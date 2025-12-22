@@ -54,8 +54,9 @@ jobs:
             COMPARE_URL=""
           fi
           
-          # Get the date of the current tag's commit
-          END_DATE=$(git log -1 --format=%aI "$CURRENT_TAG" 2>/dev/null)
+          # Use current time as END_DATE to include PRs merged up until now
+          # (using commit date could exclude PRs merged after the commit but before the tag push)
+          END_DATE=$(date -Iseconds)
           
           echo "Date range: $START_DATE to $END_DATE"
           
