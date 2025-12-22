@@ -47,6 +47,7 @@ type Parser struct {
 	fragmentsMu      sync.RWMutex  // Protects pendingFragments
 	debug            bool
 	stopCleanup      chan struct{} // Signal to stop cleanup goroutine
+	Stats            *Stats        // Parser statistics
 }
 
 // fragmentedPacket holds data for reassembling fragmented packets
@@ -64,6 +65,7 @@ func NewParser(handler PhotonHandler) *Parser {
 		pendingFragments: make(map[int32]*fragmentedPacket),
 		debug:            false,
 		stopCleanup:      make(chan struct{}),
+		Stats:            NewStats(),
 	}
 
 	// Start background cleanup goroutine
@@ -110,6 +112,7 @@ func (p *Parser) cleanupExpiredFragments() {
 		if now.Sub(frag.createdAt) > FragmentTTL {
 			delete(p.pendingFragments, seqNum)
 			expired++
+			p.Stats.IncrFragmentsExpired()
 		}
 	}
 
@@ -127,7 +130,12 @@ func (p *Parser) PendingFragmentsCount() int {
 
 // ParsePacket parses a raw UDP payload as a Photon packet
 func (p *Parser) ParsePacket(payload []byte) error {
+	p.Stats.IncrPacketsReceived()
+	p.Stats.AddBytesReceived(uint64(len(payload)))
+	p.Stats.LastPacketTime = time.Now()
+
 	if len(payload) < PhotonHeaderLength {
+		p.Stats.IncrPacketsMalformed()
 		return fmt.Errorf("packet too short: %d bytes", len(payload))
 	}
 
@@ -154,6 +162,7 @@ func (p *Parser) ParsePacket(payload []byte) error {
 	isCrcEnabled := flags == 0xCC
 
 	if isEncrypted {
+		p.Stats.IncrPacketsEncrypted()
 		if p.debug {
 			fmt.Println("  [Photon] Skipping encrypted packet")
 		}
@@ -161,6 +170,7 @@ func (p *Parser) ParsePacket(payload []byte) error {
 	}
 
 	if isCrcEnabled {
+		p.Stats.IncrPacketsWithCRC()
 		// Skip CRC field and validate (for now, just skip)
 		// In a full implementation, we'd validate the CRC
 		offset += 4
@@ -229,6 +239,8 @@ func (p *Parser) ParsePacket(payload []byte) error {
 		}
 	}
 
+	p.Stats.IncrPacketsProcessed()
+
 	return nil
 }
 
@@ -279,6 +291,8 @@ func (p *Parser) handleSendFragment(data []byte, length int, sequenceNumber int3
 	if length < FragmentHeaderLength {
 		return
 	}
+
+	p.Stats.IncrFragmentsReceived()
 
 	offset := 0
 
@@ -332,6 +346,8 @@ func (p *Parser) handleSendFragment(data []byte, length int, sequenceNumber int3
 		delete(p.pendingFragments, startSequenceNumber)
 		p.fragmentsMu.Unlock()
 
+		p.Stats.IncrFragmentsCompleted()
+
 		if p.debug {
 			fmt.Printf("  [Photon] Reassembled fragmented packet: %d bytes\n", frag.totalLength)
 		}
@@ -350,6 +366,8 @@ func (p *Parser) decodeOperationRequest(data []byte) {
 
 	operationCode := data[0]
 	parameters := decodeParameterTable(data[1:])
+
+	p.Stats.IncrRequestsDecoded()
 
 	if p.debug {
 		fmt.Printf("  [Photon] Request: code=%d, params=%d\n", operationCode, len(parameters))
@@ -389,6 +407,8 @@ func (p *Parser) decodeOperationResponse(data []byte) {
 
 	parameters := decodeParameterTable(data[offset:])
 
+	p.Stats.IncrResponsesDecoded()
+
 	if p.debug {
 		fmt.Printf("  [Photon] Response: code=%d, return=%d, params=%d\n", operationCode, returnCode, len(parameters))
 	}
@@ -406,6 +426,8 @@ func (p *Parser) decodeEventData(data []byte) {
 
 	eventCode := data[0]
 	parameters := decodeParameterTable(data[1:])
+
+	p.Stats.IncrEventsDecoded()
 
 	if p.debug {
 		fmt.Printf("  [Photon] Event: code=%d, params=%d\n", eventCode, len(parameters))
