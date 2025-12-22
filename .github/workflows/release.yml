@@ -1,0 +1,398 @@
+# GitHub Actions Release Pipeline for albion-lens
+# Triggered on version tags (v*)
+# Builds binaries for Linux (amd64/arm64), Windows (amd64), and macOS (amd64/arm64)
+# NOTE: This project requires CGO (libpcap) so builds must be native (no cross-compilation)
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  GO_VERSION: '1.25'
+
+jobs:
+  # ===========================================================================
+  # Generate Changelog from Conventional Commits
+  # ===========================================================================
+  changelog:
+    runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog generation
+
+      - name: Generate changelog
+        id: changelog
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get current and previous tags
+          CURRENT_TAG="${GITHUB_REF#refs/tags/}"
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${CURRENT_TAG}^" 2>/dev/null || echo "")
+          
+          echo "Current tag: $CURRENT_TAG"
+          echo "Previous tag: $PREVIOUS_TAG"
+          
+          # Get date range for PR search
+          if [ -n "$PREVIOUS_TAG" ]; then
+            # Get the date of the previous tag's commit
+            START_DATE=$(git log -1 --format=%aI "$PREVIOUS_TAG" 2>/dev/null)
+            COMPARE_URL="**Full Changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${PREVIOUS_TAG}...${CURRENT_TAG}"
+          else
+            # If no previous tag, use repository creation date (far past)
+            START_DATE="2000-01-01T00:00:00Z"
+            COMPARE_URL=""
+          fi
+          
+          # Get the date of the current tag's commit
+          END_DATE=$(git log -1 --format=%aI "$CURRENT_TAG" 2>/dev/null)
+          
+          echo "Date range: $START_DATE to $END_DATE"
+          
+          # Initialize category strings
+          FEATURES=""
+          FIXES=""
+          PERFORMANCE=""
+          DOCS=""
+          REFACTOR=""
+          TESTS=""
+          BUILD_CI=""
+          MAINTENANCE=""
+          OTHERS=""
+          
+          # Fetch merged PRs using GitHub API
+          # The API returns PRs sorted by updated date, we filter by merge date
+          PAGE=1
+          while true; do
+            RESPONSE=$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "/repos/${GITHUB_REPOSITORY}/pulls?state=closed&sort=updated&direction=desc&per_page=100&page=${PAGE}" 2>/dev/null || echo "[]")
+            
+            # Check if response is empty or error
+            if [ "$RESPONSE" = "[]" ] || [ -z "$RESPONSE" ]; then
+              break
+            fi
+            
+            # Parse PRs and check if they were merged within our date range
+            FOUND_OLD=false
+            while IFS= read -r pr_data; do
+              [ -z "$pr_data" ] && continue
+              
+              MERGED_AT=$(echo "$pr_data" | jq -r '.merged_at // empty')
+              [ -z "$MERGED_AT" ] && continue  # Skip if not merged
+              
+              # Check if merge date is within our range
+              if [[ "$MERGED_AT" < "$START_DATE" ]]; then
+                FOUND_OLD=true
+                continue
+              fi
+              
+              if [[ "$MERGED_AT" > "$END_DATE" ]]; then
+                continue
+              fi
+              
+              PR_NUMBER=$(echo "$pr_data" | jq -r '.number')
+              PR_TITLE=$(echo "$pr_data" | jq -r '.title')
+              PR_AUTHOR=$(echo "$pr_data" | jq -r '.user.login')
+              PR_URL="https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}"
+              
+              # Format the entry (PR-based, similar to GitHub's native release notes)
+              ENTRY="* ${PR_TITLE} ([#${PR_NUMBER}](${PR_URL})) (@${PR_AUTHOR})"
+              
+              # Categorize by conventional commit prefix in PR title
+              # Prepend entries (since we fetch newest first, prepending gives chronological order)
+              case "$PR_TITLE" in
+                feat:*|feat\(*) 
+                  FEATURES="${ENTRY}"$'\n'"${FEATURES}"
+                  ;;
+                fix:*|fix\(*) 
+                  FIXES="${ENTRY}"$'\n'"${FIXES}"
+                  ;;
+                perf:*|perf\(*) 
+                  PERFORMANCE="${ENTRY}"$'\n'"${PERFORMANCE}"
+                  ;;
+                docs:*|docs\(*) 
+                  DOCS="${ENTRY}"$'\n'"${DOCS}"
+                  ;;
+                refactor:*|refactor\(*) 
+                  REFACTOR="${ENTRY}"$'\n'"${REFACTOR}"
+                  ;;
+                test:*|test\(*) 
+                  TESTS="${ENTRY}"$'\n'"${TESTS}"
+                  ;;
+                build:*|build\(*|ci:*|ci\(*) 
+                  BUILD_CI="${ENTRY}"$'\n'"${BUILD_CI}"
+                  ;;
+                chore:*|chore\(*|style:*|style\(*) 
+                  MAINTENANCE="${ENTRY}"$'\n'"${MAINTENANCE}"
+                  ;;
+                *)
+                  OTHERS="${ENTRY}"$'\n'"${OTHERS}"
+                  ;;
+              esac
+            done < <(echo "$RESPONSE" | jq -c '.[]')
+            
+            # If we found PRs older than our start date, we can stop paginating
+            if [ "$FOUND_OLD" = true ]; then
+              break
+            fi
+            
+            PAGE=$((PAGE + 1))
+            # Safety limit to avoid infinite loops
+            if [ $PAGE -gt 10 ]; then
+              break
+            fi
+          done
+          
+          # Build changelog
+          CHANGELOG="## Changelog"$'\n\n'
+          
+          if [ -n "$FEATURES" ]; then
+            CHANGELOG="${CHANGELOG}### 🚀 New Features"$'\n\n'"${FEATURES}"$'\n'
+          fi
+          
+          if [ -n "$FIXES" ]; then
+            CHANGELOG="${CHANGELOG}### 🐛 Bug Fixes"$'\n\n'"${FIXES}"$'\n'
+          fi
+          
+          if [ -n "$PERFORMANCE" ]; then
+            CHANGELOG="${CHANGELOG}### ⚡ Performance Improvements"$'\n\n'"${PERFORMANCE}"$'\n'
+          fi
+          
+          if [ -n "$DOCS" ]; then
+            CHANGELOG="${CHANGELOG}### 📚 Documentation"$'\n\n'"${DOCS}"$'\n'
+          fi
+          
+          if [ -n "$REFACTOR" ]; then
+            CHANGELOG="${CHANGELOG}### ♻️ Code Refactoring"$'\n\n'"${REFACTOR}"$'\n'
+          fi
+          
+          if [ -n "$TESTS" ]; then
+            CHANGELOG="${CHANGELOG}### 🧪 Tests"$'\n\n'"${TESTS}"$'\n'
+          fi
+          
+          if [ -n "$BUILD_CI" ]; then
+            CHANGELOG="${CHANGELOG}### 🔧 CI/CD"$'\n\n'"${BUILD_CI}"$'\n'
+          fi
+          
+          if [ -n "$MAINTENANCE" ]; then
+            CHANGELOG="${CHANGELOG}### 🧹 Maintenance"$'\n\n'"${MAINTENANCE}"$'\n'
+          fi
+          
+          if [ -n "$OTHERS" ]; then
+            CHANGELOG="${CHANGELOG}### 📦 Other work"$'\n\n'"${OTHERS}"$'\n'
+          fi
+          
+          if [ -n "$COMPARE_URL" ]; then
+            CHANGELOG="${CHANGELOG}${COMPARE_URL}"
+          fi
+          
+          # Output changelog using heredoc for multiline
+          {
+            echo 'changelog<<EOF'
+            echo "$CHANGELOG"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+  # ===========================================================================
+  # Linux Builds (native builds with .deb and .rpm packages)
+  # NOTE: CGO required for libpcap - must build natively
+  # ===========================================================================
+  build-linux:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install libpcap-dev
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build binary
+        run: |
+          mkdir -p bin
+          go build -ldflags="-s -w -X main.appVersion=${{ steps.version.outputs.VERSION }}" \
+            -o bin/albion-lens_${{ steps.version.outputs.VERSION }}_linux_${{ matrix.arch }} \
+            ./cmd/sniffer
+
+      - name: Install nfpm
+        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+
+      - name: Create nfpm config
+        run: |
+          cat > nfpm.yaml <<EOF
+          name: albion-lens
+          arch: ${{ matrix.arch }}
+          platform: linux
+          version: ${{ steps.version.outputs.VERSION }}
+          maintainer: cantalupo555 <cantalupo@protonmail.com>
+          description: |
+            Real-time network traffic analyzer for Albion Online.
+            Captures and decodes game packets to provide insights into game events.
+          vendor: cantalupo555
+          homepage: https://github.com/cantalupo555/albion-lens
+          license: GPL-3.0
+          contents:
+            - src: ./bin/albion-lens_${{ steps.version.outputs.VERSION }}_linux_${{ matrix.arch }}
+              dst: /usr/bin/albion-lens
+              file_info:
+                mode: 0755
+            - src: ./README.md
+              dst: /usr/share/doc/albion-lens/README.md
+              file_info:
+                mode: 0644
+          depends:
+            - libpcap0.8
+          EOF
+
+      - name: Build .deb package
+        run: |
+          nfpm package -p deb -f nfpm.yaml
+          mv *.deb bin/albion-lens_${{ steps.version.outputs.VERSION }}_linux_${{ matrix.arch }}.deb
+
+      - name: Build .rpm package
+        run: |
+          nfpm package -p rpm -f nfpm.yaml
+          mv *.rpm bin/albion-lens_${{ steps.version.outputs.VERSION }}_linux_${{ matrix.arch }}.rpm
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-linux-${{ matrix.arch }}
+          path: bin/*
+
+  # ===========================================================================
+  # Windows Builds (native builds - CGO required for WinPcap)
+  # NOTE: Only amd64 supported - WinPcap/Npcap doesn't have ARM64 binaries
+  # ===========================================================================
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install WinPcap SDK
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip" -OutFile "WpdPack.zip"
+          Expand-Archive -Path "WpdPack.zip" -DestinationPath "C:\"
+
+      - name: Get version from tag
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build binary
+        shell: bash
+        env:
+          CGO_ENABLED: 1
+          CGO_CFLAGS: "-IC:/WpdPack/Include"
+          CGO_LDFLAGS: "-LC:/WpdPack/Lib/x64"
+        run: |
+          mkdir -p bin
+          go build -ldflags="-s -w -X main.appVersion=${{ steps.version.outputs.VERSION }}" \
+            -o bin/albion-lens_${{ steps.version.outputs.VERSION }}_windows_amd64.exe \
+            ./cmd/sniffer
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-windows
+          path: bin/*
+
+  # ===========================================================================
+  # macOS Builds (native builds - libpcap included in macOS)
+  # ===========================================================================
+  build-macos:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            arch: arm64
+            name: Apple Silicon
+          - os: macos-13
+            arch: amd64
+            name: Intel
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build binary (${{ matrix.name }})
+        run: |
+          mkdir -p bin
+          go build -ldflags="-s -w -X main.appVersion=${{ steps.version.outputs.VERSION }}" \
+            -o albion-lens \
+            ./cmd/sniffer
+          zip bin/albion-lens_${{ steps.version.outputs.VERSION }}_macOS_${{ matrix.arch }}.zip albion-lens
+          rm albion-lens
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-macos-${{ matrix.arch }}
+          path: bin/*
+
+  # ===========================================================================
+  # Create GitHub Release with Custom Changelog
+  # ===========================================================================
+  release:
+    needs: [changelog, build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: bin
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la bin/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bin/*
+          body: ${{ needs.changelog.outputs.changelog }}
+          draft: false
+          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') || contains(github.ref, '-rc') }}

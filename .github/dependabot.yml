@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # 1. Maintain Go dependencies
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "go"
+    reviewers:
+      - "cantalupo555"
+    # Use conventional commits for PR titles
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(dev-deps)"
+
+  # 2. Maintain GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github_actions"
+    reviewers:
+      - "cantalupo555"
+    # Use conventional commits for PR titles
+    commit-message:
+      prefix: "ci(deps)"
