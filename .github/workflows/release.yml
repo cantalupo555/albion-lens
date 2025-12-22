@@ -282,7 +282,7 @@ jobs:
           mv *.rpm bin/albion-lens_${{ steps.version.outputs.VERSION }}_linux_${{ matrix.arch }}.rpm
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: binaries-linux-${{ matrix.arch }}
           path: bin/*
@@ -326,7 +326,7 @@ jobs:
             ./cmd/sniffer
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: binaries-windows
           path: bin/*
@@ -368,7 +368,7 @@ jobs:
           rm albion-lens
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: binaries-macos-${{ matrix.arch }}
           path: bin/*
