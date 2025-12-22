@@ -5,28 +5,28 @@ import (
 	"math"
 )
 
-// Protocol16 data types
+// Protocol16 data types - ASCII character codes defined by Photon protocol
 const (
-	TypeUnknown        = 0
-	TypeNull           = 42  // '*'
-	TypeDictionary     = 68  // 'D'
-	TypeStringArray    = 97  // 'a'
-	TypeByte           = 98  // 'b'
-	TypeDouble         = 100 // 'd'
-	TypeEventData      = 101 // 'e'
-	TypeFloat          = 102 // 'f'
-	TypeInteger        = 105 // 'i'
-	TypeHashtable      = 104 // 'h'
-	TypeShort          = 107 // 'k'
-	TypeLong           = 108 // 'l'
-	TypeIntegerArray   = 110 // 'n'
-	TypeBoolean        = 111 // 'o'
-	TypeOperationResp  = 112 // 'p'
-	TypeOperationReq   = 113 // 'q'
-	TypeString         = 115 // 's'
-	TypeByteArray      = 120 // 'x'
-	TypeArray          = 121 // 'y'
-	TypeObjectArray    = 122 // 'z'
+	TypeUnknown        = 0    // Unknown type
+	TypeNull           = '*'  // 42 - Null value
+	TypeDictionary     = 'D'  // 68 - Typed dictionary
+	TypeStringArray    = 'a'  // 97 - Array of strings
+	TypeByte           = 'b'  // 98 - Byte (uint8)
+	TypeDouble         = 'd'  // 100 - Float64
+	TypeEventData      = 'e'  // 101 - Event data
+	TypeFloat          = 'f'  // 102 - Float32
+	TypeHashtable      = 'h'  // 104 - Hashtable (dynamic map)
+	TypeInteger        = 'i'  // 105 - Int32
+	TypeShort          = 'k'  // 107 - Int16
+	TypeLong           = 'l'  // 108 - Int64
+	TypeIntegerArray   = 'n'  // 110 - Array of int32
+	TypeBoolean        = 'o'  // 111 - Boolean
+	TypeOperationResp  = 'p'  // 112 - Operation response
+	TypeOperationReq   = 'q'  // 113 - Operation request
+	TypeString         = 's'  // 115 - UTF-8 string
+	TypeByteArray      = 'x'  // 120 - Array of bytes
+	TypeArray          = 'y'  // 121 - Typed array
+	TypeObjectArray    = 'z'  // 122 - Array of objects
 )
 
 // decodeParameterTable decodes a Protocol16 parameter table
