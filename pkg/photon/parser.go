@@ -5,6 +5,8 @@ package photon
 import (
 	"encoding/binary"
 	"fmt"
+	"sync"
+	"time"
 )
 
 const (
@@ -25,6 +27,10 @@ const (
 	MessageTypeEventData         = 4
 	MessageTypeInternalRequest   = 6
 	MessageTypeInternalResponse  = 7
+
+	// Fragment cleanup settings
+	FragmentTTL             = 30 * time.Second // Fragments expire after 30s
+	FragmentCleanupInterval = 10 * time.Second // Cleanup runs every 10s
 )
 
 // PhotonHandler is called when a Photon message is decoded
@@ -38,7 +44,9 @@ type PhotonHandler interface {
 type Parser struct {
 	handler          PhotonHandler
 	pendingFragments map[int32]*fragmentedPacket
+	fragmentsMu      sync.RWMutex  // Protects pendingFragments
 	debug            bool
+	stopCleanup      chan struct{} // Signal to stop cleanup goroutine
 }
 
 // fragmentedPacket holds data for reassembling fragmented packets
@@ -46,20 +54,75 @@ type fragmentedPacket struct {
 	totalLength  int32
 	payload      []byte
 	bytesWritten int
+	createdAt    time.Time // When the fragment was first received
 }
 
 // NewParser creates a new Photon parser
 func NewParser(handler PhotonHandler) *Parser {
-	return &Parser{
+	p := &Parser{
 		handler:          handler,
 		pendingFragments: make(map[int32]*fragmentedPacket),
 		debug:            false,
+		stopCleanup:      make(chan struct{}),
 	}
+
+	// Start background cleanup goroutine
+	go p.cleanupLoop()
+
+	return p
 }
 
 // SetDebug enables or disables debug output
 func (p *Parser) SetDebug(debug bool) {
 	p.debug = debug
+}
+
+// Close stops the cleanup goroutine and releases resources.
+// Should be called when the parser is no longer needed.
+func (p *Parser) Close() {
+	close(p.stopCleanup)
+}
+
+// cleanupLoop periodically removes expired fragments
+func (p *Parser) cleanupLoop() {
+	ticker := time.NewTicker(FragmentCleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			p.cleanupExpiredFragments()
+		case <-p.stopCleanup:
+			return
+		}
+	}
+}
+
+// cleanupExpiredFragments removes fragments older than FragmentTTL
+func (p *Parser) cleanupExpiredFragments() {
+	p.fragmentsMu.Lock()
+	defer p.fragmentsMu.Unlock()
+
+	now := time.Now()
+	expired := 0
+
+	for seqNum, frag := range p.pendingFragments {
+		if now.Sub(frag.createdAt) > FragmentTTL {
+			delete(p.pendingFragments, seqNum)
+			expired++
+		}
+	}
+
+	if p.debug && expired > 0 {
+		fmt.Printf("  [Photon] Cleaned up %d expired fragments\n", expired)
+	}
+}
+
+// PendingFragmentsCount returns the number of pending fragments (for debugging/stats)
+func (p *Parser) PendingFragmentsCount() int {
+	p.fragmentsMu.RLock()
+	defer p.fragmentsMu.RUnlock()
+	return len(p.pendingFragments)
 }
 
 // ParsePacket parses a raw UDP payload as a Photon packet
@@ -244,12 +307,16 @@ func (p *Parser) handleSendFragment(data []byte, length int, sequenceNumber int3
 		return
 	}
 
+	// Lock for concurrent access to pendingFragments
+	p.fragmentsMu.Lock()
+
 	// Get or create pending fragment
 	frag, exists := p.pendingFragments[startSequenceNumber]
 	if !exists {
 		frag = &fragmentedPacket{
 			totalLength: totalLength,
 			payload:     make([]byte, totalLength),
+			createdAt:   time.Now(),
 		}
 		p.pendingFragments[startSequenceNumber] = frag
 	}
@@ -263,12 +330,15 @@ func (p *Parser) handleSendFragment(data []byte, length int, sequenceNumber int3
 	// Check if complete
 	if frag.bytesWritten >= int(frag.totalLength) {
 		delete(p.pendingFragments, startSequenceNumber)
+		p.fragmentsMu.Unlock()
 
 		if p.debug {
 			fmt.Printf("  [Photon] Reassembled fragmented packet: %d bytes\n", frag.totalLength)
 		}
 
 		p.handleSendReliable(frag.payload, int(frag.totalLength))
+	} else {
+		p.fragmentsMu.Unlock()
 	}
 }
 
