@@ -3,7 +3,6 @@
 package photon
 
 import (
-	"encoding/binary"
 	"fmt"
 	"sync"
 	"time"
@@ -139,23 +138,16 @@ func (p *Parser) ParsePacket(payload []byte) error {
 		return fmt.Errorf("packet too short: %d bytes", len(payload))
 	}
 
-	offset := 0
+	r := NewBufferReader(payload)
 
 	// Read Photon header
-	// peerId := binary.BigEndian.Uint16(payload[offset:])
-	offset += 2
+	_ = r.Skip(2) // peerId (ignored)
 
-	flags := payload[offset]
-	offset++
+	flags, _ := r.ReadByte()
+	commandCount, _ := r.ReadByte()
 
-	commandCount := payload[offset]
-	offset++
-
-	// timestamp := binary.BigEndian.Uint32(payload[offset:])
-	offset += 4
-
-	// challenge := binary.BigEndian.Uint32(payload[offset:])
-	offset += 4
+	_ = r.Skip(4) // timestamp (ignored)
+	_ = r.Skip(4) // challenge (ignored)
 
 	// Check flags
 	isEncrypted := flags == 1
@@ -173,41 +165,31 @@ func (p *Parser) ParsePacket(payload []byte) error {
 		p.Stats.IncrPacketsWithCRC()
 		// Skip CRC field and validate (for now, just skip)
 		// In a full implementation, we'd validate the CRC
-		offset += 4
+		_ = r.Skip(4)
 		if p.debug {
 			fmt.Println("  [Photon] Packet has CRC enabled (skipping validation)")
 		}
 	}
 
 	// Process each command
-	for i := 0; i < int(commandCount) && offset < len(payload); i++ {
-		if offset+CommandHeaderLength > len(payload) {
+	for i := 0; i < int(commandCount) && !r.IsEmpty(); i++ {
+		if r.Remaining() < CommandHeaderLength {
 			break
 		}
 
-		commandType := payload[offset]
-		offset++
+		commandType, _ := r.ReadByte()
+		_ = r.Skip(1) // channelId (ignored)
+		_ = r.Skip(1) // commandFlags (ignored)
+		_ = r.Skip(1) // reserved
 
-		// channelId := payload[offset]
-		offset++
+		commandLength, _ := r.ReadUint32()
+		sequenceNumber, _ := r.ReadInt32()
 
-		// commandFlags := payload[offset]
-		offset++
+		dataLength := int(commandLength) - CommandHeaderLength
 
-		// reserved
-		offset++
-
-		commandLength := int(binary.BigEndian.Uint32(payload[offset:]))
-		offset += 4
-
-		sequenceNumber := int32(binary.BigEndian.Uint32(payload[offset:]))
-		offset += 4
-
-		commandLength -= CommandHeaderLength
-
-		if offset+commandLength > len(payload) {
+		if r.Remaining() < dataLength {
 			if p.debug {
-				fmt.Printf("  [Photon] Command length exceeds packet: %d + %d > %d\n", offset, commandLength, len(payload))
+				fmt.Printf("  [Photon] Command length exceeds packet: remaining=%d, need=%d\n", r.Remaining(), dataLength)
 			}
 			break
 		}
@@ -221,21 +203,21 @@ func (p *Parser) ParsePacket(payload []byte) error {
 
 		case CommandTypeSendUnreliable:
 			// Skip 4 bytes for unreliable sequence
-			offset += 4
-			commandLength -= 4
-			p.handleSendReliable(payload[offset:offset+commandLength], commandLength)
-			offset += commandLength
+			_ = r.Skip(4)
+			dataLength -= 4
+			commandData, _ := r.ReadBytesNoCopy(dataLength)
+			p.handleSendReliable(commandData)
 
 		case CommandTypeSendReliable:
-			p.handleSendReliable(payload[offset:offset+commandLength], commandLength)
-			offset += commandLength
+			commandData, _ := r.ReadBytesNoCopy(dataLength)
+			p.handleSendReliable(commandData)
 
 		case CommandTypeSendFragment:
-			p.handleSendFragment(payload[offset:offset+commandLength], commandLength, sequenceNumber)
-			offset += commandLength
+			commandData, _ := r.ReadBytesNoCopy(dataLength)
+			p.handleSendFragment(commandData, sequenceNumber)
 
 		default:
-			offset += commandLength
+			_ = r.Skip(dataLength)
 		}
 	}
 
@@ -245,24 +227,22 @@ func (p *Parser) ParsePacket(payload []byte) error {
 }
 
 // handleSendReliable processes a reliable command payload
-func (p *Parser) handleSendReliable(data []byte, length int) {
-	if length < 2 {
+func (p *Parser) handleSendReliable(data []byte) {
+	if len(data) < 2 {
 		return
 	}
 
-	offset := 0
+	r := NewBufferReader(data)
 
-	// Skip signal byte
-	signalByte := data[offset]
-	offset++
+	// Read signal byte
+	signalByte, _ := r.ReadByte()
 
 	// Check signal byte
 	if signalByte != 243 && signalByte != 253 {
 		return
 	}
 
-	messageType := data[offset]
-	offset++
+	messageType, _ := r.ReadByte()
 
 	// Check if encrypted
 	if messageType > 128 {
@@ -272,7 +252,8 @@ func (p *Parser) handleSendReliable(data []byte, length int) {
 		return
 	}
 
-	remaining := data[offset:]
+	// Get remaining data as a new BufferReader for decoding
+	remaining := NewBufferReader(r.RemainingBytes())
 
 	switch messageType {
 	case MessageTypeOperationRequest, MessageTypeInternalRequest:
@@ -287,36 +268,27 @@ func (p *Parser) handleSendReliable(data []byte, length int) {
 }
 
 // handleSendFragment processes a fragmented packet
-func (p *Parser) handleSendFragment(data []byte, length int, sequenceNumber int32) {
-	if length < FragmentHeaderLength {
+func (p *Parser) handleSendFragment(data []byte, sequenceNumber int32) {
+	if len(data) < FragmentHeaderLength {
 		return
 	}
 
 	p.Stats.IncrFragmentsReceived()
 
-	offset := 0
+	r := NewBufferReader(data)
 
-	startSequenceNumber := int32(binary.BigEndian.Uint32(data[offset:]))
-	offset += 4
+	startSequenceNumber, _ := r.ReadInt32()
+	_ = r.Skip(4) // fragmentCount (ignored)
+	_ = r.Skip(4) // fragmentNumber (ignored)
+	totalLength, _ := r.ReadInt32()
+	fragmentOffset, _ := r.ReadUint32()
 
-	// fragmentCount := binary.BigEndian.Uint32(data[offset:])
-	offset += 4
-
-	// fragmentNumber := binary.BigEndian.Uint32(data[offset:])
-	offset += 4
-
-	totalLength := int32(binary.BigEndian.Uint32(data[offset:]))
-	offset += 4
-
-	fragmentOffset := int(binary.BigEndian.Uint32(data[offset:]))
-	offset += 4
-
-	fragmentLength := length - FragmentHeaderLength
+	fragmentLength := len(data) - FragmentHeaderLength
 
 	// Validate we have enough data
-	if offset+fragmentLength > len(data) {
+	if r.Remaining() < fragmentLength {
 		if p.debug {
-			fmt.Printf("  [Photon] Fragment data exceeds buffer: offset=%d, fragLen=%d, dataLen=%d\n", offset, fragmentLength, len(data))
+			fmt.Printf("  [Photon] Fragment data exceeds buffer: remaining=%d, fragLen=%d\n", r.Remaining(), fragmentLength)
 		}
 		return
 	}
@@ -336,8 +308,10 @@ func (p *Parser) handleSendFragment(data []byte, length int, sequenceNumber int3
 	}
 
 	// Copy fragment data (with bounds check for destination)
-	if fragmentOffset >= 0 && fragmentOffset+fragmentLength <= int(totalLength) {
-		copy(frag.payload[fragmentOffset:], data[offset:offset+fragmentLength])
+	fragOff := int(fragmentOffset)
+	if fragOff >= 0 && fragOff+fragmentLength <= int(totalLength) {
+		fragmentData, _ := r.ReadBytesNoCopy(fragmentLength)
+		copy(frag.payload[fragOff:], fragmentData)
 		frag.bytesWritten += fragmentLength
 	}
 
@@ -352,20 +326,20 @@ func (p *Parser) handleSendFragment(data []byte, length int, sequenceNumber int3
 			fmt.Printf("  [Photon] Reassembled fragmented packet: %d bytes\n", frag.totalLength)
 		}
 
-		p.handleSendReliable(frag.payload, int(frag.totalLength))
+		p.handleSendReliable(frag.payload)
 	} else {
 		p.fragmentsMu.Unlock()
 	}
 }
 
 // decodeOperationRequest decodes an operation request
-func (p *Parser) decodeOperationRequest(data []byte) {
-	if len(data) < 1 {
+func (p *Parser) decodeOperationRequest(r *BufferReader) {
+	if r.Remaining() < 1 {
 		return
 	}
 
-	operationCode := data[0]
-	parameters := decodeParameterTable(data[1:])
+	operationCode, _ := r.ReadByte()
+	parameters := decodeParameterTable(r)
 
 	p.Stats.IncrRequestsDecoded()
 
@@ -379,33 +353,32 @@ func (p *Parser) decodeOperationRequest(data []byte) {
 }
 
 // decodeOperationResponse decodes an operation response
-func (p *Parser) decodeOperationResponse(data []byte) {
-	if len(data) < 4 {
+func (p *Parser) decodeOperationResponse(r *BufferReader) {
+	if r.Remaining() < 4 {
 		return
 	}
 
-	offset := 0
-
-	operationCode := data[offset]
-	offset++
-
-	returnCode := int16(binary.BigEndian.Uint16(data[offset:]))
-	offset += 2
+	operationCode, _ := r.ReadByte()
+	returnCode, _ := r.ReadInt16()
 
 	// Read debug message (optional)
 	debugMessage := ""
-	if offset < len(data) {
-		paramType := data[offset]
-		offset++
-		if paramType != 0 && paramType != 42 { // Not null
-			// Read string
-			msg, newOffset := readString(data, offset-1)
-			debugMessage = msg
-			offset = newOffset
+	if !r.IsEmpty() {
+		paramType, _ := r.PeekByte()
+		if paramType != 0 && paramType != TypeNull {
+			// Read type byte
+			_, _ = r.ReadByte()
+			// Read string value
+			if msg, err := r.ReadString(); err == nil {
+				debugMessage = msg
+			}
+		} else {
+			// Skip null type byte
+			_, _ = r.ReadByte()
 		}
 	}
 
-	parameters := decodeParameterTable(data[offset:])
+	parameters := decodeParameterTable(r)
 
 	p.Stats.IncrResponsesDecoded()
 
@@ -419,13 +392,13 @@ func (p *Parser) decodeOperationResponse(data []byte) {
 }
 
 // decodeEventData decodes an event
-func (p *Parser) decodeEventData(data []byte) {
-	if len(data) < 1 {
+func (p *Parser) decodeEventData(r *BufferReader) {
+	if r.Remaining() < 1 {
 		return
 	}
 
-	eventCode := data[0]
-	parameters := decodeParameterTable(data[1:])
+	eventCode, _ := r.ReadByte()
+	parameters := decodeParameterTable(r)
 
 	p.Stats.IncrEventsDecoded()
 
@@ -436,24 +409,4 @@ func (p *Parser) decodeEventData(data []byte) {
 	if p.handler != nil {
 		p.handler.OnEvent(eventCode, parameters)
 	}
-}
-
-// readString reads a Protocol16 string from the buffer
-func readString(data []byte, offset int) (string, int) {
-	if offset+3 > len(data) {
-		return "", offset
-	}
-
-	// Skip type byte
-	offset++
-
-	length := int(binary.BigEndian.Uint16(data[offset:]))
-	offset += 2
-
-	if offset+length > len(data) {
-		return "", offset
-	}
-
-	str := string(data[offset : offset+length])
-	return str, offset + length
 }
