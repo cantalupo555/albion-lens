@@ -16,6 +16,11 @@ import (
 	"github.com/fatih/color"
 )
 
+// EventCallback is called when a game event is processed
+// eventType: "fame", "silver", "loot", "combat", "info"
+// message: formatted message to display
+type EventCallback func(eventType, message string)
+
 // AlbionHandler handles Albion Online game events
 type AlbionHandler struct {
 	debug     bool
@@ -27,6 +32,11 @@ type AlbionHandler struct {
 
 	// Silver tracking
 	sessionSilver int64
+
+	// Kill/Death tracking
+	sessionKills  int
+	sessionDeaths int
+	sessionLoot   int
 
 	// Items database
 	itemDB *items.ItemDatabase
@@ -42,6 +52,9 @@ type AlbionHandler struct {
 	combatColor    *color.Color
 	infoColor      *color.Color
 	discoveryColor *color.Color
+
+	// Event callback for TUI integration
+	eventCallback EventCallback
 }
 
 // DiscoveredEvent tracks unknown events in discovery mode
@@ -80,6 +93,33 @@ func (h *AlbionHandler) SetDiscoveryMode(discovery bool) {
 	if discovery {
 		h.discoveryColor.Println("🔍 Discovery mode enabled - logging all events")
 	}
+}
+
+// SetEventCallback sets a callback function for TUI integration
+func (h *AlbionHandler) SetEventCallback(callback EventCallback) {
+	h.eventCallback = callback
+}
+
+// notifyEvent calls the event callback if set
+func (h *AlbionHandler) notifyEvent(eventType, message string) {
+	if h.eventCallback != nil {
+		h.eventCallback(eventType, message)
+	}
+}
+
+// GetSessionKills returns the number of kills in this session
+func (h *AlbionHandler) GetSessionKills() int {
+	return h.sessionKills
+}
+
+// GetSessionDeaths returns the number of deaths in this session
+func (h *AlbionHandler) GetSessionDeaths() int {
+	return h.sessionDeaths
+}
+
+// GetSessionLoot returns the number of loot items in this session
+func (h *AlbionHandler) GetSessionLoot() int {
+	return h.sessionLoot
 }
 
 // LoadItemDatabase loads the item database from ao-bin-dumps
@@ -419,18 +459,16 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 	if hasDetailedFormat {
 		// Detailed format: we have the actual gained fame
 		fameGainedVal := math.Floor(float64(fameGained) / 10000.0)
-		zoneFameVal := math.Floor(float64(zoneFame) / 10000.0)
-		
+		_ = zoneFame // Zone fame available but not displayed in simplified view
+
 		// Only show if fame was actually gained
 		if fameGainedVal > 0 {
 			h.sessionFame += int64(fameGainedVal)
 			h.totalFame = totalFame // Update tracked total
-			
-			h.fameColor.Printf("[%s] ⭐ FAME: +%.0f", timestamp, fameGainedVal)
-			if zoneFameVal > 0 && zoneFameVal != fameGainedVal {
-				fmt.Printf(" (Zone: %.0f)", zoneFameVal)
-			}
-			fmt.Printf(" | Total: %.0f | Session: %d\n", totalFameVal, h.sessionFame)
+
+			msg := fmt.Sprintf("⭐ FAME: +%.0f | Total: %.0f | Session: %d", fameGainedVal, totalFameVal, h.sessionFame)
+			h.fameColor.Printf("[%s] %s\n", timestamp, msg)
+			h.notifyEvent("fame", msg)
 		} else if h.debug {
 			fmt.Printf("  [Fame] Total fame update: %.0f (no gain)\n", totalFameVal)
 		}
@@ -442,8 +480,9 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 			if gained > 0 {
 				gainedVal := math.Floor(float64(gained) / 10000.0)
 				h.sessionFame += int64(gainedVal)
-				h.fameColor.Printf("[%s] ⭐ FAME: +%.0f | Total: %.0f | Session: %d\n", 
-					timestamp, gainedVal, totalFameVal, h.sessionFame)
+				msg := fmt.Sprintf("⭐ FAME: +%.0f | Total: %.0f | Session: %d", gainedVal, totalFameVal, h.sessionFame)
+				h.fameColor.Printf("[%s] %s\n", timestamp, msg)
+				h.notifyEvent("fame", msg)
 			}
 		} else if h.debug {
 			// First fame event, just record the total
@@ -481,7 +520,9 @@ func (h *AlbionHandler) handleUpdateMoney(params map[byte]interface{}) {
 	// Parameter 1: Current silver
 	currentSilver := getInt64(params, 1)
 
-	h.silverColor.Printf("[%s] 💰 SILVER: %d\n", timestamp, currentSilver)
+	msg := fmt.Sprintf("💰 SILVER: %s", formatSilver(currentSilver))
+	h.silverColor.Printf("[%s] %s\n", timestamp, msg)
+	h.notifyEvent("silver", msg)
 }
 
 // handleHealthUpdate handles health update events
@@ -528,17 +569,21 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 		// Silver also uses FixPoint format (divide by 10000)
 		silverAmount := int64(math.Floor(float64(silverAmountRaw) / 10000.0))
 		h.sessionSilver += silverAmount
-		h.silverColor.Printf("[%s] 💰 %s looted silver (%d) from %s | Session: %d\n",
-			timestamp, lootedBy, silverAmount, lootedFrom, h.sessionSilver)
+		msg := fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
+			lootedBy, formatSilver(silverAmount), lootedFrom, formatSilver(h.sessionSilver))
+		h.silverColor.Printf("[%s] %s\n", timestamp, msg)
+		h.notifyEvent("silver", msg)
 	} else {
 		// Try to get item name from database
 		itemName := fmt.Sprintf("Item#%d", itemID)
 		if h.itemDB != nil && h.itemDB.IsLoaded() {
 			itemName = h.itemDB.GetItemName(itemID)
 		}
-		
-		h.lootColor.Printf("[%s] 📦 %s looted %s (x%d) from %s\n",
-			timestamp, lootedBy, itemName, quantity, lootedFrom)
+
+		h.sessionLoot++
+		msg := fmt.Sprintf("📦 %s looted %s (x%d) from %s", lootedBy, itemName, quantity, lootedFrom)
+		h.lootColor.Printf("[%s] %s\n", timestamp, msg)
+		h.notifyEvent("loot", msg)
 	}
 }
 
@@ -555,13 +600,19 @@ func (h *AlbionHandler) handleNewLoot(params map[byte]interface{}) {
 // handleKilledPlayer handles player kill events
 func (h *AlbionHandler) handleKilledPlayer(params map[byte]interface{}) {
 	timestamp := time.Now().Format("15:04:05")
-	h.combatColor.Printf("[%s] ⚔️ Player Killed: %v\n", timestamp, params)
+	h.sessionKills++
+	msg := fmt.Sprintf("⚔️ Player Killed! (Session: %d kills)", h.sessionKills)
+	h.combatColor.Printf("[%s] %s\n", timestamp, msg)
+	h.notifyEvent("kill", msg)
 }
 
 // handleDied handles death events
 func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 	timestamp := time.Now().Format("15:04:05")
-	h.combatColor.Printf("[%s] 💀 Died: %v\n", timestamp, params)
+	h.sessionDeaths++
+	msg := fmt.Sprintf("💀 You died! (Session: %d deaths)", h.sessionDeaths)
+	h.combatColor.Printf("[%s] %s\n", timestamp, msg)
+	h.notifyEvent("death", msg)
 }
 
 // Helper functions to extract typed values from parameters
