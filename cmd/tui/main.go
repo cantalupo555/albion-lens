@@ -3,15 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net"
 	"os"
-	"path/filepath"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cantalupo555/albion-lens/internal/tui"
+	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/capture"
-	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
 
@@ -32,96 +30,61 @@ func main() {
 		return
 	}
 
+	// Create backend service with options
+	opts := []backend.Option{
+		backend.WithDebug(*debug),
+	}
+	if *deviceName != "" {
+		opts = append(opts, backend.WithDevice(*deviceName))
+	}
+	if *itemsPath != "" {
+		opts = append(opts, backend.WithItemDatabasePath(*itemsPath))
+	}
+
+	svc := backend.New(opts...)
+
 	// Create channels for TUI communication
 	eventChan := make(chan tui.EventMsg, 100)
 	statsChan := make(chan *photon.Stats, 10)
 
-	// Create Albion handler (uses existing event parsing logic)
-	albionHandler := handlers.NewAlbionHandler()
-	albionHandler.SetDebug(*debug)
-
-	// Set event callback to send events to TUI
-	albionHandler.SetEventCallback(func(eventType, message string) {
-		select {
-		case eventChan <- tui.EventMsg{
-			Type:      eventType,
-			Message:   message,
-			Timestamp: time.Now(),
-		}:
-		default:
-			// Channel full, drop event
-		}
-	})
-
-	// Load item database if path provided
-	if *itemsPath != "" {
-		if err := albionHandler.LoadItemDatabase(*itemsPath); err != nil {
-			// Silently continue without item names
-		}
-	} else {
-		// Try to auto-detect ao-bin-dumps in common locations
-		commonPaths := []string{
-			"../ao-bin-dumps",
-			"../../ao-bin-dumps",
-			filepath.Join(os.Getenv("HOME"), "Documents/albion/ao-bin-dumps"),
-		}
-		for _, path := range commonPaths {
-			if _, err := os.Stat(filepath.Join(path, "items.json")); err == nil {
-				_ = albionHandler.LoadItemDatabase(path)
-				break
-			}
-		}
-	}
-
-	// Create Photon parser with Albion handler
-	parser := photon.NewParser(albionHandler)
-	parser.SetDebug(*debug)
-	defer parser.Close()
-
-	// Create network capture
-	netCapture := capture.NewCapture(func(payload []byte, srcIP, dstIP net.IP, srcPort, dstPort uint16) {
-		// Parse Photon packet
-		_ = parser.ParsePacket(payload)
-	})
-
-	// Set online/offline callback
-	netCapture.OnlineCallback = func(online bool) {
-		select {
-		case eventChan <- tui.EventMsg{
-			Type:      "info",
-			Message:   statusMessage(online),
-			Timestamp: time.Now(),
-		}:
-		default:
-		}
-	}
-
-	// Start stats update goroutine
+	// Bridge backend events to TUI
 	go func() {
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		for range ticker.C {
+		for event := range svc.Events {
 			select {
-			case statsChan <- parser.Stats:
+			case eventChan <- tui.EventMsg{
+				Type:      string(event.Type),
+				Message:   event.Message,
+				Timestamp: event.Timestamp,
+			}:
 			default:
 			}
 		}
 	}()
 
-	// Start capture
-	var err error
-	if *deviceName != "" {
-		err = netCapture.StartOnDevice(*deviceName)
-	} else {
-		err = netCapture.Start()
-	}
+	// Bridge backend stats to TUI
+	go func() {
+		for stats := range svc.Stats {
+			select {
+			case statsChan <- stats:
+			default:
+			}
+		}
+	}()
 
-	if err != nil {
+	// Start backend service
+	if err := svc.Start(); err != nil {
 		fmt.Printf("Error starting capture: %v\n", err)
 		fmt.Println("Try running with sudo or as administrator.")
 		os.Exit(1)
 	}
-	defer netCapture.Stop()
+	defer svc.Stop()
+
+	// Send initial status event
+	eventChan <- tui.EventMsg{
+		Type:      "info",
+		Message:   "Waiting for Albion Online traffic...",
+		Timestamp: time.Now(),
+	}
 
 	// Create and run TUI
 	model := tui.New(eventChan, statsChan)
@@ -131,11 +94,4 @@ func main() {
 		fmt.Printf("Error running TUI: %v\n", err)
 		os.Exit(1)
 	}
-}
-
-func statusMessage(online bool) string {
-	if online {
-		return "Albion Online detected! Capturing packets..."
-	}
-	return "Waiting for Albion Online traffic..."
 }
