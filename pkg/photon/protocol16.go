@@ -1,10 +1,5 @@
 package photon
 
-import (
-	"encoding/binary"
-	"math"
-)
-
 // Protocol16 data types - ASCII character codes defined by Photon protocol
 const (
 	TypeUnknown        = 0    // Unknown type
@@ -29,247 +24,230 @@ const (
 	TypeObjectArray    = 'z'  // 122 - Array of objects
 )
 
-// decodeParameterTable decodes a Protocol16 parameter table
-func decodeParameterTable(data []byte) map[byte]interface{} {
+// decodeParameterTable decodes a Protocol16 parameter table using BufferReader
+func decodeParameterTable(r *BufferReader) map[byte]interface{} {
 	params := make(map[byte]interface{})
 
-	if len(data) < 2 {
+	if r.Remaining() < 2 {
 		return params
 	}
 
-	offset := 0
-
 	// Read parameter count
-	paramCount := int(binary.BigEndian.Uint16(data[offset:]))
-	offset += 2
+	paramCount, err := r.ReadUint16()
+	if err != nil {
+		return params
+	}
 
-	for i := 0; i < paramCount && offset < len(data); i++ {
-		if offset >= len(data) {
-			break
-		}
-
+	for i := 0; i < int(paramCount) && !r.IsEmpty(); i++ {
 		// Read parameter key
-		paramKey := data[offset]
-		offset++
-
-		if offset >= len(data) {
+		paramKey, err := r.ReadByte()
+		if err != nil {
 			break
 		}
 
 		// Read parameter type
-		paramType := data[offset]
-		offset++
+		paramType, err := r.ReadByte()
+		if err != nil {
+			break
+		}
 
 		// Read parameter value
-		value, newOffset := readValue(data, offset, paramType)
+		value := readValue(r, paramType)
 		params[paramKey] = value
-		offset = newOffset
 	}
 
 	return params
 }
 
-// readValue reads a Protocol16 typed value
-func readValue(data []byte, offset int, paramType byte) (interface{}, int) {
-	if offset >= len(data) {
-		return nil, offset
+// readValue reads a Protocol16 typed value using BufferReader
+func readValue(r *BufferReader, paramType byte) interface{} {
+	if r.IsEmpty() {
+		return nil
 	}
 
 	switch paramType {
 	case 0, TypeNull:
-		return nil, offset
+		return nil
 
 	case TypeByte:
-		if offset >= len(data) {
-			return nil, offset
+		val, err := r.ReadByte()
+		if err != nil {
+			return nil
 		}
-		return data[offset], offset + 1
+		return val
 
 	case TypeBoolean:
-		if offset >= len(data) {
-			return nil, offset
+		val, err := r.ReadBool()
+		if err != nil {
+			return nil
 		}
-		return data[offset] == 1, offset + 1
+		return val
 
 	case TypeShort, 7: // 7 is also used for short in some cases
-		if offset+2 > len(data) {
-			return nil, offset
+		val, err := r.ReadInt16()
+		if err != nil {
+			return nil
 		}
-		val := int16(binary.BigEndian.Uint16(data[offset:]))
-		return val, offset + 2
+		return val
 
 	case TypeInteger:
-		if offset+4 > len(data) {
-			return nil, offset
+		val, err := r.ReadInt32()
+		if err != nil {
+			return nil
 		}
-		val := int32(binary.BigEndian.Uint32(data[offset:]))
-		return val, offset + 4
+		return val
 
 	case TypeLong:
-		if offset+8 > len(data) {
-			return nil, offset
+		val, err := r.ReadInt64()
+		if err != nil {
+			return nil
 		}
-		val := int64(binary.BigEndian.Uint64(data[offset:]))
-		return val, offset + 8
+		return val
 
 	case TypeFloat:
-		if offset+4 > len(data) {
-			return nil, offset
+		val, err := r.ReadFloat32()
+		if err != nil {
+			return nil
 		}
-		bits := binary.BigEndian.Uint32(data[offset:])
-		val := math.Float32frombits(bits)
-		return val, offset + 4
+		return val
 
 	case TypeDouble:
-		if offset+8 > len(data) {
-			return nil, offset
+		val, err := r.ReadFloat64()
+		if err != nil {
+			return nil
 		}
-		bits := binary.BigEndian.Uint64(data[offset:])
-		val := math.Float64frombits(bits)
-		return val, offset + 8
+		return val
 
 	case TypeString:
-		if offset+2 > len(data) {
-			return nil, offset
+		val, err := r.ReadString()
+		if err != nil {
+			return ""
 		}
-		length := int(binary.BigEndian.Uint16(data[offset:]))
-		offset += 2
-		if offset+length > len(data) {
-			return "", offset
-		}
-		str := string(data[offset : offset+length])
-		return str, offset + length
+		return val
 
 	case TypeByteArray:
-		if offset+4 > len(data) {
-			return nil, offset
+		length, err := r.ReadUint32()
+		if err != nil {
+			return nil
 		}
-		length := int(binary.BigEndian.Uint32(data[offset:]))
-		offset += 4
-		if offset+length > len(data) {
-			return nil, offset
+		arr, err := r.ReadBytes(int(length))
+		if err != nil {
+			return nil
 		}
-		arr := make([]byte, length)
-		copy(arr, data[offset:offset+length])
-		return arr, offset + length
+		return arr
 
 	case TypeArray:
-		if offset+3 > len(data) {
-			return nil, offset
+		length, err := r.ReadUint16()
+		if err != nil {
+			return nil
 		}
-		length := int(binary.BigEndian.Uint16(data[offset:]))
-		offset += 2
-		elemType := data[offset]
-		offset++
+		elemType, err := r.ReadByte()
+		if err != nil {
+			return nil
+		}
 
 		arr := make([]interface{}, length)
-		for i := 0; i < length && offset < len(data); i++ {
-			val, newOffset := readValue(data, offset, elemType)
-			arr[i] = val
-			offset = newOffset
+		for i := 0; i < int(length) && !r.IsEmpty(); i++ {
+			arr[i] = readValue(r, elemType)
 		}
-		return arr, offset
+		return arr
 
 	case TypeIntegerArray:
-		if offset+4 > len(data) {
-			return nil, offset
+		length, err := r.ReadUint32()
+		if err != nil {
+			return nil
 		}
-		length := int(binary.BigEndian.Uint32(data[offset:]))
-		offset += 4
 
 		arr := make([]int32, length)
-		for i := 0; i < length && offset+4 <= len(data); i++ {
-			arr[i] = int32(binary.BigEndian.Uint32(data[offset:]))
-			offset += 4
+		for i := 0; i < int(length); i++ {
+			val, err := r.ReadInt32()
+			if err != nil {
+				break
+			}
+			arr[i] = val
 		}
-		return arr, offset
+		return arr
 
 	case TypeStringArray:
-		if offset+2 > len(data) {
-			return nil, offset
+		length, err := r.ReadUint16()
+		if err != nil {
+			return nil
 		}
-		length := int(binary.BigEndian.Uint16(data[offset:]))
-		offset += 2
 
 		arr := make([]string, length)
-		for i := 0; i < length && offset < len(data); i++ {
-			str, newOffset := readValue(data, offset, TypeString)
+		for i := 0; i < int(length) && !r.IsEmpty(); i++ {
+			str := readValue(r, TypeString)
 			if s, ok := str.(string); ok {
 				arr[i] = s
 			}
-			offset = newOffset
 		}
-		return arr, offset
+		return arr
 
 	case TypeDictionary, TypeHashtable:
-		if offset+4 > len(data) {
-			return nil, offset
+		keyType, err := r.ReadByte()
+		if err != nil {
+			return nil
+		}
+		valueType, err := r.ReadByte()
+		if err != nil {
+			return nil
+		}
+		length, err := r.ReadUint16()
+		if err != nil {
+			return nil
 		}
 
-		keyType := data[offset]
-		offset++
-		valueType := data[offset]
-		offset++
-		length := int(binary.BigEndian.Uint16(data[offset:]))
-		offset += 2
-
 		dict := make(map[interface{}]interface{})
-		for i := 0; i < length && offset < len(data); i++ {
+		for i := 0; i < int(length) && !r.IsEmpty(); i++ {
 			// Read key
 			var key interface{}
 			if keyType == 0 || keyType == TypeUnknown {
 				// Unknown type, read type first
-				if offset >= len(data) {
+				actualKeyType, err := r.ReadByte()
+				if err != nil {
 					break
 				}
-				actualKeyType := data[offset]
-				offset++
-				key, offset = readValue(data, offset, actualKeyType)
+				key = readValue(r, actualKeyType)
 			} else {
-				key, offset = readValue(data, offset, keyType)
+				key = readValue(r, keyType)
 			}
 
 			// Read value
 			var val interface{}
 			if valueType == 0 || valueType == TypeUnknown {
 				// Unknown type, read type first
-				if offset >= len(data) {
+				actualValueType, err := r.ReadByte()
+				if err != nil {
 					break
 				}
-				actualValueType := data[offset]
-				offset++
-				val, offset = readValue(data, offset, actualValueType)
+				val = readValue(r, actualValueType)
 			} else {
-				val, offset = readValue(data, offset, valueType)
+				val = readValue(r, valueType)
 			}
 
 			dict[key] = val
 		}
-		return dict, offset
+		return dict
 
 	case TypeObjectArray:
-		if offset+2 > len(data) {
-			return nil, offset
+		length, err := r.ReadUint16()
+		if err != nil {
+			return nil
 		}
-		length := int(binary.BigEndian.Uint16(data[offset:]))
-		offset += 2
 
 		arr := make([]interface{}, length)
-		for i := 0; i < length && offset < len(data); i++ {
+		for i := 0; i < int(length) && !r.IsEmpty(); i++ {
 			// Each element has its own type
-			if offset >= len(data) {
+			elemType, err := r.ReadByte()
+			if err != nil {
 				break
 			}
-			elemType := data[offset]
-			offset++
-			val, newOffset := readValue(data, offset, elemType)
-			arr[i] = val
-			offset = newOffset
+			arr[i] = readValue(r, elemType)
 		}
-		return arr, offset
+		return arr
 
 	default:
 		// Unknown type, skip
-		return nil, offset
+		return nil
 	}
 }
