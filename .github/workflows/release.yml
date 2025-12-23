@@ -43,22 +43,18 @@ jobs:
           echo "Current tag: $CURRENT_TAG"
           echo "Previous tag: $PREVIOUS_TAG"
           
-          # Get date range for PR search
+          # Get all commit SHAs between tags (this is the authoritative source)
+          # Using SHA-based filtering instead of date-based to avoid duplicates
           if [ -n "$PREVIOUS_TAG" ]; then
-            # Get the date of the previous tag's commit
-            START_DATE=$(git log -1 --format=%aI "$PREVIOUS_TAG" 2>/dev/null)
+            COMMIT_SHAS=$(git log --format=%H "${PREVIOUS_TAG}..${CURRENT_TAG}" 2>/dev/null || echo "")
             COMPARE_URL="**Full Changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${PREVIOUS_TAG}...${CURRENT_TAG}"
           else
-            # If no previous tag, use repository creation date (far past)
-            START_DATE="2000-01-01T00:00:00Z"
+            # If no previous tag, get all commits up to current tag
+            COMMIT_SHAS=$(git log --format=%H "${CURRENT_TAG}" 2>/dev/null || echo "")
             COMPARE_URL=""
           fi
           
-          # Use current time as END_DATE to include PRs merged up until now
-          # (using commit date could exclude PRs merged after the commit but before the tag push)
-          END_DATE=$(date -Iseconds)
-          
-          echo "Date range: $START_DATE to $END_DATE"
+          echo "Found $(echo "$COMMIT_SHAS" | grep -c . || echo 0) commits between tags"
           
           # Initialize category strings
           FEATURES=""
@@ -72,7 +68,7 @@ jobs:
           OTHERS=""
           
           # Fetch merged PRs using GitHub API
-          # The API returns PRs sorted by updated date, we filter by merge date
+          # We check if each PR's merge_commit_sha is in our list of commits between tags
           PAGE=1
           while true; do
             RESPONSE=$(gh api \
@@ -85,23 +81,25 @@ jobs:
               break
             fi
             
-            # Parse PRs and check if they were merged within our date range
-            FOUND_OLD=false
+            # Track if we found any matching PRs in this page
+            FOUND_MATCH=false
+            
+            # Parse PRs and check if their merge commit is in our commit list
             while IFS= read -r pr_data; do
               [ -z "$pr_data" ] && continue
               
               MERGED_AT=$(echo "$pr_data" | jq -r '.merged_at // empty')
               [ -z "$MERGED_AT" ] && continue  # Skip if not merged
               
-              # Check if merge date is within our range
-              if [[ "$MERGED_AT" < "$START_DATE" ]]; then
-                FOUND_OLD=true
-                continue
+              MERGE_COMMIT_SHA=$(echo "$pr_data" | jq -r '.merge_commit_sha // empty')
+              [ -z "$MERGE_COMMIT_SHA" ] && continue  # Skip if no merge commit
+              
+              # Check if this PR's merge commit is in our list of commits between tags
+              if ! echo "$COMMIT_SHAS" | grep -q "^${MERGE_COMMIT_SHA}$"; then
+                continue  # Skip if merge commit is not between our tags
               fi
               
-              if [[ "$MERGED_AT" > "$END_DATE" ]]; then
-                continue
-              fi
+              FOUND_MATCH=true
               
               PR_NUMBER=$(echo "$pr_data" | jq -r '.number')
               PR_TITLE=$(echo "$pr_data" | jq -r '.title')
@@ -143,11 +141,6 @@ jobs:
                   ;;
               esac
             done < <(echo "$RESPONSE" | jq -c '.[]')
-            
-            # If we found PRs older than our start date, we can stop paginating
-            if [ "$FOUND_OLD" = true ]; then
-              break
-            fi
             
             PAGE=$((PAGE + 1))
             # Safety limit to avoid infinite loops
