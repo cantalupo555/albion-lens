@@ -92,6 +92,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "f", "F":
 			m.fullNumbers = !m.fullNumbers
 			m.statsPanel = m.statsPanel.SetFullNumbers(m.fullNumbers)
+			m.eventLog = m.eventLog.SetFullNumbers(m.fullNumbers)
 			return m, nil
 		case "r", "R":
 			m.statsPanel = m.statsPanel.Reset()
@@ -137,7 +138,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.statsPanel = m.statsPanel.IncrDeaths()
 		}
 
-		m.eventLog = m.eventLog.AddEvent(msg.Type, displayMsg, msg.Timestamp)
+		m.eventLog = m.eventLog.AddEvent(msg.Type, displayMsg, msg.Timestamp, msg.Data)
 
 		// Continue listening for events
 		if m.eventChan != nil {
