@@ -125,13 +125,12 @@ func (s *Capture) StartOnDevice(deviceName string) error {
 func (s *Capture) captureOnDevice(deviceName, ipAddr string) {
 	handle, err := pcap.OpenLive(deviceName, SnapshotLen, Promiscuous, Timeout)
 	if err != nil {
-		fmt.Printf("Warning: Could not open device %s: %v\n", deviceName, err)
+		// Silently skip devices that can't be opened
 		return
 	}
 
 	// Set BPF filter
 	if err := handle.SetBPFFilter(BPFFilter); err != nil {
-		fmt.Printf("Warning: Could not set BPF filter on %s: %v\n", deviceName, err)
 		handle.Close()
 		return
 	}
@@ -139,12 +138,6 @@ func (s *Capture) captureOnDevice(deviceName, ipAddr string) {
 	s.mu.Lock()
 	s.handles = append(s.handles, handle)
 	s.mu.Unlock()
-
-	if ipAddr != "" {
-		fmt.Printf("📡 Listening on %s (%s)\n", deviceName, ipAddr)
-	} else {
-		fmt.Printf("📡 Listening on %s\n", deviceName)
-	}
 
 	s.wg.Add(1)
 	defer s.wg.Done()
@@ -249,7 +242,6 @@ func (s *Capture) Stop() {
 	}
 
 	s.wg.Wait()
-	fmt.Println("Capture stopped")
 }
 
 // IsOnline returns whether the game is currently sending packets

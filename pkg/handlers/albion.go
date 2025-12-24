@@ -7,17 +7,15 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"sort"
 	"sync"
 	"time"
 
 	"github.com/cantalupo555/albion-lens/pkg/events"
 	"github.com/cantalupo555/albion-lens/pkg/items"
-	"github.com/fatih/color"
 )
 
 // EventCallback is called when a game event is processed
-// eventType: "fame", "silver", "loot", "combat", "info"
+// eventType: "fame", "silver", "loot", "combat", "info", "death", "kill"
 // message: formatted message to display
 type EventCallback func(eventType, message string)
 
@@ -45,15 +43,7 @@ type AlbionHandler struct {
 	discoveredEvents map[int16]*DiscoveredEvent
 	discoveryMu      sync.RWMutex
 
-	// Output colors
-	fameColor      *color.Color
-	silverColor    *color.Color
-	lootColor      *color.Color
-	combatColor    *color.Color
-	infoColor      *color.Color
-	discoveryColor *color.Color
-
-	// Event callback for TUI integration
+	// Event callback for frontend integration (TUI, Wails, etc.)
 	eventCallback EventCallback
 }
 
@@ -70,15 +60,7 @@ type DiscoveredEvent struct {
 // NewAlbionHandler creates a new Albion event handler
 func NewAlbionHandler() *AlbionHandler {
 	return &AlbionHandler{
-		debug:            false,
-		discovery:        false,
 		discoveredEvents: make(map[int16]*DiscoveredEvent),
-		fameColor:        color.New(color.FgGreen, color.Bold),
-		silverColor:      color.New(color.FgYellow, color.Bold),
-		lootColor:        color.New(color.FgMagenta, color.Bold),
-		combatColor:      color.New(color.FgRed, color.Bold),
-		infoColor:        color.New(color.FgCyan),
-		discoveryColor:   color.New(color.FgHiBlue),
 	}
 }
 
@@ -90,9 +72,6 @@ func (h *AlbionHandler) SetDebug(debug bool) {
 // SetDiscoveryMode enables discovery mode to log all unknown events
 func (h *AlbionHandler) SetDiscoveryMode(discovery bool) {
 	h.discovery = discovery
-	if discovery {
-		h.discoveryColor.Println("🔍 Discovery mode enabled - logging all events")
-	}
 }
 
 // SetEventCallback sets a callback function for TUI integration
@@ -125,11 +104,7 @@ func (h *AlbionHandler) GetSessionLoot() int {
 // LoadItemDatabase loads the item database from ao-bin-dumps
 func (h *AlbionHandler) LoadItemDatabase(path string) error {
 	h.itemDB = items.GetDatabase()
-	if err := h.itemDB.LoadFromPath(path); err != nil {
-		return err
-	}
-	h.infoColor.Printf("📚 Loaded %d items from database\n", h.itemDB.ItemCount())
-	return nil
+	return h.itemDB.LoadFromPath(path)
 }
 
 // OnRequest handles operation requests (client -> server)
@@ -223,11 +198,6 @@ func (h *AlbionHandler) trackDiscoveredEvent(code int16, params map[byte]interfa
 			ParamTypes: make(map[byte]string),
 		}
 		h.discoveredEvents[code] = event
-
-		// Log new unknown event
-		if !handled {
-			h.logNewUnknownEvent(code, params)
-		}
 	}
 
 	event.Count++
@@ -240,44 +210,6 @@ func (h *AlbionHandler) trackDiscoveredEvent(code int16, params map[byte]interfa
 			event.SampleData[key] = val
 		}
 	}
-}
-
-// logNewUnknownEvent logs a newly discovered unknown event
-func (h *AlbionHandler) logNewUnknownEvent(code int16, params map[byte]interface{}) {
-	timestamp := time.Now().Format("15:04:05")
-	h.discoveryColor.Printf("[%s] 🆕 NEW EVENT #%d discovered!\n", timestamp, code)
-	
-	// Sort parameter keys for consistent output
-	keys := make([]int, 0, len(params))
-	for k := range params {
-		keys = append(keys, int(k))
-	}
-	sort.Ints(keys)
-
-	for _, k := range keys {
-		key := byte(k)
-		val := params[key]
-		h.discoveryColor.Printf("    [%d] (%T) = %v\n", key, val, truncateValue(val))
-	}
-}
-
-// truncateValue truncates long values for display
-func truncateValue(val interface{}) interface{} {
-	switch v := val.(type) {
-	case string:
-		if len(v) > 100 {
-			return v[:100] + "..."
-		}
-	case []byte:
-		if len(v) > 50 {
-			return fmt.Sprintf("[%d bytes]", len(v))
-		}
-	case []interface{}:
-		if len(v) > 10 {
-			return fmt.Sprintf("[array of %d items]", len(v))
-		}
-	}
-	return val
 }
 
 // GetDiscoveredEvents returns all discovered events
@@ -316,52 +248,6 @@ func (h *AlbionHandler) SaveDiscoveredEvents(filename string) error {
 	}
 
 	return os.WriteFile(filename, data, 0644)
-}
-
-// PrintDiscoverySummary prints a summary of discovered events
-func (h *AlbionHandler) PrintDiscoverySummary() {
-	h.discoveryMu.RLock()
-	defer h.discoveryMu.RUnlock()
-
-	if len(h.discoveredEvents) == 0 {
-		fmt.Println("\nNo events discovered during this session.")
-		return
-	}
-
-	fmt.Println("\n╔════════════════════════════════════════════════════════════╗")
-	fmt.Println("║             📊 DISCOVERY MODE SUMMARY                      ║")
-	fmt.Println("╠════════════════════════════════════════════════════════════╣")
-
-	// Sort by event code
-	codes := make([]int, 0, len(h.discoveredEvents))
-	for code := range h.discoveredEvents {
-		codes = append(codes, int(code))
-	}
-	sort.Ints(codes)
-
-	knownCount := 0
-	unknownCount := 0
-
-	for _, code := range codes {
-		event := h.discoveredEvents[int16(code)]
-		isKnown := h.isKnownEventCode(int16(code))
-		
-		status := "❓"
-		if isKnown {
-			status = "✅"
-			knownCount++
-		} else {
-			unknownCount++
-		}
-
-		fmt.Printf("║ %s Event #%-4d | Count: %-6d | Params: %-2d            ║\n",
-			status, code, event.Count, len(event.ParamTypes))
-	}
-
-	fmt.Println("╠════════════════════════════════════════════════════════════╣")
-	fmt.Printf("║ Total: %d events (%d known, %d unknown)                   ║\n",
-		len(h.discoveredEvents), knownCount, unknownCount)
-	fmt.Println("╚════════════════════════════════════════════════════════════╝")
 }
 
 // isKnownEventCode checks if an event code is in our known list
@@ -407,8 +293,6 @@ func (h *AlbionHandler) GetSessionSilver() int64 {
 // handleUpdateFame handles fame/XP gain events
 // Supports multiple event formats as they vary between game versions
 func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
-	timestamp := time.Now().Format("15:04:05")
-
 	// Debug: show raw params
 	if h.debug {
 		fmt.Printf("  [Fame Debug] params=%v\n", params)
@@ -461,16 +345,13 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 		fameGainedVal := math.Floor(float64(fameGained) / 10000.0)
 		_ = zoneFame // Zone fame available but not displayed in simplified view
 
-		// Only show if fame was actually gained
+		// Only notify if fame was actually gained
 		if fameGainedVal > 0 {
 			h.sessionFame += int64(fameGainedVal)
 			h.totalFame = totalFame // Update tracked total
 
 			msg := fmt.Sprintf("⭐ FAME: +%.0f | Total: %.0f | Session: %d", fameGainedVal, totalFameVal, h.sessionFame)
-			h.fameColor.Printf("[%s] %s\n", timestamp, msg)
 			h.notifyEvent("fame", msg)
-		} else if h.debug {
-			fmt.Printf("  [Fame] Total fame update: %.0f (no gain)\n", totalFameVal)
 		}
 	} else {
 		// Simple format: we only have total fame
@@ -481,12 +362,8 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 				gainedVal := math.Floor(float64(gained) / 10000.0)
 				h.sessionFame += int64(gainedVal)
 				msg := fmt.Sprintf("⭐ FAME: +%.0f | Total: %.0f | Session: %d", gainedVal, totalFameVal, h.sessionFame)
-				h.fameColor.Printf("[%s] %s\n", timestamp, msg)
 				h.notifyEvent("fame", msg)
 			}
-		} else if h.debug {
-			// First fame event, just record the total
-			fmt.Printf("  [Fame] Initial total: %.0f\n", totalFameVal)
 		}
 		h.totalFame = totalFame
 	}
@@ -515,40 +392,25 @@ func toInt64(val interface{}) int64 {
 
 // handleUpdateMoney handles silver gain events
 func (h *AlbionHandler) handleUpdateMoney(params map[byte]interface{}) {
-	timestamp := time.Now().Format("15:04:05")
-
 	// Parameter 1: Current silver
 	currentSilver := getInt64(params, 1)
 
 	msg := fmt.Sprintf("💰 SILVER: %s", formatSilver(currentSilver))
-	h.silverColor.Printf("[%s] %s\n", timestamp, msg)
 	h.notifyEvent("silver", msg)
 }
 
-// handleHealthUpdate handles health update events
+// handleHealthUpdate handles health update events (debug only, no callback)
 func (h *AlbionHandler) handleHealthUpdate(params map[byte]interface{}) {
-	if !h.debug {
-		return
-	}
-
-	timestamp := time.Now().Format("15:04:05")
-	h.combatColor.Printf("[%s] ❤️ Health Update: %v\n", timestamp, params)
+	// Health updates are too frequent to notify, used only for debug
 }
 
-// handleNewCharacter handles new character events
+// handleNewCharacter handles new character events (debug only, no callback)
 func (h *AlbionHandler) handleNewCharacter(params map[byte]interface{}) {
-	if !h.debug {
-		return
-	}
-
-	// Parameters vary, but usually include player name and guild info
-	h.infoColor.Printf("👤 New Character: %v\n", params)
+	// New character events are informational only
 }
 
 // handleOtherGrabbedLoot handles when another player loots something
 func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
-	timestamp := time.Now().Format("15:04:05")
-
 	// Parameter 1: Looted from
 	lootedFrom := getString(params, 1)
 
@@ -571,7 +433,6 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 		h.sessionSilver += silverAmount
 		msg := fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
 			lootedBy, formatSilver(silverAmount), lootedFrom, formatSilver(h.sessionSilver))
-		h.silverColor.Printf("[%s] %s\n", timestamp, msg)
 		h.notifyEvent("silver", msg)
 	} else {
 		// Try to get item name from database
@@ -582,36 +443,26 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 
 		h.sessionLoot++
 		msg := fmt.Sprintf("📦 %s looted %s (x%d) from %s", lootedBy, itemName, quantity, lootedFrom)
-		h.lootColor.Printf("[%s] %s\n", timestamp, msg)
 		h.notifyEvent("loot", msg)
 	}
 }
 
-// handleNewLoot handles new loot available events
+// handleNewLoot handles new loot available events (debug only, no callback)
 func (h *AlbionHandler) handleNewLoot(params map[byte]interface{}) {
-	if !h.debug {
-		return
-	}
-
-	timestamp := time.Now().Format("15:04:05")
-	h.lootColor.Printf("[%s] 📦 New Loot: %v\n", timestamp, params)
+	// New loot events are informational only
 }
 
 // handleKilledPlayer handles player kill events
 func (h *AlbionHandler) handleKilledPlayer(params map[byte]interface{}) {
-	timestamp := time.Now().Format("15:04:05")
 	h.sessionKills++
 	msg := fmt.Sprintf("⚔️ Player Killed! (Session: %d kills)", h.sessionKills)
-	h.combatColor.Printf("[%s] %s\n", timestamp, msg)
 	h.notifyEvent("kill", msg)
 }
 
 // handleDied handles death events
 func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
-	timestamp := time.Now().Format("15:04:05")
 	h.sessionDeaths++
 	msg := fmt.Sprintf("💀 You died! (Session: %d deaths)", h.sessionDeaths)
-	h.combatColor.Printf("[%s] %s\n", timestamp, msg)
 	h.notifyEvent("death", msg)
 }
 
