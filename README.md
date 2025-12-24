@@ -86,7 +86,7 @@ cd albion-lens
 go mod download
 
 # Build
-go build -o bin/albion-lens ./cmd/sniffer
+go build -o bin/albion-lens ./cmd/tui
 
 # Run (requires sudo for packet capture)
 sudo ./bin/albion-lens
