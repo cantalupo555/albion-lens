@@ -35,9 +35,21 @@ func (s StatsPanel) AddFame(amount int64) StatsPanel {
 	return s
 }
 
+// SetFame sets the session fame total
+func (s StatsPanel) SetFame(amount int64) StatsPanel {
+	s.fame = amount
+	return s
+}
+
 // AddSilver adds silver to the session total
 func (s StatsPanel) AddSilver(amount int64) StatsPanel {
 	s.silver += amount
+	return s
+}
+
+// SetSilver sets the session silver total
+func (s StatsPanel) SetSilver(amount int64) StatsPanel {
+	s.silver = amount
 	return s
 }
 

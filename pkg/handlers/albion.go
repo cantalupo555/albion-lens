@@ -17,7 +17,8 @@ import (
 // EventCallback is called when a game event is processed
 // eventType: "fame", "silver", "loot", "combat", "info", "death", "kill"
 // message: formatted message to display
-type EventCallback func(eventType, message string)
+// data: optional structured data (FameEventData, SilverEventData, etc.)
+type EventCallback func(eventType, message string, data interface{})
 
 // AlbionHandler handles Albion Online game events
 type AlbionHandler struct {
@@ -80,10 +81,23 @@ func (h *AlbionHandler) SetEventCallback(callback EventCallback) {
 }
 
 // notifyEvent calls the event callback if set
-func (h *AlbionHandler) notifyEvent(eventType, message string) {
+func (h *AlbionHandler) notifyEvent(eventType, message string, data interface{}) {
 	if h.eventCallback != nil {
-		h.eventCallback(eventType, message)
+		h.eventCallback(eventType, message, data)
 	}
+}
+
+// FameEventData contains fame-specific event data
+type FameEventData struct {
+	Gained  int64 // Fame gained in this event
+	Total   int64 // Total fame after this event
+	Session int64 // Total fame gained this session
+}
+
+// SilverEventData contains silver-specific event data
+type SilverEventData struct {
+	Amount  int64 // Silver amount in this event
+	Session int64 // Total silver gained this session
 }
 
 // GetSessionKills returns the number of kills in this session
@@ -351,7 +365,11 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 			h.totalFame = totalFame // Update tracked total
 
 			msg := fmt.Sprintf("⭐ FAME: +%.0f | Total: %.0f | Session: %d", fameGainedVal, totalFameVal, h.sessionFame)
-			h.notifyEvent("fame", msg)
+			h.notifyEvent("fame", msg, &FameEventData{
+				Gained:  int64(fameGainedVal),
+				Total:   int64(totalFameVal),
+				Session: h.sessionFame,
+			})
 		}
 	} else {
 		// Simple format: we only have total fame
@@ -362,7 +380,11 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 				gainedVal := math.Floor(float64(gained) / 10000.0)
 				h.sessionFame += int64(gainedVal)
 				msg := fmt.Sprintf("⭐ FAME: +%.0f | Total: %.0f | Session: %d", gainedVal, totalFameVal, h.sessionFame)
-				h.notifyEvent("fame", msg)
+				h.notifyEvent("fame", msg, &FameEventData{
+					Gained:  int64(gainedVal),
+					Total:   int64(totalFameVal),
+					Session: h.sessionFame,
+				})
 			}
 		}
 		h.totalFame = totalFame
@@ -396,7 +418,10 @@ func (h *AlbionHandler) handleUpdateMoney(params map[byte]interface{}) {
 	currentSilver := getInt64(params, 1)
 
 	msg := fmt.Sprintf("💰 SILVER: %s", formatSilver(currentSilver))
-	h.notifyEvent("silver", msg)
+	h.notifyEvent("silver", msg, &SilverEventData{
+		Amount:  currentSilver,
+		Session: h.sessionSilver,
+	})
 }
 
 // handleHealthUpdate handles health update events (debug only, no callback)
@@ -433,7 +458,10 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 		h.sessionSilver += silverAmount
 		msg := fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
 			lootedBy, formatSilver(silverAmount), lootedFrom, formatSilver(h.sessionSilver))
-		h.notifyEvent("silver", msg)
+		h.notifyEvent("silver", msg, &SilverEventData{
+			Amount:  silverAmount,
+			Session: h.sessionSilver,
+		})
 	} else {
 		// Try to get item name from database
 		itemName := fmt.Sprintf("Item#%d", itemID)
@@ -443,7 +471,7 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 
 		h.sessionLoot++
 		msg := fmt.Sprintf("📦 %s looted %s (x%d) from %s", lootedBy, itemName, quantity, lootedFrom)
-		h.notifyEvent("loot", msg)
+		h.notifyEvent("loot", msg, nil)
 	}
 }
 
@@ -456,14 +484,14 @@ func (h *AlbionHandler) handleNewLoot(params map[byte]interface{}) {
 func (h *AlbionHandler) handleKilledPlayer(params map[byte]interface{}) {
 	h.sessionKills++
 	msg := fmt.Sprintf("⚔️ Player Killed! (Session: %d kills)", h.sessionKills)
-	h.notifyEvent("kill", msg)
+	h.notifyEvent("kill", msg, nil)
 }
 
 // handleDied handles death events
 func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 	h.sessionDeaths++
 	msg := fmt.Sprintf("💀 You died! (Session: %d deaths)", h.sessionDeaths)
-	h.notifyEvent("death", msg)
+	h.notifyEvent("death", msg, nil)
 }
 
 // Helper functions to extract typed values from parameters

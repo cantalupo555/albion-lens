@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cantalupo555/albion-lens/internal/tui/components"
+	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
 
@@ -96,12 +97,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case EventMsg:
 		m.eventLog = m.eventLog.AddEvent(msg.Type, msg.Message, msg.Timestamp)
 
-		// Update session stats based on event type
+		// Update session stats based on event type and data
 		switch msg.Type {
 		case "fame":
-			// Could extract amount from message if needed
+			if data, ok := msg.Data.(*handlers.FameEventData); ok && data != nil {
+				m.statsPanel = m.statsPanel.SetFame(data.Session)
+			}
 		case "silver":
-			// Could extract amount from message if needed
+			if data, ok := msg.Data.(*handlers.SilverEventData); ok && data != nil {
+				m.statsPanel = m.statsPanel.SetSilver(data.Session)
+			}
 		case "loot":
 			m.statsPanel = m.statsPanel.IncrLoot()
 		case "kill":
