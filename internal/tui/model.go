@@ -112,6 +112,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "fame":
 			if data, ok := msg.Data.(*handlers.FameEventData); ok && data != nil {
 				m.statsPanel = m.statsPanel.SetFame(data.Session)
+				// Format fame message based on fullNumbers setting
+				displayMsg = fmt.Sprintf("⭐ FAME: +%s | Total: %s | Session: %s",
+					formatNumber(data.Gained, m.fullNumbers),
+					formatNumber(data.Total, m.fullNumbers),
+					formatNumber(data.Session, m.fullNumbers))
 			}
 		case "silver":
 			if data, ok := msg.Data.(*handlers.SilverEventData); ok && data != nil {

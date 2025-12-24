@@ -375,8 +375,8 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 			h.sessionFame += int64(fameGainedVal)
 			h.totalFame = totalFame // Update tracked total
 
-			msg := fmt.Sprintf("⭐ FAME: +%.0f | Total: %.0f | Session: %d", fameGainedVal, totalFameVal, h.sessionFame)
-			h.notifyEvent("fame", msg, &FameEventData{
+			// Message formatting is now handled by the frontend (TUI)
+			h.notifyEvent("fame", "", &FameEventData{
 				Gained:  int64(fameGainedVal),
 				Total:   int64(totalFameVal),
 				Session: h.sessionFame,
@@ -390,8 +390,8 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 			if gained > 0 {
 				gainedVal := math.Floor(float64(gained) / 10000.0)
 				h.sessionFame += int64(gainedVal)
-				msg := fmt.Sprintf("⭐ FAME: +%.0f | Total: %.0f | Session: %d", gainedVal, totalFameVal, h.sessionFame)
-				h.notifyEvent("fame", msg, &FameEventData{
+				// Message formatting is now handled by the frontend (TUI)
+				h.notifyEvent("fame", "", &FameEventData{
 					Gained:  int64(gainedVal),
 					Total:   int64(totalFameVal),
 					Session: h.sessionFame,
