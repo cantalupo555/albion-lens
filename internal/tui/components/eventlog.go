@@ -2,11 +2,13 @@ package components
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cantalupo555/albion-lens/pkg/handlers"
 )
 
 const maxEvents = 1000
@@ -16,22 +18,33 @@ type Event struct {
 	Type      string
 	Message   string
 	Timestamp time.Time
+	Data      interface{} // Raw event data for dynamic formatting
 }
 
 // EventLog displays a scrollable list of game events
 type EventLog struct {
-	viewport viewport.Model
-	events   []Event
-	width    int
-	height   int
-	ready    bool
+	viewport    viewport.Model
+	events      []Event
+	width       int
+	height      int
+	ready       bool
+	fullNumbers bool
 }
 
 // NewEventLog creates a new EventLog component
 func NewEventLog() EventLog {
 	return EventLog{
-		events: make([]Event, 0, maxEvents),
+		events:      make([]Event, 0, maxEvents),
+		fullNumbers: true, // Default: show full numbers
 	}
+}
+
+// SetFullNumbers sets whether to display full or abbreviated numbers
+func (e EventLog) SetFullNumbers(full bool) EventLog {
+	e.fullNumbers = full
+	// Re-render events with new format
+	e.viewport.SetContent(e.renderEvents())
+	return e
 }
 
 // SetSize updates the dimensions of the event log
@@ -65,11 +78,12 @@ func (e EventLog) SetSize(width, height int) EventLog {
 }
 
 // AddEvent adds a new event to the log
-func (e EventLog) AddEvent(eventType, message string, timestamp time.Time) EventLog {
+func (e EventLog) AddEvent(eventType, message string, timestamp time.Time, data interface{}) EventLog {
 	event := Event{
 		Type:      eventType,
 		Message:   message,
 		Timestamp: timestamp,
+		Data:      data,
 	}
 
 	e.events = append(e.events, event)
@@ -121,14 +135,56 @@ func (e EventLog) renderEvents() string {
 			msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
 		}
 
+		// Format message dynamically based on event data and fullNumbers setting
+		message := e.formatEventMessage(event)
+
 		line := fmt.Sprintf("%s %s",
 			timestampStyle.Render(event.Timestamp.Format("15:04:05")),
-			msgStyle.Render(event.Message),
+			msgStyle.Render(message),
 		)
 		lines = append(lines, line)
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+// formatEventMessage formats event message based on data and fullNumbers setting
+func (e EventLog) formatEventMessage(event Event) string {
+	switch event.Type {
+	case "fame":
+		if data, ok := event.Data.(*handlers.FameEventData); ok && data != nil {
+			return fmt.Sprintf("⭐ FAME: +%s | Total: %s | Session: %s",
+				formatNumber(data.Gained, e.fullNumbers),
+				formatNumber(data.Total, e.fullNumbers),
+				formatNumber(data.Session, e.fullNumbers))
+		}
+	case "silver":
+		if data, ok := event.Data.(*handlers.SilverEventData); ok && data != nil {
+			return fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
+				data.LootedBy,
+				formatNumber(data.Amount, e.fullNumbers),
+				data.LootedFrom,
+				formatNumber(data.Session, e.fullNumbers))
+		}
+	}
+	// Fallback to original message
+	return event.Message
+}
+
+// formatNumber formats a number based on fullNumbers setting
+func formatNumber(amount int64, full bool) string {
+	if full {
+		return fmt.Sprintf("%d", amount)
+	}
+	// Abbreviated format with truncation (floor) instead of rounding
+	if amount >= 1000000 {
+		val := math.Floor(float64(amount)/100000.0) / 10.0
+		return fmt.Sprintf("%.1fM", val)
+	} else if amount >= 1000 {
+		val := math.Floor(float64(amount)/100.0) / 10.0
+		return fmt.Sprintf("%.1fk", val)
+	}
+	return fmt.Sprintf("%d", amount)
 }
 
 // ScrollUp scrolls the viewport up
