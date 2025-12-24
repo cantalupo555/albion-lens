@@ -96,11 +96,12 @@ func (s *Service) Start() error {
 	s.handler.SetDiscoveryMode(s.discovery)
 
 	// Set event callback to send events to channel
-	s.handler.SetEventCallback(func(eventType, message string) {
+	s.handler.SetEventCallback(func(eventType, message string, data interface{}) {
 		event := GameEvent{
 			Type:      EventType(eventType),
 			Message:   message,
 			Timestamp: time.Now(),
+			Data:      data,
 		}
 		select {
 		case s.eventsChan <- event:

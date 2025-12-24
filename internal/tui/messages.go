@@ -9,9 +9,10 @@ import (
 
 // EventMsg represents a game event to display in the log
 type EventMsg struct {
-	Type      string    // "fame", "silver", "loot", "combat", "info"
-	Message   string    // Formatted message to display
-	Timestamp time.Time // When the event occurred
+	Type      string      // "fame", "silver", "loot", "combat", "info"
+	Message   string      // Formatted message to display
+	Timestamp time.Time   // When the event occurred
+	Data      interface{} // Optional structured data (FameEventData, SilverEventData, etc.)
 }
 
 // StatsUpdateMsg triggers a stats panel update

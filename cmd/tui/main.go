@@ -55,6 +55,7 @@ func main() {
 				Type:      string(event.Type),
 				Message:   event.Message,
 				Timestamp: event.Timestamp,
+				Data:      event.Data,
 			}:
 			default:
 			}
