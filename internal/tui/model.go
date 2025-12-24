@@ -1,6 +1,9 @@
 package tui
 
 import (
+	"fmt"
+	"math"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cantalupo555/albion-lens/internal/tui/components"
@@ -24,16 +27,20 @@ type Model struct {
 	debug    bool
 	quitting bool
 	ready    bool
+
+	// Display settings
+	fullNumbers bool // Show full numbers instead of abbreviated (e.g., 4984 vs 4.9k)
 }
 
 // New creates a new TUI Model
 func New(eventChan chan EventMsg, statsChan chan *photon.Stats) Model {
 	return Model{
-		statusBar:  components.NewStatusBar(),
-		eventLog:   components.NewEventLog(),
-		statsPanel: components.NewStatsPanel(),
-		eventChan:  eventChan,
-		statsChan:  statsChan,
+		statusBar:   components.NewStatusBar(),
+		eventLog:    components.NewEventLog(),
+		statsPanel:  components.NewStatsPanel(),
+		eventChan:   eventChan,
+		statsChan:   statsChan,
+		fullNumbers: true, // Default: show full numbers
 	}
 }
 
@@ -82,6 +89,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "d", "D":
 			m.debug = !m.debug
 			return m, nil
+		case "f", "F":
+			m.fullNumbers = !m.fullNumbers
+			return m, nil
 		case "r", "R":
 			m.statsPanel = m.statsPanel.Reset()
 			return m, nil
@@ -95,7 +105,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Game event from parser
 	case EventMsg:
-		m.eventLog = m.eventLog.AddEvent(msg.Type, msg.Message, msg.Timestamp)
+		displayMsg := msg.Message
 
 		// Update session stats based on event type and data
 		switch msg.Type {
@@ -106,6 +116,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "silver":
 			if data, ok := msg.Data.(*handlers.SilverEventData); ok && data != nil {
 				m.statsPanel = m.statsPanel.SetSilver(data.Session)
+				// Format silver message based on fullNumbers setting
+				displayMsg = fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
+					data.LootedBy,
+					formatNumber(data.Amount, m.fullNumbers),
+					data.LootedFrom,
+					formatNumber(data.Session, m.fullNumbers))
 			}
 		case "loot":
 			m.statsPanel = m.statsPanel.IncrLoot()
@@ -114,6 +130,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "death":
 			m.statsPanel = m.statsPanel.IncrDeaths()
 		}
+
+		m.eventLog = m.eventLog.AddEvent(msg.Type, displayMsg, msg.Timestamp)
 
 		// Continue listening for events
 		if m.eventChan != nil {
@@ -231,17 +249,41 @@ func (m Model) renderHelpBar() string {
 		keyStyle.Render("Q"), textStyle.Render("uit  "),
 		keyStyle.Render("C"), textStyle.Render("lear  "),
 		keyStyle.Render("R"), textStyle.Render("eset stats  "),
+		keyStyle.Render("F"), textStyle.Render("ull numbers  "),
 		keyStyle.Render("D"), textStyle.Render("ebug"),
 	)
 
+	// Show active toggles
+	toggleStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("214")).
+		Bold(true)
+
+	if m.fullNumbers {
+		help += "  " + toggleStyle.Render("[FULL]")
+	}
 	if m.debug {
-		debugStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("214")).
-			Bold(true)
-		help += "  " + debugStyle.Render("[DEBUG ON]")
+		help += "  " + toggleStyle.Render("[DEBUG]")
 	}
 
 	return lipgloss.NewStyle().
 		Padding(0, 1).
 		Render(help)
+}
+
+// formatNumber formats a number based on fullNumbers setting
+// If fullNumbers is true, returns the full number (e.g., 4984)
+// If fullNumbers is false, returns abbreviated form (e.g., 4.9k)
+func formatNumber(amount int64, full bool) string {
+	if full {
+		return fmt.Sprintf("%d", amount)
+	}
+	// Abbreviated format with truncation (floor) instead of rounding
+	if amount >= 1000000 {
+		val := math.Floor(float64(amount)/100000.0) / 10.0
+		return fmt.Sprintf("%.1fM", val)
+	} else if amount >= 1000 {
+		val := math.Floor(float64(amount)/100.0) / 10.0
+		return fmt.Sprintf("%.1fk", val)
+	}
+	return fmt.Sprintf("%d", amount)
 }
