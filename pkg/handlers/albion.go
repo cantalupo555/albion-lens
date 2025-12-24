@@ -96,8 +96,10 @@ type FameEventData struct {
 
 // SilverEventData contains silver-specific event data
 type SilverEventData struct {
-	Amount  int64 // Silver amount in this event
-	Session int64 // Total silver gained this session
+	Amount     int64  // Silver amount in this event
+	Session    int64  // Total silver gained this session
+	LootedBy   string // Player who looted
+	LootedFrom string // Source of the loot
 }
 
 // GetSessionKills returns the number of kills in this session
@@ -462,11 +464,13 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 		// Silver also uses FixPoint format (divide by 10000)
 		silverAmount := int64(math.Floor(float64(silverAmountRaw) / 10000.0))
 		h.sessionSilver += silverAmount
-		msg := fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
-			lootedBy, formatSilver(silverAmount), lootedFrom, formatSilver(h.sessionSilver))
-		h.notifyEvent("silver", msg, &SilverEventData{
-			Amount:  silverAmount,
-			Session: h.sessionSilver,
+		// Message formatting is now handled by the frontend (TUI)
+		// We just pass the raw data
+		h.notifyEvent("silver", "", &SilverEventData{
+			Amount:     silverAmount,
+			Session:    h.sessionSilver,
+			LootedBy:   lootedBy,
+			LootedFrom: lootedFrom,
 		})
 	} else {
 		// Try to get item name from database
