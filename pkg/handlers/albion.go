@@ -327,7 +327,16 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 		}
 		return
 	}
-	
+
+	// Deduplication: Server sends both Event #81 and #82 for the same fame gain
+	// Skip if we already processed an event with this exact totalFame
+	if totalFame == h.totalFame {
+		if h.debug {
+			fmt.Printf("  [Fame] Ignored: duplicate event (totalFame=%d already processed)\n", totalFame)
+		}
+		return
+	}
+
 	// Check if we have additional parameters (Format 2)
 	hasDetailedFormat := false
 	var fameGained int64
@@ -412,16 +421,13 @@ func toInt64(val interface{}) int64 {
 	return 0
 }
 
-// handleUpdateMoney handles silver gain events
+// handleUpdateMoney handles silver balance update events
+// Note: We don't notify here because silver gains are already captured by
+// handleOtherGrabbedLoot. This event only shows total balance, which would
+// cause duplicate entries in the event log.
 func (h *AlbionHandler) handleUpdateMoney(params map[byte]interface{}) {
-	// Parameter 1: Current silver
-	currentSilver := getInt64(params, 1)
-
-	msg := fmt.Sprintf("💰 SILVER: %s", formatSilver(currentSilver))
-	h.notifyEvent("silver", msg, &SilverEventData{
-		Amount:  currentSilver,
-		Session: h.sessionSilver,
-	})
+	// Silver balance updates are tracked but not notified to avoid duplication
+	// The actual silver gains are captured via EventOtherGrabbedLoot
 }
 
 // handleHealthUpdate handles health update events (debug only, no callback)
