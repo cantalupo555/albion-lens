@@ -233,7 +233,7 @@ jobs:
           mkdir -p bin
           go build -ldflags="-s -w -X main.appVersion=${{ steps.version.outputs.VERSION }}" \
             -o bin/albion-lens_${{ steps.version.outputs.VERSION }}_linux_${{ matrix.arch }} \
-            ./cmd/sniffer
+            ./cmd/tui
 
       - name: Install nfpm
         run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
@@ -317,7 +317,7 @@ jobs:
           mkdir -p bin
           go build -ldflags="-s -w -X main.appVersion=${{ steps.version.outputs.VERSION }}" \
             -o bin/albion-lens_${{ steps.version.outputs.VERSION }}_windows_amd64.exe \
-            ./cmd/sniffer
+            ./cmd/tui
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v6
@@ -357,7 +357,7 @@ jobs:
           mkdir -p bin
           go build -ldflags="-s -w -X main.appVersion=${{ steps.version.outputs.VERSION }}" \
             -o albion-lens \
-            ./cmd/sniffer
+            ./cmd/tui
           zip bin/albion-lens_${{ steps.version.outputs.VERSION }}_macOS_${{ matrix.arch }}.zip albion-lens
           rm albion-lens
 
