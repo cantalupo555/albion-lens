@@ -109,10 +109,8 @@ func (s *Service) Start() error {
 		}
 	})
 
-	// Load item database
-	if err := s.loadItemDatabase(); err != nil && s.debug {
-		fmt.Printf("Warning: Could not load item database: %v\n", err)
-	}
+	// Load item database (errors are non-fatal)
+	_ = s.loadItemDatabase()
 
 	// Create parser
 	s.parser = photon.NewParser(s.handler)
