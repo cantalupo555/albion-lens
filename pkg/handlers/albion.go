@@ -125,16 +125,12 @@ func (h *AlbionHandler) LoadItemDatabase(path string) error {
 
 // OnRequest handles operation requests (client -> server)
 func (h *AlbionHandler) OnRequest(operationCode byte, parameters map[byte]interface{}) {
-	if h.debug {
-		fmt.Printf("  [Request] op=%d params=%v\n", operationCode, parameters)
-	}
+	// Requests are not logged to avoid polluting TUI output
 }
 
 // OnResponse handles operation responses (server -> client)
 func (h *AlbionHandler) OnResponse(operationCode byte, returnCode int16, debugMessage string, parameters map[byte]interface{}) {
-	if h.debug {
-		fmt.Printf("  [Response] op=%d return=%d params=%v\n", operationCode, returnCode, parameters)
-	}
+	// Responses are not logged to avoid polluting TUI output
 }
 
 // OnEvent handles incoming game events
@@ -310,33 +306,22 @@ func (h *AlbionHandler) GetSessionSilver() int64 {
 // handleUpdateFame handles fame/XP gain events
 // Supports multiple event formats as they vary between game versions
 func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
-	// Debug: show raw params
-	if h.debug {
-		fmt.Printf("  [Fame Debug] params=%v\n", params)
-	}
-
 	// Detect event format based on available parameters
 	// Format 1 (Event #81 simple): [0]=playerID, [1]=totalFame
 	// Format 2 (Event #82 detailed): [0]=playerID, [1]=totalFame, [2]=gained, [3]=zone
-	
+
 	// Get total fame from parameter 1
 	totalFame := getInt64(params, 1)
-	
+
 	// Validation: Total fame should be a large number (> 1 million in FixPoint = 100 fame)
 	// This helps filter out events with similar structure but different purpose
 	if totalFame < 1000000 {
-		if h.debug {
-			fmt.Printf("  [Fame] Ignored: total fame too low (%d), likely not a fame event\n", totalFame)
-		}
 		return
 	}
 
 	// Deduplication: Server sends both Event #81 and #82 for the same fame gain
 	// Skip if we already processed an event with this exact totalFame
 	if totalFame == h.totalFame {
-		if h.debug {
-			fmt.Printf("  [Fame] Ignored: duplicate event (totalFame=%d already processed)\n", totalFame)
-		}
 		return
 	}
 
@@ -344,7 +329,7 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 	hasDetailedFormat := false
 	var fameGained int64
 	var zoneFame int64
-	
+
 	if val, ok := params[2]; ok {
 		hasDetailedFormat = true
 		fameGained = toInt64(val)
@@ -352,13 +337,10 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 	if val, ok := params[3]; ok {
 		zoneFame = toInt64(val)
 	}
-	
+
 	// Validation: Total fame should not decrease significantly
 	// This helps filter out events with similar structure but different purpose
 	if h.totalFame > 0 && totalFame < h.totalFame {
-		if h.debug {
-			fmt.Printf("  [Fame] Ignored: total decreased from %d to %d\n", h.totalFame, totalFame)
-		}
 		return
 	}
 	
