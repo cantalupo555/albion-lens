@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cantalupo555/albion-lens/internal/tui/components"
+	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
@@ -16,6 +17,9 @@ type Model struct {
 	statusBar  components.StatusBar
 	eventLog   components.EventLog
 	statsPanel components.StatsPanel
+
+	// Backend service reference for runtime control
+	svc *backend.Service
 
 	// Channels for receiving data from parser
 	eventChan chan EventMsg
@@ -33,15 +37,21 @@ type Model struct {
 }
 
 // New creates a new TUI Model
-func New(eventChan chan EventMsg, statsChan chan *photon.Stats) Model {
-	return Model{
+func New(svc *backend.Service, eventChan chan EventMsg, statsChan chan *photon.Stats) Model {
+	m := Model{
 		statusBar:   components.NewStatusBar(),
 		eventLog:    components.NewEventLog(),
 		statsPanel:  components.NewStatsPanel(),
+		svc:         svc,
 		eventChan:   eventChan,
 		statsChan:   statsChan,
 		fullNumbers: true, // Default: show full numbers
 	}
+	// Sync debug state from service
+	if svc != nil {
+		m.debug = svc.IsDebug()
+	}
+	return m
 }
 
 // Init initializes the model
@@ -88,6 +98,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "d", "D":
 			m.debug = !m.debug
+			// Propagate to backend service
+			if m.svc != nil {
+				m.svc.SetDebug(m.debug)
+			}
 			return m, nil
 		case "f", "F":
 			m.fullNumbers = !m.fullNumbers

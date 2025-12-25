@@ -304,3 +304,25 @@ func (s *Service) ParserStats() *photon.Stats {
 func (s *Service) Handler() *handlers.AlbionHandler {
 	return s.handler
 }
+
+// SetDebug enables or disables debug mode at runtime.
+// This propagates to both the handler and the parser.
+func (s *Service) SetDebug(debug bool) {
+	s.mu.Lock()
+	s.debug = debug
+	s.mu.Unlock()
+
+	if s.handler != nil {
+		s.handler.SetDebug(debug)
+	}
+	if s.parser != nil {
+		s.parser.SetDebug(debug)
+	}
+}
+
+// IsDebug returns whether debug mode is enabled.
+func (s *Service) IsDebug() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.debug
+}
