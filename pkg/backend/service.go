@@ -115,7 +115,7 @@ func (s *Service) Start() error {
 
 	// Create parser
 	s.parser = photon.NewParser(s.handler)
-	s.parser.SetDebug(s.debug)
+	// Note: Parser debug is not enabled because it uses fmt.Printf which interferes with TUI
 
 	// Create capture
 	s.capture = capture.NewCapture(func(payload []byte, srcIP, dstIP net.IP, srcPort, dstPort uint16) {
@@ -306,7 +306,7 @@ func (s *Service) Handler() *handlers.AlbionHandler {
 }
 
 // SetDebug enables or disables debug mode at runtime.
-// This propagates to both the handler and the parser.
+// This propagates to the handler only (not parser, which uses fmt.Printf).
 func (s *Service) SetDebug(debug bool) {
 	s.mu.Lock()
 	s.debug = debug
@@ -315,9 +315,8 @@ func (s *Service) SetDebug(debug bool) {
 	if s.handler != nil {
 		s.handler.SetDebug(debug)
 	}
-	if s.parser != nil {
-		s.parser.SetDebug(debug)
-	}
+	// Note: We don't propagate to parser because it uses fmt.Printf
+	// which interferes with the TUI. Handler sends events via callback instead.
 }
 
 // IsDebug returns whether debug mode is enabled.
