@@ -45,7 +45,7 @@ func New(svc *backend.Service, eventChan chan EventMsg, statsChan chan *photon.S
 		svc:         svc,
 		eventChan:   eventChan,
 		statsChan:   statsChan,
-		fullNumbers: true, // Default: show full numbers
+		fullNumbers: false, // Default: abbreviated numbers (e.g., 4.9k)
 	}
 	// Sync debug state from service
 	if svc != nil {
