@@ -150,10 +150,10 @@ func TestHandleUpdateFameDetailedFormat(t *testing.T) {
 		1:                     int64(50000000000), // Total fame (5M in FixPoint)
 		2:                     int64(10000000),    // Gained fame (1000 in FixPoint)
 		3:                     int64(0),           // Zone fame
-		events.ParamEventCode: int16(events.EventUpdateFameDetails),
+		events.ParamEventCode: int16(events.EventUpdateFame),
 	}
 
-	handler.OnEvent(byte(events.EventUpdateFameDetails), params)
+	handler.OnEvent(byte(events.EventUpdateFame), params)
 
 	if receivedData == nil {
 		t.Fatal("fame callback was not called")
@@ -216,10 +216,10 @@ func TestHandleUpdateFameDuplicateIgnored(t *testing.T) {
 		1: int64(50000000000), // Total fame
 		2: int64(10000000),    // Gained fame
 	}
-	handler.OnEvent(byte(events.EventUpdateFameDetails), params)
+	handler.OnEvent(byte(events.EventUpdateFame), params)
 
 	// Duplicate event with same total fame
-	handler.OnEvent(byte(events.EventUpdateFameDetails), params)
+	handler.OnEvent(byte(events.EventUpdateFame), params)
 
 	if callCount != 1 {
 		t.Errorf("expected 1 callback, got %d (duplicate should be ignored)", callCount)
@@ -242,7 +242,7 @@ func TestHandleUpdateFameLowTotalIgnored(t *testing.T) {
 		1: int64(500000), // Total fame below 1M threshold
 		2: int64(10000),  // Gained fame
 	}
-	handler.OnEvent(byte(events.EventUpdateFameDetails), params)
+	handler.OnEvent(byte(events.EventUpdateFame), params)
 
 	if callCount != 0 {
 		t.Errorf("expected 0 callbacks (low fame should be ignored), got %d", callCount)
