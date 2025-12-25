@@ -137,25 +137,25 @@ func (h *AlbionHandler) OnResponse(operationCode byte, returnCode int16, debugMe
 	}
 }
 
-// OnEvent handles game events (server -> client)
+// OnEvent handles incoming game events
 func (h *AlbionHandler) OnEvent(eventCode byte, parameters map[byte]interface{}) {
 	// Get actual event code from parameter 252 if available
-	actualEventCode := int16(eventCode)
+	actualEventCode := events.EventCode(eventCode)
 	if code, ok := parameters[events.ParamEventCode]; ok {
 		switch v := code.(type) {
 		case int16:
-			actualEventCode = v
+			actualEventCode = events.EventCode(v)
 		case int32:
-			actualEventCode = int16(v)
+			actualEventCode = events.EventCode(v)
 		case int64:
-			actualEventCode = int16(v)
+			actualEventCode = events.EventCode(v)
 		}
 	}
 
 	handled := false
 
-	switch int(actualEventCode) {
-	case events.EventUpdateFame, events.EventUpdateFameDetails:
+	switch actualEventCode {
+	case events.EventUpdateFame:
 		h.handleUpdateFame(parameters)
 		handled = true
 
@@ -189,13 +189,14 @@ func (h *AlbionHandler) OnEvent(eventCode byte, parameters map[byte]interface{})
 
 	default:
 		if h.debug {
-			fmt.Printf("  [Event] code=%d params=%v\n", actualEventCode, parameters)
+			msg := fmt.Sprintf("🔍 %v (%d)", actualEventCode, actualEventCode)
+			h.notifyEvent("debug", msg, nil)
 		}
 	}
 
 	// Discovery mode: track all events (including handled ones for completeness)
 	if h.discovery {
-		h.trackDiscoveredEvent(actualEventCode, parameters, handled)
+		h.trackDiscoveredEvent(int16(actualEventCode), parameters, handled)
 	}
 }
 
@@ -268,7 +269,7 @@ func (h *AlbionHandler) SaveDiscoveredEvents(filename string) error {
 
 // isKnownEventCode checks if an event code is in our known list
 func (h *AlbionHandler) isKnownEventCode(code int16) bool {
-	knownCodes := []int{
+	knownCodes := []events.EventCode{
 		events.EventUnused, events.EventLeave, events.EventJoinFinished,
 		events.EventMove, events.EventTeleport, events.EventHealthUpdate,
 		events.EventHealthUpdates, events.EventEnergyUpdate, events.EventAttack,
@@ -279,17 +280,17 @@ func (h *AlbionHandler) isKnownEventCode(code int16) bool {
 		events.EventNewSimpleItem, events.EventNewFurnitureItem,
 		events.EventHarvestStart, events.EventHarvestCancel,
 		events.EventHarvestFinished, events.EventTakeSilver,
-		events.EventUpdateMoney, events.EventUpdateFame, events.EventUpdateFameDetails,
+		events.EventUpdateMoney, events.EventUpdateFame, events.EventUpdateLearningPoints,
 		events.EventNewLoot, events.EventAttachItemContainer,
 		events.EventDetachItemContainer, events.EventCharacterStats,
 		events.EventPartyInvitation, events.EventPartyJoinRequest,
 		events.EventPartyJoined, events.EventPartyDisbanded,
 		events.EventPartyPlayerJoined, events.EventPartyPlayerLeft,
-		events.EventOtherGrabbedLoot, events.EventInCombatState,
+		events.EventOtherGrabbedLoot, events.EventInCombatStateUpdate,
 	}
 
 	for _, known := range knownCodes {
-		if int(code) == known {
+		if events.EventCode(code) == known {
 			return true
 		}
 	}
@@ -499,8 +500,23 @@ func (h *AlbionHandler) handleKilledPlayer(params map[byte]interface{}) {
 
 // handleDied handles death events
 func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
-	h.sessionDeaths++
-	msg := fmt.Sprintf("💀 You died! (Session: %d deaths)", h.sessionDeaths)
+	victim := getString(params, 2)
+	killer := getString(params, 10)
+
+	if victim == "" {
+		victim = "Someone"
+	}
+
+	msg := ""
+	if killer != "" {
+		msg = fmt.Sprintf("💀 %s died! (Killed by %s)", victim, killer)
+	} else {
+		msg = fmt.Sprintf("💀 %s died!", victim)
+	}
+
+	// We only increment session deaths if WE died, but we don't have local player tracking yet.
+	// For now, let's just log the event.
+	h.sessionDeaths++ 
 	h.notifyEvent("death", msg, nil)
 }
 
