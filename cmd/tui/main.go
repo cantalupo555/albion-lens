@@ -88,7 +88,7 @@ func main() {
 	}
 
 	// Create and run TUI
-	model := tui.New(eventChan, statsChan)
+	model := tui.New(svc, eventChan, statsChan)
 	p := tea.NewProgram(model, tea.WithAltScreen())
 
 	if _, err := p.Run(); err != nil {
