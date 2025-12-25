@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/cantalupo555/albion-lens/pkg/events"
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
 )
 
@@ -167,6 +168,29 @@ func (e EventLog) formatEventMessage(event Event) string {
 				formatNumber(data.Amount, e.fullNumbers),
 				data.LootedFrom,
 				formatNumber(data.Session, e.fullNumbers))
+		}
+	case "loot":
+		if data, ok := event.Data.(*handlers.LootEventData); ok && data != nil {
+			return fmt.Sprintf("📦 %s looted %s (x%d) from %s",
+				data.LootedBy,
+				data.ItemName,
+				data.Quantity,
+				data.LootedFrom)
+		}
+	case "kill":
+		if data, ok := event.Data.(*handlers.KillEventData); ok && data != nil {
+			return fmt.Sprintf("⚔️ Player Killed! (Session: %d kills)", data.SessionKills)
+		}
+	case "death":
+		if data, ok := event.Data.(*handlers.DeathEventData); ok && data != nil {
+			if data.Killer != "" {
+				return fmt.Sprintf("💀 %s died! (Killed by %s)", data.Victim, data.Killer)
+			}
+			return fmt.Sprintf("💀 %s died!", data.Victim)
+		}
+	case "debug":
+		if code, ok := event.Data.(events.EventCode); ok {
+			return fmt.Sprintf("🔍 %v (%d)", code, code)
 		}
 	}
 	// Fallback to original message

@@ -102,6 +102,26 @@ type SilverEventData struct {
 	LootedFrom string // Source of the loot
 }
 
+// LootEventData contains loot-specific event data
+type LootEventData struct {
+	LootedBy   string // Player who looted
+	ItemName   string // Name of the item
+	Quantity   int32  // Quantity of the item
+	LootedFrom string // Source of the loot
+}
+
+// KillEventData contains kill-specific event data
+type KillEventData struct {
+	SessionKills int // Total kills in this session
+}
+
+// DeathEventData contains death-specific event data
+type DeathEventData struct {
+	Victim        string // Player who died
+	Killer        string // Player who killed
+	SessionDeaths int    // Total deaths in this session
+}
+
 // GetSessionKills returns the number of kills in this session
 func (h *AlbionHandler) GetSessionKills() int {
 	return h.sessionKills
@@ -185,8 +205,9 @@ func (h *AlbionHandler) OnEvent(eventCode byte, parameters map[byte]interface{})
 
 	default:
 		if h.debug {
-			msg := fmt.Sprintf("🔍 %v (%d)", actualEventCode, actualEventCode)
-			h.notifyEvent("debug", msg, nil)
+			// Pass "debug" type and the raw event code as data.
+			// The TUI will handle visual formatting.
+			h.notifyEvent("debug", "", actualEventCode)
 		}
 	}
 
@@ -463,8 +484,14 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 		}
 
 		h.sessionLoot++
-		msg := fmt.Sprintf("📦 %s looted %s (x%d) from %s", lootedBy, itemName, quantity, lootedFrom)
-		h.notifyEvent("loot", msg, nil)
+
+		// Message formatting is now handled by the frontend (TUI)
+		h.notifyEvent("loot", "", &LootEventData{
+			LootedBy:   lootedBy,
+			ItemName:   itemName,
+			Quantity:   quantity,
+			LootedFrom: lootedFrom,
+		})
 	}
 }
 
@@ -476,8 +503,11 @@ func (h *AlbionHandler) handleNewLoot(params map[byte]interface{}) {
 // handleKilledPlayer handles player kill events
 func (h *AlbionHandler) handleKilledPlayer(params map[byte]interface{}) {
 	h.sessionKills++
-	msg := fmt.Sprintf("⚔️ Player Killed! (Session: %d kills)", h.sessionKills)
-	h.notifyEvent("kill", msg, nil)
+
+	// Message formatting is now handled by the frontend (TUI)
+	h.notifyEvent("kill", "", &KillEventData{
+		SessionKills: h.sessionKills,
+	})
 }
 
 // handleDied handles death events
@@ -489,17 +519,16 @@ func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 		victim = "Someone"
 	}
 
-	msg := ""
-	if killer != "" {
-		msg = fmt.Sprintf("💀 %s died! (Killed by %s)", victim, killer)
-	} else {
-		msg = fmt.Sprintf("💀 %s died!", victim)
-	}
-
 	// We only increment session deaths if WE died, but we don't have local player tracking yet.
 	// For now, let's just log the event.
-	h.sessionDeaths++ 
-	h.notifyEvent("death", msg, nil)
+	h.sessionDeaths++
+
+	// Message formatting is now handled by the frontend (TUI)
+	h.notifyEvent("death", "", &DeathEventData{
+		Victim:        victim,
+		Killer:        killer,
+		SessionDeaths: h.sessionDeaths,
+	})
 }
 
 // Helper functions to extract typed values from parameters
