@@ -13,6 +13,7 @@ type StatusBar struct {
 	packetsTotal   uint64
 	packetsPerSec  float64
 	eventsDecoded  uint64
+	eventsDropped  uint64
 	uptime         string
 	width          int
 }
@@ -42,6 +43,7 @@ func (s StatusBar) UpdateStats(stats *photon.Stats) StatusBar {
 		s.packetsTotal = stats.GetPacketsReceived()
 		s.packetsPerSec = stats.PacketsPerSecond()
 		s.eventsDecoded = stats.GetEventsDecoded()
+		s.eventsDropped = stats.GetEventsDropped()
 		s.uptime = stats.FormatUptime()
 	}
 	return s
@@ -65,11 +67,24 @@ func (s StatusBar) View() string {
 
 	// Stats
 	statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
+
+	// Format events with drop warning if needed
+	eventsDisplay := fmt.Sprintf("Events: %d", s.eventsDecoded)
+	if s.eventsDropped > 0 {
+		// RED with warning icon when drops detected
+		dropStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("196")). // Red
+			Bold(true)
+		eventsDisplay = fmt.Sprintf("Events: %d  %s",
+			s.eventsDecoded,
+			dropStyle.Render(fmt.Sprintf("⚠ Dropped: %d", s.eventsDropped)))
+	}
+
 	stats := statsStyle.Render(fmt.Sprintf(
-		"Packets: %d (%.1f/s)  │  Events: %d  │  %s",
+		"Packets: %d (%.1f/s)  │  %s  │  %s",
 		s.packetsTotal,
 		s.packetsPerSec,
-		s.eventsDecoded,
+		eventsDisplay,
 		s.uptime,
 	))
 
