@@ -299,10 +299,12 @@ func TestHandleOtherGrabbedLootSilver(t *testing.T) {
 func TestHandleOtherGrabbedLootItem(t *testing.T) {
 	handler := NewAlbionHandler()
 
-	var receivedMessage string
+	var receivedData *LootEventData
 	handler.SetEventCallback(func(eventType, message string, data interface{}) {
 		if eventType == "loot" {
-			receivedMessage = message
+			if lootData, ok := data.(*LootEventData); ok {
+				receivedData = lootData
+			}
 		}
 	})
 
@@ -319,8 +321,20 @@ func TestHandleOtherGrabbedLootItem(t *testing.T) {
 
 	handler.OnEvent(0, params) // Event code comes from param 252
 
-	if receivedMessage == "" {
+	if receivedData == nil {
 		t.Fatal("loot callback was not called")
+	}
+
+	if receivedData.LootedBy != "Player1" {
+		t.Errorf("expected LootedBy 'Player1', got %s", receivedData.LootedBy)
+	}
+
+	if receivedData.LootedFrom != "Chest" {
+		t.Errorf("expected LootedFrom 'Chest', got %s", receivedData.LootedFrom)
+	}
+
+	if receivedData.Quantity != 3 {
+		t.Errorf("expected Quantity 3, got %d", receivedData.Quantity)
 	}
 
 	if handler.GetSessionLoot() != 1 {
@@ -332,17 +346,23 @@ func TestHandleOtherGrabbedLootItem(t *testing.T) {
 func TestHandleKilledPlayer(t *testing.T) {
 	handler := NewAlbionHandler()
 
-	var receivedMessage string
+	var receivedData *KillEventData
 	handler.SetEventCallback(func(eventType, message string, data interface{}) {
 		if eventType == "kill" {
-			receivedMessage = message
+			if killData, ok := data.(*KillEventData); ok {
+				receivedData = killData
+			}
 		}
 	})
 
 	handler.OnEvent(byte(events.EventKilledPlayer), map[byte]interface{}{})
 
-	if receivedMessage == "" {
+	if receivedData == nil {
 		t.Fatal("kill callback was not called")
+	}
+
+	if receivedData.SessionKills != 1 {
+		t.Errorf("expected SessionKills 1, got %d", receivedData.SessionKills)
 	}
 
 	if handler.GetSessionKills() != 1 {
@@ -354,17 +374,27 @@ func TestHandleKilledPlayer(t *testing.T) {
 func TestHandleDied(t *testing.T) {
 	handler := NewAlbionHandler()
 
-	var receivedMessage string
+	var receivedData *DeathEventData
 	handler.SetEventCallback(func(eventType, message string, data interface{}) {
 		if eventType == "death" {
-			receivedMessage = message
+			if deathData, ok := data.(*DeathEventData); ok {
+				receivedData = deathData
+			}
 		}
 	})
 
 	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{})
 
-	if receivedMessage == "" {
+	if receivedData == nil {
 		t.Fatal("death callback was not called")
+	}
+
+	if receivedData.Victim != "Someone" {
+		t.Errorf("expected Victim 'Someone', got %s", receivedData.Victim)
+	}
+
+	if receivedData.SessionDeaths != 1 {
+		t.Errorf("expected SessionDeaths 1, got %d", receivedData.SessionDeaths)
 	}
 
 	if handler.GetSessionDeaths() != 1 {
