@@ -45,7 +45,7 @@ func main() {
 
 	// Create channels for TUI communication
 	// Use a buffered channel for bulk messages
-	bulkEventChan := make(chan tui.BulkEventMsg, 100) // 100 batches of 50 = 5000 events
+	bulkEventChan := make(chan tui.BulkEventMsg, 5) // 5 batches of 50 = 250 events
 	statsChan := make(chan *photon.Stats, 10)
 
 	// Bridge backend events to TUI with batching

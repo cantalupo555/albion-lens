@@ -416,8 +416,8 @@ func TestServiceHandlerWithoutStart(t *testing.T) {
 
 // TestDefaultBufferSizeConstants tests default buffer size constants
 func TestDefaultBufferSizeConstants(t *testing.T) {
-	if defaultEventBufferSize != 5000 {
-		t.Errorf("defaultEventBufferSize: expected 5000, got %d", defaultEventBufferSize)
+	if defaultEventBufferSize != 250 {
+		t.Errorf("defaultEventBufferSize: expected 250, got %d", defaultEventBufferSize)
 	}
 
 	if defaultStatsBufferSize != 10 {
