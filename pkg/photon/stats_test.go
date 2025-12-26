@@ -1,6 +1,7 @@
 package photon
 
 import (
+	"sync"
 	"testing"
 	"time"
 )
@@ -81,6 +82,11 @@ func TestStatsIncrementers(t *testing.T) {
 	stats.IncrResponsesDecoded()
 	if stats.GetResponsesDecoded() != 1 {
 		t.Errorf("Expected ResponsesDecoded=1, got %d", stats.GetResponsesDecoded())
+	}
+
+	stats.IncrEventsDropped()
+	if stats.GetEventsDropped() != 1 {
+		t.Errorf("Expected EventsDropped=1, got %d", stats.GetEventsDropped())
 	}
 
 	// Test bytes counter
@@ -187,6 +193,62 @@ func TestStatsReset(t *testing.T) {
 	}
 	if stats.GetBytesReceived() != 0 {
 		t.Errorf("After reset, expected BytesReceived=0, got %d", stats.GetBytesReceived())
+	}
+}
+
+func TestEventsDropped(t *testing.T) {
+	stats := NewStats()
+
+	// Initial value should be 0
+	if stats.GetEventsDropped() != 0 {
+		t.Error("Initial events dropped should be 0")
+	}
+
+	// Increment and verify
+	stats.IncrEventsDropped()
+	if stats.GetEventsDropped() != 1 {
+		t.Error("Events dropped should be 1 after increment")
+	}
+
+	// Multiple increments
+	stats.IncrEventsDropped()
+	stats.IncrEventsDropped()
+	if stats.GetEventsDropped() != 3 {
+		t.Errorf("Events dropped should be 3, got %d", stats.GetEventsDropped())
+	}
+
+	// Reset should zero it
+	stats.Reset()
+	if stats.GetEventsDropped() != 0 {
+		t.Error("Events dropped should be 0 after reset")
+	}
+}
+
+func TestEventsDroppedConcurrent(t *testing.T) {
+	stats := NewStats()
+	var wg sync.WaitGroup
+
+	// Simulate 1000 concurrent drops from multiple goroutines
+	// This tests thread-safety of atomic operations
+	numGoroutines := 10
+	dropsPerGoroutine := 100
+
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < dropsPerGoroutine; j++ {
+				stats.IncrEventsDropped()
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	expectedDrops := uint64(numGoroutines * dropsPerGoroutine)
+	actualDrops := stats.GetEventsDropped()
+	if actualDrops != expectedDrops {
+		t.Errorf("Expected %d drops, got %d", expectedDrops, actualDrops)
 	}
 }
 
