@@ -44,7 +44,7 @@ func main() {
 	svc := backend.New(opts...)
 
 	// Create channels for TUI communication
-	eventChan := make(chan tui.EventMsg, 100)
+	eventChan := make(chan tui.EventMsg, 500)
 	statsChan := make(chan *photon.Stats, 10)
 
 	// Bridge backend events to TUI
@@ -58,6 +58,10 @@ func main() {
 				Data:      event.Data,
 			}:
 			default:
+				// TUI event channel full, drop event
+				if stats := svc.ParserStats(); stats != nil {
+					stats.IncrEventsDropped()
+				}
 			}
 		}
 	}()
@@ -68,6 +72,7 @@ func main() {
 			select {
 			case statsChan <- stats:
 			default:
+				// Stats channel full - not critical
 			}
 		}
 	}()

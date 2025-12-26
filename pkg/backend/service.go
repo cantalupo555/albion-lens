@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	defaultEventBufferSize = 100
+	defaultEventBufferSize = 500
 	defaultStatsBufferSize = 10
 )
 
@@ -107,6 +107,9 @@ func (s *Service) Start() error {
 		case s.eventsChan <- event:
 		default:
 			// Channel full, drop event
+			if s.parser != nil && s.parser.Stats != nil {
+				s.parser.Stats.IncrEventsDropped()
+			}
 		}
 	})
 
@@ -127,6 +130,7 @@ func (s *Service) Start() error {
 		select {
 		case s.onlineStatusChan <- online:
 		default:
+			// Status updates are idempotent, drop is safe
 		}
 
 		// Also send as info event
@@ -141,6 +145,10 @@ func (s *Service) Start() error {
 			Timestamp: time.Now(),
 		}:
 		default:
+			// Info event dropped
+			if s.parser != nil && s.parser.Stats != nil {
+				s.parser.Stats.IncrEventsDropped()
+			}
 		}
 	}
 
@@ -208,6 +216,8 @@ func (s *Service) statsUpdater() {
 				select {
 				case s.statsChan <- s.parser.Stats:
 				default:
+					// Stats channel full - this is less critical than events
+					// We don't increment EventsDropped for stats updates
 				}
 			}
 		}
