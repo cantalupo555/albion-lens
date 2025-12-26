@@ -14,6 +14,8 @@ type StatusBar struct {
 	packetsPerSec  float64
 	eventsDecoded  uint64
 	eventsDropped  uint64
+	bufferUsage    int
+	bufferCapacity int
 	uptime         string
 	width          int
 }
@@ -44,6 +46,8 @@ func (s StatusBar) UpdateStats(stats *photon.Stats) StatusBar {
 		s.packetsPerSec = stats.PacketsPerSecond()
 		s.eventsDecoded = stats.GetEventsDecoded()
 		s.eventsDropped = stats.GetEventsDropped()
+		s.bufferUsage = int(stats.BufferPeakDisplay)
+		s.bufferCapacity = stats.BufferCapacity
 		s.uptime = stats.FormatUptime()
 	}
 	return s
@@ -65,6 +69,21 @@ func (s StatusBar) View() string {
 			Render("● Offline")
 	}
 
+	// Buffer Stats Logic
+	var bufStatus string
+	if s.bufferCapacity > 0 {
+		pct := float64(s.bufferUsage) / float64(s.bufferCapacity) * 100
+		bufColor := "42" // Green
+		if pct >= 75 {
+			bufColor = "196" // Red
+		} else if pct >= 50 {
+			bufColor = "214" // Yellow
+		}
+		
+		bufStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(bufColor))
+		bufStatus = fmt.Sprintf("│  Queue: %s", bufStyle.Render(fmt.Sprintf("%d/%d (%.0f%%)", s.bufferUsage, s.bufferCapacity, pct)))
+	}
+
 	// Stats
 	statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
 
@@ -81,11 +100,12 @@ func (s StatusBar) View() string {
 	}
 
 	stats := statsStyle.Render(fmt.Sprintf(
-		"Packets: %d (%.1f/s)  │  %s  │  %s",
+		"Packets: %d (%.1f/s)  │  %s  │  %s  %s",
 		s.packetsTotal,
 		s.packetsPerSec,
 		eventsDisplay,
 		s.uptime,
+		bufStatus, // Append buffer status at the end
 	))
 
 	// Combine

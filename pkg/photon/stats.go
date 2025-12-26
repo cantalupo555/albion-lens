@@ -16,6 +16,7 @@ type Stats struct {
 	PacketsEncrypted uint64 // Encrypted packets (skipped)
 	PacketsWithCRC   uint64 // Packets with CRC enabled
 	PacketsMalformed uint64 // Malformed/corrupted packets
+	BytesReceived    uint64 // Total bytes received
 
 	// Fragment counters
 	FragmentsReceived  uint64 // Individual fragments received
@@ -28,12 +29,36 @@ type Stats struct {
 	ResponsesDecoded uint64 // Operation responses decoded
 	EventsDropped    uint64 // Events dropped due to full channels
 
-	// Byte counters
-	BytesReceived uint64 // Total bytes received
+	// Buffer Metrics
+	BufferPeakDisplay int64 // Peak usage snapshot for display (updated per tick)
+	BufferCapacity    int   // Total capacity of backend buffer
+	
+	bufferPeakInternal int64 // Internal accumulator for peak usage
 
-	// Timing
-	StartTime      time.Time // When the parser started
-	LastPacketTime time.Time // Timestamp of last packet received
+	// Internal state
+	StartTime      time.Time
+	LastPacketTime time.Time
+}
+
+// ... (methods) ...
+
+// UpdateBufferPeak updates the peak buffer usage if current is higher.
+func (s *Stats) UpdateBufferPeak(current int) {
+	for {
+		oldMax := atomic.LoadInt64(&s.bufferPeakInternal)
+		if int64(current) <= oldMax {
+			return
+		}
+		if atomic.CompareAndSwapInt64(&s.bufferPeakInternal, oldMax, int64(current)) {
+			return
+		}
+	}
+}
+
+// SnapshotBufferPeak promotes the internal peak to the display field and resets internal.
+func (s *Stats) SnapshotBufferPeak() {
+	peak := atomic.SwapInt64(&s.bufferPeakInternal, 0)
+	atomic.StoreInt64(&s.BufferPeakDisplay, peak)
 }
 
 // NewStats creates a new Stats instance with StartTime set to now.
