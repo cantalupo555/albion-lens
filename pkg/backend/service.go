@@ -103,6 +103,12 @@ func (s *Service) Start() error {
 			Timestamp: time.Now(),
 			Data:      data,
 		}
+		
+		// Update peak buffer usage stats before sending
+		if s.parser != nil && s.parser.Stats != nil {
+			s.parser.Stats.UpdateBufferPeak(len(s.eventsChan))
+		}
+
 		select {
 		case s.eventsChan <- event:
 		default:
@@ -213,6 +219,10 @@ func (s *Service) statsUpdater() {
 			return
 		case <-ticker.C:
 			if s.parser != nil {
+				// Snapshot buffer metrics (Peak usage in last interval)
+				s.parser.Stats.SnapshotBufferPeak()
+				s.parser.Stats.BufferCapacity = cap(s.eventsChan)
+
 				select {
 				case s.statsChan <- s.parser.Stats:
 				default:
