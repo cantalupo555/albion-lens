@@ -26,6 +26,7 @@ type Stats struct {
 	EventsDecoded    uint64 // Game events decoded
 	RequestsDecoded  uint64 // Operation requests decoded
 	ResponsesDecoded uint64 // Operation responses decoded
+	EventsDropped    uint64 // Events dropped due to full channels
 
 	// Byte counters
 	BytesReceived uint64 // Total bytes received
@@ -101,6 +102,11 @@ func (s *Stats) IncrResponsesDecoded() {
 	atomic.AddUint64(&s.ResponsesDecoded, 1)
 }
 
+// IncrEventsDropped increments the events dropped counter.
+func (s *Stats) IncrEventsDropped() {
+	atomic.AddUint64(&s.EventsDropped, 1)
+}
+
 // AddBytesReceived adds n bytes to the bytes received counter.
 func (s *Stats) AddBytesReceived(n uint64) {
 	atomic.AddUint64(&s.BytesReceived, n)
@@ -163,6 +169,11 @@ func (s *Stats) GetRequestsDecoded() uint64 {
 // GetResponsesDecoded returns the responses decoded count.
 func (s *Stats) GetResponsesDecoded() uint64 {
 	return atomic.LoadUint64(&s.ResponsesDecoded)
+}
+
+// GetEventsDropped returns the events dropped count.
+func (s *Stats) GetEventsDropped() uint64 {
+	return atomic.LoadUint64(&s.EventsDropped)
 }
 
 // GetBytesReceived returns the bytes received count.
@@ -236,6 +247,7 @@ func (s *Stats) Reset() {
 	atomic.StoreUint64(&s.EventsDecoded, 0)
 	atomic.StoreUint64(&s.RequestsDecoded, 0)
 	atomic.StoreUint64(&s.ResponsesDecoded, 0)
+	atomic.StoreUint64(&s.EventsDropped, 0)
 	atomic.StoreUint64(&s.BytesReceived, 0)
 	s.StartTime = time.Now()
 }
