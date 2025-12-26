@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	defaultEventBufferSize = 500
+	defaultEventBufferSize = 5000
 	defaultStatsBufferSize = 10
 )
 
