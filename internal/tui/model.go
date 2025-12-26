@@ -22,8 +22,8 @@ type Model struct {
 	svc *backend.Service
 
 	// Channels for receiving data from parser
-	eventChan chan EventMsg
-	statsChan chan *photon.Stats
+	bulkEventChan chan BulkEventMsg
+	statsChan     chan *photon.Stats
 
 	// UI state
 	width    int
@@ -37,15 +37,15 @@ type Model struct {
 }
 
 // New creates a new TUI Model
-func New(svc *backend.Service, eventChan chan EventMsg, statsChan chan *photon.Stats) Model {
+func New(svc *backend.Service, bulkEventChan chan BulkEventMsg, statsChan chan *photon.Stats) Model {
 	m := Model{
-		statusBar:   components.NewStatusBar(),
-		eventLog:    components.NewEventLog(),
-		statsPanel:  components.NewStatsPanel(),
-		svc:         svc,
-		eventChan:   eventChan,
-		statsChan:   statsChan,
-		fullNumbers: false, // Default: abbreviated numbers (e.g., 4.9k)
+		statusBar:     components.NewStatusBar(),
+		eventLog:      components.NewEventLog(),
+		statsPanel:    components.NewStatsPanel(),
+		svc:           svc,
+		bulkEventChan: bulkEventChan,
+		statsChan:     statsChan,
+		fullNumbers:   false, // Default: abbreviated numbers (e.g., 4.9k)
 	}
 	// Sync debug state from service
 	if svc != nil {
@@ -61,8 +61,8 @@ func (m Model) Init() tea.Cmd {
 	}
 
 	// Listen for events if channel provided
-	if m.eventChan != nil {
-		cmds = append(cmds, WaitForEvent(m.eventChan))
+	if m.bulkEventChan != nil {
+		cmds = append(cmds, WaitForBulkEvent(m.bulkEventChan))
 	}
 
 	// Listen for stats if channel provided
@@ -119,44 +119,54 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-	// Game event from parser
-	case EventMsg:
-		displayMsg := msg.Message
+	// Batch of game events from parser
+	case BulkEventMsg:
+		var logEvents []components.Event
 
-		// Update session stats based on event type and data
-		switch msg.Type {
-		case "fame":
-			if data, ok := msg.Data.(*handlers.FameEventData); ok && data != nil {
-				m.statsPanel = m.statsPanel.SetFame(data.Session)
-				// Format fame message based on fullNumbers setting
-				displayMsg = fmt.Sprintf("⭐ FAME: +%s | Total: %s | Session: %s",
-					formatNumber(data.Gained, m.fullNumbers),
-					formatNumber(data.Total, m.fullNumbers),
-					formatNumber(data.Session, m.fullNumbers))
+		for _, eventMsg := range msg {
+			displayMsg := eventMsg.Message
+
+			// Update session stats based on event type and data
+			switch eventMsg.Type {
+			case "fame":
+				if data, ok := eventMsg.Data.(*handlers.FameEventData); ok && data != nil {
+					m.statsPanel = m.statsPanel.SetFame(data.Session)
+					displayMsg = fmt.Sprintf("⭐ FAME: +%s | Total: %s | Session: %s",
+						formatNumber(data.Gained, m.fullNumbers),
+						formatNumber(data.Total, m.fullNumbers),
+						formatNumber(data.Session, m.fullNumbers))
+				}
+			case "silver":
+				if data, ok := eventMsg.Data.(*handlers.SilverEventData); ok && data != nil {
+					m.statsPanel = m.statsPanel.SetSilver(data.Session)
+					displayMsg = fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
+						data.LootedBy,
+						formatNumber(data.Amount, m.fullNumbers),
+						data.LootedFrom,
+						formatNumber(data.Session, m.fullNumbers))
+				}
+			case "loot":
+				m.statsPanel = m.statsPanel.IncrLoot()
+			case "kill":
+				m.statsPanel = m.statsPanel.IncrKills()
+			case "death":
+				m.statsPanel = m.statsPanel.IncrDeaths()
 			}
-		case "silver":
-			if data, ok := msg.Data.(*handlers.SilverEventData); ok && data != nil {
-				m.statsPanel = m.statsPanel.SetSilver(data.Session)
-				// Format silver message based on fullNumbers setting
-				displayMsg = fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
-					data.LootedBy,
-					formatNumber(data.Amount, m.fullNumbers),
-					data.LootedFrom,
-					formatNumber(data.Session, m.fullNumbers))
-			}
-		case "loot":
-			m.statsPanel = m.statsPanel.IncrLoot()
-		case "kill":
-			m.statsPanel = m.statsPanel.IncrKills()
-		case "death":
-			m.statsPanel = m.statsPanel.IncrDeaths()
+
+			logEvents = append(logEvents, components.Event{
+				Type:      eventMsg.Type,
+				Message:   displayMsg,
+				Timestamp: eventMsg.Timestamp,
+				Data:      eventMsg.Data,
+			})
 		}
 
-		m.eventLog = m.eventLog.AddEvent(msg.Type, displayMsg, msg.Timestamp, msg.Data)
+		// Add all events to log at once (efficient batch render)
+		m.eventLog = m.eventLog.AddEvents(logEvents)
 
 		// Continue listening for events
-		if m.eventChan != nil {
-			cmds = append(cmds, WaitForEvent(m.eventChan))
+		if m.bulkEventChan != nil {
+			cmds = append(cmds, WaitForBulkEvent(m.bulkEventChan))
 		}
 		return m, tea.Batch(cmds...)
 

@@ -24,27 +24,29 @@ type Event struct {
 
 // EventLog displays a scrollable list of game events
 type EventLog struct {
-	viewport    viewport.Model
-	events      []Event
-	width       int
-	height      int
-	ready       bool
-	fullNumbers bool
+	viewport      viewport.Model
+	events        []Event
+	renderedLines []string // Cache of already formatted lines
+	width         int
+	height        int
+	ready         bool
+	fullNumbers   bool
 }
 
 // NewEventLog creates a new EventLog component
 func NewEventLog() EventLog {
 	return EventLog{
-		events:      make([]Event, 0, maxEvents),
-		fullNumbers: true, // Default: show full numbers
+		events:        make([]Event, 0, maxEvents),
+		renderedLines: make([]string, 0, maxEvents),
+		fullNumbers:   true, // Default: show full numbers
 	}
 }
 
 // SetFullNumbers sets whether to display full or abbreviated numbers
 func (e EventLog) SetFullNumbers(full bool) EventLog {
 	e.fullNumbers = full
-	// Re-render events with new format
-	e.viewport.SetContent(e.renderEvents())
+	// Settings changed, must re-render everything
+	e = e.reRenderAll()
 	return e
 }
 
@@ -68,11 +70,13 @@ func (e EventLog) SetSize(width, height int) EventLog {
 
 	if !e.ready {
 		e.viewport = viewport.New(viewportWidth, viewportHeight)
-		e.viewport.SetContent(e.renderEvents())
 		e.ready = true
+		// Initial render
+		e = e.reRenderAll()
 	} else {
 		e.viewport.Width = viewportWidth
 		e.viewport.Height = viewportHeight
+		e.viewport.SetContent(strings.Join(e.renderedLines, "\n"))
 	}
 
 	return e
@@ -86,16 +90,44 @@ func (e EventLog) AddEvent(eventType, message string, timestamp time.Time, data 
 		Timestamp: timestamp,
 		Data:      data,
 	}
+	return e.AddEvents([]Event{event})
+}
 
-	e.events = append(e.events, event)
+// AddEvents adds multiple events to the log efficiently
+func (e EventLog) AddEvents(newEvents []Event) EventLog {
+	if len(newEvents) == 0 {
+		return e
+	}
+
+	e.events = append(e.events, newEvents...)
 
 	// Trim old events if needed
 	if len(e.events) > maxEvents {
-		e.events = e.events[100:] // Remove oldest 100
+		e.events = e.events[len(e.events)-maxEvents:] // Keep newest maxEvents
+		
+		// Trim the rendered cache to match
+		if len(e.renderedLines) > len(e.events)-len(newEvents) {
+			keepCount := maxEvents - len(newEvents)
+			if keepCount > 0 && keepCount < len(e.renderedLines) {
+				e.renderedLines = e.renderedLines[len(e.renderedLines)-keepCount:]
+			} else if keepCount <= 0 {
+				e.renderedLines = nil // Replaced all
+			}
+		}
 	}
 
-	// Update viewport content
-	e.viewport.SetContent(e.renderEvents())
+	// Format NEW events only
+	for _, event := range newEvents {
+		e.renderedLines = append(e.renderedLines, e.renderSingleEvent(event))
+	}
+
+	// Ensure cache size doesn't exceed maxEvents (sanity check)
+	if len(e.renderedLines) > maxEvents {
+		e.renderedLines = e.renderedLines[len(e.renderedLines)-maxEvents:]
+	}
+
+	// Update viewport content efficiently - ONCE per batch
+	e.viewport.SetContent(strings.Join(e.renderedLines, "\n"))
 	e.viewport.GotoBottom()
 
 	return e
@@ -104,51 +136,59 @@ func (e EventLog) AddEvent(eventType, message string, timestamp time.Time, data 
 // Clear removes all events from the log
 func (e EventLog) Clear() EventLog {
 	e.events = e.events[:0]
+	e.renderedLines = e.renderedLines[:0]
 	e.viewport.SetContent("")
 	return e
 }
 
-// renderEvents formats all events for display
-func (e EventLog) renderEvents() string {
-	if len(e.events) == 0 {
-		emptyStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")).
-			Italic(true)
-		return emptyStyle.Render("No events yet...")
+// reRenderAll clears cache and re-renders all events (used when settings change)
+func (e EventLog) reRenderAll() EventLog {
+	e.renderedLines = make([]string, 0, len(e.events))
+	for _, event := range e.events {
+		e.renderedLines = append(e.renderedLines, e.renderSingleEvent(event))
 	}
+	
+	if e.ready {
+		if len(e.renderedLines) == 0 {
+			emptyStyle := lipgloss.NewStyle().
+				Foreground(lipgloss.Color("241")).
+				Italic(true)
+			e.viewport.SetContent(emptyStyle.Render("No events yet..."))
+		} else {
+			e.viewport.SetContent(strings.Join(e.renderedLines, "\n"))
+		}
+	}
+	return e
+}
 
-	var lines []string
+// renderSingleEvent formats a single event struct into a colored string
+func (e EventLog) renderSingleEvent(event Event) string {
 	timestampStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 
-	for _, event := range e.events {
-		// Get color based on event type
-		var msgStyle lipgloss.Style
-		switch event.Type {
-		case "fame":
-			msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
-		case "silver":
-			msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
-		case "loot":
-			msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-		case "combat", "kill", "death":
-			msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
-		case "debug":
-			msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")) // Gray color for debug
-		default:
-			msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
-		}
-
-		// Format message dynamically based on event data and fullNumbers setting
-		message := e.formatEventMessage(event)
-
-		line := fmt.Sprintf("%s %s",
-			timestampStyle.Render(event.Timestamp.Format("15:04:05")),
-			msgStyle.Render(message),
-		)
-		lines = append(lines, line)
+	// Get color based on event type
+	var msgStyle lipgloss.Style
+	switch event.Type {
+	case "fame":
+		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
+	case "silver":
+		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+	case "loot":
+		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	case "combat", "kill", "death":
+		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
+	case "debug":
+		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	default:
+		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
 	}
 
-	return strings.Join(lines, "\n")
+	// Format message dynamically based on event data and fullNumbers setting
+	message := e.formatEventMessage(event)
+
+	return fmt.Sprintf("%s %s",
+		timestampStyle.Render(event.Timestamp.Format("15:04:05")),
+		msgStyle.Render(message),
+	)
 }
 
 // formatEventMessage formats event message based on data and fullNumbers setting
