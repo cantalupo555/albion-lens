@@ -15,6 +15,9 @@ type EventMsg struct {
 	Data      interface{} // Optional structured data (FameEventData, SilverEventData, etc.)
 }
 
+// BulkEventMsg represents a batch of game events
+type BulkEventMsg []EventMsg
+
 // StatsUpdateMsg triggers a stats panel update
 type StatsUpdateMsg struct {
 	Stats *photon.Stats
@@ -48,6 +51,13 @@ func TickCmd() tea.Cmd {
 
 // WaitForEvent returns a command that waits for an event from the channel
 func WaitForEvent(ch <-chan EventMsg) tea.Cmd {
+	return func() tea.Msg {
+		return <-ch
+	}
+}
+
+// WaitForBulkEvent returns a command that waits for a batch of events from the channel
+func WaitForBulkEvent(ch <-chan BulkEventMsg) tea.Cmd {
 	return func() tea.Msg {
 		return <-ch
 	}
