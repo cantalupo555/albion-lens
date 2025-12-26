@@ -44,24 +44,69 @@ func main() {
 	svc := backend.New(opts...)
 
 	// Create channels for TUI communication
-	eventChan := make(chan tui.EventMsg, 500)
+	// Use a buffered channel for bulk messages
+	bulkEventChan := make(chan tui.BulkEventMsg, 100) // 100 batches of 50 = 5000 events
 	statsChan := make(chan *photon.Stats, 10)
 
-	// Bridge backend events to TUI
+	// Bridge backend events to TUI with batching
 	go func() {
-		for event := range svc.Events {
+		const batchSize = 50
+		const flushInterval = 50 * time.Millisecond
+		
+		buffer := make([]tui.EventMsg, 0, batchSize)
+		ticker := time.NewTicker(flushInterval)
+		defer ticker.Stop()
+
+		flush := func() {
+			if len(buffer) == 0 {
+				return
+			}
+			// Create a copy of the buffer to send
+			msg := make(tui.BulkEventMsg, len(buffer))
+			copy(msg, buffer)
+			
 			select {
-			case eventChan <- tui.EventMsg{
-				Type:      string(event.Type),
-				Message:   event.Message,
-				Timestamp: event.Timestamp,
-				Data:      event.Data,
-			}:
+			case bulkEventChan <- msg:
+				// Success
 			default:
-				// TUI event channel full, drop event
+				// Channel full, drop ENTIRE batch
 				if stats := svc.ParserStats(); stats != nil {
-					stats.IncrEventsDropped()
+					// Increment dropped count for each event in the batch
+					for i := 0; i < len(buffer); i++ {
+						stats.IncrEventsDropped()
+					}
 				}
+			}
+			// Reset buffer
+			buffer = buffer[:0]
+		}
+
+		for {
+			select {
+			case event, ok := <-svc.Events:
+				if !ok {
+					// Channel closed
+					flush()
+					return
+				}
+				
+				// Add to buffer
+				buffer = append(buffer, tui.EventMsg{
+					Type:      string(event.Type),
+					Message:   event.Message,
+					Timestamp: event.Timestamp,
+					Data:      event.Data,
+				})
+
+				// Flush if full
+				if len(buffer) >= batchSize {
+					flush()
+					// Reset ticker to avoid double flushing
+					ticker.Reset(flushInterval)
+				}
+
+			case <-ticker.C:
+				flush()
 			}
 		}
 	}()
@@ -85,15 +130,17 @@ func main() {
 	}
 	defer svc.Stop()
 
-	// Send initial status event
-	eventChan <- tui.EventMsg{
-		Type:      "info",
-		Message:   "Waiting for Albion Online traffic...",
-		Timestamp: time.Now(),
+	// Send initial status event (as a batch)
+	bulkEventChan <- tui.BulkEventMsg{
+		{
+			Type:      "info",
+			Message:   "Waiting for Albion Online traffic...",
+			Timestamp: time.Now(),
+		},
 	}
 
 	// Create and run TUI
-	model := tui.New(svc, eventChan, statsChan)
+	model := tui.New(svc, bulkEventChan, statsChan)
 	p := tea.NewProgram(model, tea.WithAltScreen())
 
 	if _, err := p.Run(); err != nil {
