@@ -30,9 +30,11 @@ type Stats struct {
 	EventsDropped    uint64 // Events dropped due to full channels
 
 	// Buffer Metrics
-	BufferPeakDisplay int64 // Peak usage snapshot for display (updated per tick)
-	BufferCapacity    int   // Total capacity of backend buffer
-	
+	// BufferPeakDisplay is the peak buffer usage from the last snapshot interval.
+	// Updated every second via SnapshotBufferPeak(). Shows temporal peaks, not absolute maximum.
+	BufferPeakDisplay int64
+	BufferCapacity    int // Total capacity of backend buffer
+
 	bufferPeakInternal int64 // Internal accumulator for peak usage
 
 	// Internal state
@@ -56,6 +58,14 @@ func (s *Stats) UpdateBufferPeak(current int) {
 }
 
 // SnapshotBufferPeak promotes the internal peak to the display field and resets internal.
+//
+// This implements a "peak per interval" strategy:
+//   - bufferPeakInternal accumulates the maximum value during the current interval
+//   - On snapshot, the peak is promoted to BufferPeakDisplay (visible in UI)
+//   - bufferPeakInternal is reset to 0 to start tracking the next interval
+//
+// This allows the UI to show temporal variations in buffer usage rather than
+// an absolute maximum since session start.
 func (s *Stats) SnapshotBufferPeak() {
 	peak := atomic.SwapInt64(&s.bufferPeakInternal, 0)
 	atomic.StoreInt64(&s.BufferPeakDisplay, peak)
@@ -274,5 +284,11 @@ func (s *Stats) Reset() {
 	atomic.StoreUint64(&s.ResponsesDecoded, 0)
 	atomic.StoreUint64(&s.EventsDropped, 0)
 	atomic.StoreUint64(&s.BytesReceived, 0)
+
+	// Reset buffer metrics
+	atomic.StoreInt64(&s.BufferPeakDisplay, 0)
+	atomic.StoreInt64(&s.bufferPeakInternal, 0)
+	// Note: BufferCapacity is an invariant and doesn't need reset
+
 	s.StartTime = time.Now()
 }
