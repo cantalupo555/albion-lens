@@ -176,9 +176,21 @@ func TestStatsReset(t *testing.T) {
 	stats.IncrEventsDecoded()
 	stats.AddBytesReceived(1000)
 
+	// Set buffer metrics
+	stats.UpdateBufferPeak(200)
+	stats.SnapshotBufferPeak() // This sets BufferPeakDisplay=200, bufferPeakInternal=0
+	stats.UpdateBufferPeak(50) // Set internal to 50
+	stats.BufferCapacity = 250
+
 	// Verify they're set
 	if stats.GetPacketsReceived() != 2 {
 		t.Errorf("Expected PacketsReceived=2, got %d", stats.GetPacketsReceived())
+	}
+	if stats.BufferPeakDisplay != 200 {
+		t.Errorf("Expected BufferPeakDisplay=200, got %d", stats.BufferPeakDisplay)
+	}
+	if stats.bufferPeakInternal != 50 {
+		t.Errorf("Expected bufferPeakInternal=50, got %d", stats.bufferPeakInternal)
 	}
 
 	// Reset
@@ -194,6 +206,15 @@ func TestStatsReset(t *testing.T) {
 	if stats.GetBytesReceived() != 0 {
 		t.Errorf("After reset, expected BytesReceived=0, got %d", stats.GetBytesReceived())
 	}
+
+	// Verify buffer metrics are reset
+	if stats.BufferPeakDisplay != 0 {
+		t.Errorf("After reset, expected BufferPeakDisplay=0, got %d", stats.BufferPeakDisplay)
+	}
+	if stats.bufferPeakInternal != 0 {
+		t.Errorf("After reset, expected bufferPeakInternal=0, got %d", stats.bufferPeakInternal)
+	}
+	// Note: BufferCapacity is an invariant and intentionally not reset
 }
 
 func TestEventsDropped(t *testing.T) {
@@ -263,6 +284,115 @@ func TestParserHasStats(t *testing.T) {
 	// Stats should be initialized
 	if parser.Stats.StartTime.IsZero() {
 		t.Error("Parser.Stats.StartTime should be set")
+	}
+}
+
+func TestUpdateBufferPeak(t *testing.T) {
+	stats := NewStats()
+
+	// Initial value should be 0
+	if stats.bufferPeakInternal != 0 {
+		t.Errorf("Initial bufferPeakInternal should be 0, got %d", stats.bufferPeakInternal)
+	}
+
+	// Update with increasing values
+	stats.UpdateBufferPeak(10)
+	if stats.bufferPeakInternal != 10 {
+		t.Errorf("Expected bufferPeakInternal=10, got %d", stats.bufferPeakInternal)
+	}
+
+	stats.UpdateBufferPeak(50)
+	if stats.bufferPeakInternal != 50 {
+		t.Errorf("Expected bufferPeakInternal=50, got %d", stats.bufferPeakInternal)
+	}
+
+	// Update with smaller value should not change peak
+	stats.UpdateBufferPeak(30)
+	if stats.bufferPeakInternal != 50 {
+		t.Errorf("Expected bufferPeakInternal=50 (unchanged), got %d", stats.bufferPeakInternal)
+	}
+
+	// Update with larger value should update
+	stats.UpdateBufferPeak(100)
+	if stats.bufferPeakInternal != 100 {
+		t.Errorf("Expected bufferPeakInternal=100, got %d", stats.bufferPeakInternal)
+	}
+
+	// Update with equal value should not change
+	stats.UpdateBufferPeak(100)
+	if stats.bufferPeakInternal != 100 {
+		t.Errorf("Expected bufferPeakInternal=100 (unchanged), got %d", stats.bufferPeakInternal)
+	}
+}
+
+func TestSnapshotBufferPeak(t *testing.T) {
+	stats := NewStats()
+
+	// Set peak to 150
+	stats.UpdateBufferPeak(150)
+	if stats.bufferPeakInternal != 150 {
+		t.Errorf("Expected bufferPeakInternal=150, got %d", stats.bufferPeakInternal)
+	}
+
+	// Take snapshot
+	stats.SnapshotBufferPeak()
+
+	// BufferPeakDisplay should have the peak
+	if stats.BufferPeakDisplay != 150 {
+		t.Errorf("Expected BufferPeakDisplay=150, got %d", stats.BufferPeakDisplay)
+	}
+
+	// bufferPeakInternal should be reset to 0
+	if stats.bufferPeakInternal != 0 {
+		t.Errorf("Expected bufferPeakInternal=0 after snapshot, got %d", stats.bufferPeakInternal)
+	}
+
+	// Update to new value (80) in new interval
+	stats.UpdateBufferPeak(80)
+	if stats.bufferPeakInternal != 80 {
+		t.Errorf("Expected bufferPeakInternal=80, got %d", stats.bufferPeakInternal)
+	}
+
+	// Take another snapshot
+	stats.SnapshotBufferPeak()
+
+	// BufferPeakDisplay should now show 80 (new interval peak)
+	if stats.BufferPeakDisplay != 80 {
+		t.Errorf("Expected BufferPeakDisplay=80 (new interval), got %d", stats.BufferPeakDisplay)
+	}
+
+	// bufferPeakInternal should be reset again
+	if stats.bufferPeakInternal != 0 {
+		t.Errorf("Expected bufferPeakInternal=0 after second snapshot, got %d", stats.bufferPeakInternal)
+	}
+}
+
+func TestBufferPeakConcurrent(t *testing.T) {
+	stats := NewStats()
+	var wg sync.WaitGroup
+
+	// Simulate 10 goroutines concurrently updating buffer peak
+	// Each goroutine sends values from 0 to 99
+	numGoroutines := 10
+	valuesPerGoroutine := 100
+
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < valuesPerGoroutine; j++ {
+				stats.UpdateBufferPeak(j)
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	// The peak should be 99 (maximum value sent by any goroutine)
+	expectedPeak := int64(valuesPerGoroutine - 1)
+	actualPeak := stats.bufferPeakInternal
+	if actualPeak != expectedPeak {
+		t.Errorf("Expected bufferPeakInternal=%d, got %d", expectedPeak, actualPeak)
 	}
 }
 
