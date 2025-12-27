@@ -124,6 +124,7 @@ func (s *Service) Start() error {
 
 	// Create parser
 	s.parser = photon.NewParser(s.handler)
+	s.parser.Stats.BufferCapacity = cap(s.eventsChan) // Set once at startup
 	// Note: Parser debug is not enabled because it uses fmt.Printf which interferes with TUI
 
 	// Create capture
@@ -221,7 +222,6 @@ func (s *Service) statsUpdater() {
 			if s.parser != nil {
 				// Snapshot buffer metrics (Peak usage in last interval)
 				s.parser.Stats.SnapshotBufferPeak()
-				s.parser.Stats.BufferCapacity = cap(s.eventsChan)
 
 				select {
 				case s.statsChan <- s.parser.Stats:
