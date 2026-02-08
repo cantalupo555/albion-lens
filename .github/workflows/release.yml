@@ -160,16 +160,16 @@ jobs:
             CHANGELOG="${CHANGELOG}### 🐛 Bug Fixes"$'\n\n'"${FIXES}"$'\n'
           fi
           
+          if [ -n "$REFACTOR" ]; then
+            CHANGELOG="${CHANGELOG}### ♻️ Code Refactoring"$'\n\n'"${REFACTOR}"$'\n'
+          fi
+          
           if [ -n "$PERFORMANCE" ]; then
             CHANGELOG="${CHANGELOG}### ⚡ Performance Improvements"$'\n\n'"${PERFORMANCE}"$'\n'
           fi
           
           if [ -n "$DOCS" ]; then
             CHANGELOG="${CHANGELOG}### 📚 Documentation"$'\n\n'"${DOCS}"$'\n'
-          fi
-          
-          if [ -n "$REFACTOR" ]; then
-            CHANGELOG="${CHANGELOG}### ♻️ Code Refactoring"$'\n\n'"${REFACTOR}"$'\n'
           fi
           
           if [ -n "$TESTS" ]; then
