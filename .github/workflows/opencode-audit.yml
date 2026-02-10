@@ -59,5 +59,7 @@ jobs:
             - Only report real, actionable issues — do NOT invent problems
             - If the codebase is clean or all findings already have open issues, do NOT create any issues
 
+            Before reporting any bug, trace the actual code path to verify it's real. Read the implementation of called functions — do not assume behavior. Only report issues you have high confidence are genuine bugs.
+
             Do NOT suggest stylistic changes or formatting improvements.
             Do NOT modify any files, create branches, or open pull requests. This is a read-only audit — only report findings as a GitHub issue.
