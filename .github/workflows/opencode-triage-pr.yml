@@ -34,7 +34,7 @@ jobs:
             ## Instructions
 
             1. First, list all available labels in this repository by running: `gh label list --json name,description`
-            2. Analyze the PR: read the title, body, and the actual code changes (run `git diff master...HEAD` and read changed files)
+            2. Analyze the PR: read the title, body, and the actual code changes
             3. Determine which labels best match the PR content — you may assign one or more labels
             4. Apply the labels by running: `gh pr edit <number> --add-label "label1" --add-label "label2"`
 
