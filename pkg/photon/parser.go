@@ -234,13 +234,8 @@ func (p *Parser) handleSendReliable(data []byte) {
 
 	r := NewBufferReader(data)
 
-	// Read signal byte
-	signalByte, _ := r.ReadByte()
-
-	// Check signal byte
-	if signalByte != 243 && signalByte != 253 {
-		return
-	}
+	// Skip signal byte (Protocol18 does not validate it, unlike Protocol16)
+	_ = r.Skip(1)
 
 	messageType, _ := r.ReadByte()
 
@@ -347,7 +342,7 @@ func (p *Parser) decodeOperationRequest(r *BufferReader) {
 	}
 
 	operationCode, _ := r.ReadByte()
-	parameters := decodeParameterTable(r)
+	parameters := decodeParameterTable18(r)
 
 	p.Stats.IncrRequestsDecoded()
 
@@ -367,26 +362,19 @@ func (p *Parser) decodeOperationResponse(r *BufferReader) {
 	}
 
 	operationCode, _ := r.ReadByte()
-	returnCode, _ := r.ReadInt16()
+	returnCode, _ := r.ReadInt16LE()
 
-	// Read debug message (optional)
+	// Read debug message: type byte + typed value (Protocol18 format)
 	debugMessage := ""
 	if !r.IsEmpty() {
-		paramType, _ := r.PeekByte()
-		if paramType != 0 && paramType != TypeNull {
-			// Read type byte
-			_, _ = r.ReadByte()
-			// Read string value
-			if msg, err := r.ReadString(); err == nil {
-				debugMessage = msg
-			}
-		} else {
-			// Skip null type byte
-			_, _ = r.ReadByte()
+		debugType, _ := r.ReadByte()
+		debugVal := deserialize18(r, debugType)
+		if s, ok := debugVal.(string); ok {
+			debugMessage = s
 		}
 	}
 
-	parameters := decodeParameterTable(r)
+	parameters := decodeParameterTable18(r)
 
 	p.Stats.IncrResponsesDecoded()
 
@@ -406,7 +394,7 @@ func (p *Parser) decodeEventData(r *BufferReader) {
 	}
 
 	eventCode, _ := r.ReadByte()
-	parameters := decodeParameterTable(r)
+	parameters := decodeParameterTable18(r)
 
 	p.Stats.IncrEventsDecoded()
 
