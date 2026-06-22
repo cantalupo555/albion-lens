@@ -1,6 +1,6 @@
 module github.com/cantalupo555/albion-lens
 
-go 1.25
+go 1.26
 
 require (
 	github.com/charmbracelet/bubbles v1.0.0

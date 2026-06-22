@@ -75,7 +75,7 @@ sudo ./albion-lens
 
 ### Option 2: Build from Source
 
-Requires **Go 1.25+** and **libpcap-dev** installed.
+Requires **Go 1.26+** and **libpcap-dev** installed.
 
 ```bash
 # Clone the repository
