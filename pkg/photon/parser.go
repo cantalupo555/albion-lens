@@ -285,6 +285,14 @@ func (p *Parser) handleSendFragment(data []byte, sequenceNumber int32) {
 
 	fragmentLength := len(data) - FragmentHeaderLength
 
+	// Validate totalLength to prevent OOM from corrupted packets
+	if totalLength <= 0 || totalLength > 10*1024*1024 {
+		if p.debug {
+			fmt.Printf("  [Photon] Fragment totalLength out of range: %d\n", totalLength)
+		}
+		return
+	}
+
 	// Validate we have enough data
 	if r.Remaining() < fragmentLength {
 		if p.debug {

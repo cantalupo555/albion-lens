@@ -130,6 +130,9 @@ func readValue(r *BufferReader, paramType byte) interface{} {
 		if err != nil {
 			return nil
 		}
+		if int(length) > r.Remaining() {
+			return nil
+		}
 		arr, err := r.ReadBytes(int(length))
 		if err != nil {
 			return nil
@@ -139,6 +142,9 @@ func readValue(r *BufferReader, paramType byte) interface{} {
 	case TypeArray:
 		length, err := r.ReadUint16()
 		if err != nil {
+			return nil
+		}
+		if int(length) > r.Remaining() {
 			return nil
 		}
 		elemType, err := r.ReadByte()
@@ -157,6 +163,9 @@ func readValue(r *BufferReader, paramType byte) interface{} {
 		if err != nil {
 			return nil
 		}
+		if int(length) > r.Remaining()/4 {
+			return nil
+		}
 
 		arr := make([]int32, length)
 		for i := 0; i < int(length); i++ {
@@ -171,6 +180,9 @@ func readValue(r *BufferReader, paramType byte) interface{} {
 	case TypeStringArray:
 		length, err := r.ReadUint16()
 		if err != nil {
+			return nil
+		}
+		if int(length) > r.Remaining() {
 			return nil
 		}
 
@@ -194,6 +206,9 @@ func readValue(r *BufferReader, paramType byte) interface{} {
 		}
 		length, err := r.ReadUint16()
 		if err != nil {
+			return nil
+		}
+		if int(length) > r.Remaining() {
 			return nil
 		}
 
@@ -232,6 +247,9 @@ func readValue(r *BufferReader, paramType byte) interface{} {
 	case TypeObjectArray:
 		length, err := r.ReadUint16()
 		if err != nil {
+			return nil
+		}
+		if int(length) > r.Remaining() {
 			return nil
 		}
 

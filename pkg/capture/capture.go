@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/gopacket"
@@ -23,6 +24,8 @@ const (
 	BPFFilter = "udp and (port 5055 or port 5056)"
 
 	// Capture settings
+	// Large enough to capture full UDP datagrams regardless of MTU/VPN/tunneling.
+	// gopacket only allocates ci.CaptureLength bytes (actual packet size), not SnapshotLen.
 	SnapshotLen = 65536
 	Promiscuous = false
 	Timeout     = pcap.BlockForever
@@ -35,11 +38,18 @@ type PacketHandler func(payload []byte, srcIP, dstIP net.IP, srcPort, dstPort ui
 type Capture struct {
 	handles []*pcap.Handle
 	handler PacketHandler
-	running bool
-	mu      sync.Mutex
-	wg      sync.WaitGroup
 
-	// Status tracking
+	// Hot path: checked on every packet
+	running atomic.Bool
+
+	// Handles slice protection (append at startup, read at shutdown)
+	handlesMu sync.Mutex
+
+	// WaitGroup for all goroutines
+	wg sync.WaitGroup
+
+	// Status tracking (updated per-packet, protected by mutex)
+	mu             sync.Mutex
 	lastPacketTime time.Time
 	isOnline       bool
 	OnlineCallback func(online bool)
@@ -48,9 +58,8 @@ type Capture struct {
 // NewCapture creates a new network capture instance
 func NewCapture(handler PacketHandler) *Capture {
 	return &Capture{
-		handler:  handler,
-		handles:  make([]*pcap.Handle, 0),
-		isOnline: false,
+		handler: handler,
+		handles: make([]*pcap.Handle, 0),
 	}
 }
 
@@ -88,20 +97,20 @@ func (s *Capture) Start() error {
 		return fmt.Errorf("failed to list devices: %w", err)
 	}
 
-	s.mu.Lock()
-	s.running = true
-	s.mu.Unlock()
+	s.running.Store(true)
 
 	// Start capturing on all devices with IPv4 addresses
 	for _, device := range devices {
 		for _, addr := range device.Addresses {
 			if addr.IP.To4() != nil {
+				s.wg.Add(1)
 				go s.captureOnDevice(device.Name, addr.IP.String())
 			}
 		}
 	}
 
 	// Start online status checker
+	s.wg.Add(1)
 	go s.checkOnlineStatus()
 
 	return nil
@@ -109,13 +118,13 @@ func (s *Capture) Start() error {
 
 // StartOnDevice begins capturing packets on a specific device
 func (s *Capture) StartOnDevice(deviceName string) error {
-	s.mu.Lock()
-	s.running = true
-	s.mu.Unlock()
+	s.running.Store(true)
 
+	s.wg.Add(1)
 	go s.captureOnDevice(deviceName, "")
 
 	// Start online status checker
+	s.wg.Add(1)
 	go s.checkOnlineStatus()
 
 	return nil
@@ -123,9 +132,10 @@ func (s *Capture) StartOnDevice(deviceName string) error {
 
 // captureOnDevice captures packets on a specific network device
 func (s *Capture) captureOnDevice(deviceName, ipAddr string) {
+	defer s.wg.Done()
+
 	handle, err := pcap.OpenLive(deviceName, SnapshotLen, Promiscuous, Timeout)
 	if err != nil {
-		// Silently skip devices that can't be opened
 		return
 	}
 
@@ -135,21 +145,24 @@ func (s *Capture) captureOnDevice(deviceName, ipAddr string) {
 		return
 	}
 
-	s.mu.Lock()
+	s.handlesMu.Lock()
 	s.handles = append(s.handles, handle)
-	s.mu.Unlock()
+	s.handlesMu.Unlock()
 
-	s.wg.Add(1)
-	defer s.wg.Done()
-
+	// Use NextPacket() loop instead of Packets() channel.
+	// This avoids the 1000-packet channel buffer and background goroutine
+	// that leaks on shutdown when the channel is full.
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
-	for packet := range packetSource.Packets() {
-		s.mu.Lock()
-		if !s.running {
-			s.mu.Unlock()
+
+	for {
+		if !s.running.Load() {
 			break
 		}
-		s.mu.Unlock()
+
+		packet, err := packetSource.NextPacket()
+		if err != nil {
+			continue
+		}
 
 		s.processPacket(packet)
 	}
@@ -209,16 +222,17 @@ func (s *Capture) processPacket(packet gopacket.Packet) {
 
 // checkOnlineStatus periodically checks if the game is still sending packets
 func (s *Capture) checkOnlineStatus() {
+	defer s.wg.Done()
+
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		s.mu.Lock()
-		if !s.running {
-			s.mu.Unlock()
+		if !s.running.Load() {
 			return
 		}
 
+		s.mu.Lock()
 		if s.isOnline && time.Since(s.lastPacketTime) > 5*time.Second {
 			s.isOnline = false
 			s.mu.Unlock()
@@ -233,13 +247,13 @@ func (s *Capture) checkOnlineStatus() {
 
 // Stop stops all packet capture
 func (s *Capture) Stop() {
-	s.mu.Lock()
-	s.running = false
-	s.mu.Unlock()
+	s.running.Store(false)
 
+	s.handlesMu.Lock()
 	for _, handle := range s.handles {
 		handle.Close()
 	}
+	s.handlesMu.Unlock()
 
 	s.wg.Wait()
 }
