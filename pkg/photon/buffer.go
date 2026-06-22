@@ -10,6 +10,9 @@ import (
 // ErrBufferUnderflow is returned when there are not enough bytes to read.
 var ErrBufferUnderflow = errors.New("buffer underflow: not enough data to read")
 
+// ErrVarintOverflow is returned when a varint exceeds the maximum valid length.
+var ErrVarintOverflow = errors.New("varint overflow: value exceeds maximum size")
+
 // BufferReader provides sequential reading of a byte buffer
 // with automatic offset management and bounds checking.
 type BufferReader struct {
@@ -267,37 +270,39 @@ func (r *BufferReader) RemainingBytes() []byte {
 // ReadVarint32 reads a protobuf-style varint as uint32.
 func (r *BufferReader) ReadVarint32() (uint32, error) {
 	var value uint32
-	shift := 0
-	for shift != 35 {
+	for shift := 0; shift <= 28; shift += 7 {
 		b, err := r.ReadByte()
 		if err != nil {
 			return 0, err
 		}
-		value |= uint32(b&0x7F) << shift
-		shift += 7
 		if b&0x80 == 0 {
-			return value, nil
+			if shift == 28 && b > 0x0F {
+				return 0, ErrVarintOverflow
+			}
+			return value | uint32(b)<<shift, nil
 		}
+		value |= uint32(b&0x7F) << shift
 	}
-	return value, nil
+	return 0, ErrVarintOverflow
 }
 
 // ReadVarint64 reads a protobuf-style varint as uint64.
 func (r *BufferReader) ReadVarint64() (uint64, error) {
 	var value uint64
-	shift := 0
-	for shift != 70 {
+	for shift := 0; shift <= 63; shift += 7 {
 		b, err := r.ReadByte()
 		if err != nil {
 			return 0, err
 		}
-		value |= uint64(b&0x7F) << shift
-		shift += 7
 		if b&0x80 == 0 {
-			return value, nil
+			if shift == 63 && b > 1 {
+				return 0, ErrVarintOverflow
+			}
+			return value | uint64(b)<<shift, nil
 		}
+		value |= uint64(b&0x7F) << shift
 	}
-	return value, nil
+	return 0, ErrVarintOverflow
 }
 
 // DecodeZigZag32 decodes a zigzag-encoded uint32 to int32.

@@ -159,6 +159,15 @@ func deserialize18(r *BufferReader, typeCode byte) interface{} {
 	case P18ObjectArray:
 		return deserializeObjectArray18(r)
 
+	case P18CustomTypeArray:
+		return deserializeCustomTypeArray18(r)
+
+	case P18DictionaryArray:
+		return deserializeDictionaryArray18(r)
+
+	case P18HashtableArray:
+		return deserializeHashtableArray18(r)
+
 	case P18BooleanFalse:
 		return false
 
@@ -233,7 +242,10 @@ func deserializeDictionary18(r *BufferReader) map[interface{}]interface{} {
 	}
 	keyType, _ := r.ReadByte()
 	valueType, _ := r.ReadByte()
+	return deserializeDictEntries18(r, keyType, valueType)
+}
 
+func deserializeDictEntries18(r *BufferReader, keyType, valueType byte) map[interface{}]interface{} {
 	size, err := r.ReadVarint32()
 	if err != nil || size == 0 || int(size) > r.Remaining() {
 		return make(map[interface{}]interface{})
@@ -324,7 +336,7 @@ func deserializeByteArray18(r *BufferReader) []byte {
 
 func deserializeShortArray18(r *BufferReader) []int16 {
 	arrLen, err := r.ReadVarint32()
-	if err != nil || int(arrLen*2) > r.Remaining() {
+	if err != nil || arrLen > uint32(r.Remaining())/2 {
 		return nil
 	}
 	arr := make([]int16, arrLen)
@@ -340,7 +352,7 @@ func deserializeShortArray18(r *BufferReader) []int16 {
 
 func deserializeFloatArray18(r *BufferReader) []float32 {
 	arrLen, err := r.ReadVarint32()
-	if err != nil || int(arrLen*4) > r.Remaining() {
+	if err != nil || arrLen > uint32(r.Remaining())/4 {
 		return nil
 	}
 	arr := make([]float32, arrLen)
@@ -356,7 +368,7 @@ func deserializeFloatArray18(r *BufferReader) []float32 {
 
 func deserializeDoubleArray18(r *BufferReader) []float64 {
 	arrLen, err := r.ReadVarint32()
-	if err != nil || int(arrLen*8) > r.Remaining() {
+	if err != nil || arrLen > uint32(r.Remaining())/8 {
 		return nil
 	}
 	arr := make([]float64, arrLen)
@@ -457,4 +469,54 @@ func deserializeCustomType18(r *BufferReader, slimCode byte) interface{} {
 		"customTypeCode": typeCode,
 		"data":           data,
 	}
+}
+
+func deserializeCustomTypeArray18(r *BufferReader) []interface{} {
+	arrLen, err := r.ReadVarint32()
+	if err != nil || arrLen > uint32(r.Remaining()) {
+		return nil
+	}
+	typeCode, _ := r.ReadByte()
+	arr := make([]interface{}, arrLen)
+	for i := uint32(0); i < arrLen && !r.IsEmpty(); i++ {
+		length, err := r.ReadVarint32()
+		if err != nil || int(length) > r.Remaining() {
+			break
+		}
+		data, _ := r.ReadBytes(int(length))
+		arr[i] = map[string]interface{}{
+			"customTypeCode": typeCode,
+			"data":           data,
+		}
+	}
+	return arr
+}
+
+func deserializeDictionaryArray18(r *BufferReader) []map[interface{}]interface{} {
+	if r.Remaining() < 2 {
+		return nil
+	}
+	keyType, _ := r.ReadByte()
+	valueType, _ := r.ReadByte()
+	arrLen, err := r.ReadVarint32()
+	if err != nil || arrLen > uint32(r.Remaining()) {
+		return nil
+	}
+	arr := make([]map[interface{}]interface{}, arrLen)
+	for i := uint32(0); i < arrLen && !r.IsEmpty(); i++ {
+		arr[i] = deserializeDictEntries18(r, keyType, valueType)
+	}
+	return arr
+}
+
+func deserializeHashtableArray18(r *BufferReader) []map[interface{}]interface{} {
+	arrLen, err := r.ReadVarint32()
+	if err != nil || arrLen > uint32(r.Remaining()) {
+		return nil
+	}
+	arr := make([]map[interface{}]interface{}, arrLen)
+	for i := uint32(0); i < arrLen && !r.IsEmpty(); i++ {
+		arr[i] = deserializeHashtable18(r)
+	}
+	return arr
 }
