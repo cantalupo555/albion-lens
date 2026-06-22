@@ -451,7 +451,7 @@ func TestDeserializeDictionaryArray18(t *testing.T) {
 
 func TestDeserialize18_UnknownType(t *testing.T) {
 	r := NewBufferReader([]byte{0x01, 0x02})
-	got := deserialize18(r, 0xFF)
+	got := deserialize18(r, 1)
 	if got != nil {
 		t.Errorf("expected nil for unknown type, got %v", got)
 	}
