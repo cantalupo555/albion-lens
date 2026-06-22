@@ -192,6 +192,8 @@ const (
 	EventMatchPlayerStatsEvent
 	EventMatchPlayerStatsCompleteEvent
 	EventMatchTimeLineEventEvent
+	EventMatchNewCombatRound
+	EventMatchEndCombatRound
 	EventMatchPlayerMainGearStatsEvent
 	EventMatchPlayerChangedAvatarEvent
 	EventInvitationPlayerTrade
@@ -492,8 +494,9 @@ const (
 	EventXignCodeEvent
 	EventBatchUseItemStart
 	EventBatchUseItemEnd
-	EventRedZoneEventClusterStatus
 	EventRedZonePlayerNotification
+	EventRedZoneEventCheatCleanup
+	EventRedZoneFortressEventChestOpened
 	EventRedZoneWorldEvent
 	EventFactionWarfareStats
 	EventUpdateFactionBalanceFactors
@@ -682,6 +685,24 @@ const (
 	EventFactionDuchySupplyWarDefensiveVictoryEvent
 	EventFactionDuchyReconnectedFromCutoffEvent
 	EventFactionFortressCutoffFightCancelledByClusterOwnerChangeEvent
+	EventFactionDuchyEnteredCutoffStateEvent
+	EventLeaveProtectionStateUpdate
+	EventRedZoneEventStandings
+	EventNewFactionBattleStandardDeliveryStation
+	EventNewLoreSnippetObject
+	EventLoreSnippetObjectStateUpdate
+	EventLoreSnippedClaimed
+	EventLoreSnippetStatesChangedByCheat
+	EventNewTeleporterNode
+	EventTeleporterNodeStateChanged
+	EventTeleporterConnectionsFullStateUpdate
+	EventTeleporterConnectionStateChanged
+	EventRetrieveCarriableObjectStart
+	EventRetrieveCarriableObjectCancel
+	EventRetrieveCarriableObjectReset
+	EventRetrieveCarriableObjectFinished
+	EventLosingCarriableObjectStart
+	EventLosingCarriableObjectFinished
 )
 
 // Special parameter keys
@@ -864,6 +885,8 @@ var EventCodeNames = map[EventCode]string{
 	EventMatchPlayerStatsEvent: "MatchPlayerStatsEvent",
 	EventMatchPlayerStatsCompleteEvent: "MatchPlayerStatsCompleteEvent",
 	EventMatchTimeLineEventEvent: "MatchTimeLineEventEvent",
+	EventMatchNewCombatRound: "MatchNewCombatRound",
+	EventMatchEndCombatRound: "MatchEndCombatRound",
 	EventMatchPlayerMainGearStatsEvent: "MatchPlayerMainGearStatsEvent",
 	EventMatchPlayerChangedAvatarEvent: "MatchPlayerChangedAvatarEvent",
 	EventInvitationPlayerTrade: "InvitationPlayerTrade",
@@ -1164,8 +1187,9 @@ var EventCodeNames = map[EventCode]string{
 	EventXignCodeEvent: "XignCodeEvent",
 	EventBatchUseItemStart: "BatchUseItemStart",
 	EventBatchUseItemEnd: "BatchUseItemEnd",
-	EventRedZoneEventClusterStatus: "RedZoneEventClusterStatus",
 	EventRedZonePlayerNotification: "RedZonePlayerNotification",
+	EventRedZoneEventCheatCleanup: "RedZoneEventCheatCleanup",
+	EventRedZoneFortressEventChestOpened: "RedZoneFortressEventChestOpened",
 	EventRedZoneWorldEvent: "RedZoneWorldEvent",
 	EventFactionWarfareStats: "FactionWarfareStats",
 	EventUpdateFactionBalanceFactors: "UpdateFactionBalanceFactors",
@@ -1354,4 +1378,22 @@ var EventCodeNames = map[EventCode]string{
 	EventFactionDuchySupplyWarDefensiveVictoryEvent: "FactionDuchySupplyWarDefensiveVictoryEvent",
 	EventFactionDuchyReconnectedFromCutoffEvent: "FactionDuchyReconnectedFromCutoffEvent",
 	EventFactionFortressCutoffFightCancelledByClusterOwnerChangeEvent: "FactionFortressCutoffFightCancelledByClusterOwnerChangeEvent",
+	EventFactionDuchyEnteredCutoffStateEvent: "FactionDuchyEnteredCutoffStateEvent",
+	EventLeaveProtectionStateUpdate: "LeaveProtectionStateUpdate",
+	EventRedZoneEventStandings: "RedZoneEventStandings",
+	EventNewFactionBattleStandardDeliveryStation: "NewFactionBattleStandardDeliveryStation",
+	EventNewLoreSnippetObject: "NewLoreSnippetObject",
+	EventLoreSnippetObjectStateUpdate: "LoreSnippetObjectStateUpdate",
+	EventLoreSnippedClaimed: "LoreSnippedClaimed",
+	EventLoreSnippetStatesChangedByCheat: "LoreSnippetStatesChangedByCheat",
+	EventNewTeleporterNode: "NewTeleporterNode",
+	EventTeleporterNodeStateChanged: "TeleporterNodeStateChanged",
+	EventTeleporterConnectionsFullStateUpdate: "TeleporterConnectionsFullStateUpdate",
+	EventTeleporterConnectionStateChanged: "TeleporterConnectionStateChanged",
+	EventRetrieveCarriableObjectStart: "RetrieveCarriableObjectStart",
+	EventRetrieveCarriableObjectCancel: "RetrieveCarriableObjectCancel",
+	EventRetrieveCarriableObjectReset: "RetrieveCarriableObjectReset",
+	EventRetrieveCarriableObjectFinished: "RetrieveCarriableObjectFinished",
+	EventLosingCarriableObjectStart: "LosingCarriableObjectStart",
+	EventLosingCarriableObjectFinished: "LosingCarriableObjectFinished",
 }
