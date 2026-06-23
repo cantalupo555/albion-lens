@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/cantalupo555/albion-lens/pkg/photon"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // EventMsg represents a game event to display in the log

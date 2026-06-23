@@ -10,7 +10,7 @@ import (
 	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/capture"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 const (
@@ -87,7 +87,7 @@ func main() {
 
 	// Create and run TUI
 	model := tui.New(svc, bulkEventChan, statsChan)
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	p := tea.NewProgram(model)
 
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running TUI: %v\n", err)

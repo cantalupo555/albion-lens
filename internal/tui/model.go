@@ -7,8 +7,8 @@ import (
 	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // Model is the main TUI model
@@ -94,7 +94,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	// Keyboard input
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "q", "Q", "ctrl+c":
 			m.quitting = true
@@ -265,13 +265,13 @@ func (m Model) updateLayout() Model {
 }
 
 // View renders the TUI
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	if m.quitting {
-		return "Goodbye!\n"
+		return tea.NewView("Goodbye!\n")
 	}
 
 	if !m.ready {
-		return "Initializing..."
+		return tea.NewView("Initializing...")
 	}
 
 	// Status bar (top)
@@ -288,12 +288,16 @@ func (m Model) View() string {
 	helpBar := m.renderHelpBar()
 
 	// Combine all sections
-	return lipgloss.JoinVertical(
+	content := lipgloss.JoinVertical(
 		lipgloss.Left,
 		statusBar,
 		mainPanel,
 		helpBar,
 	)
+
+	v := tea.NewView(content)
+	v.AltScreen = true
+	return v
 }
 
 // renderHelpBar renders the help bar at the bottom
