@@ -186,8 +186,8 @@ func TestStatsReset(t *testing.T) {
 	if stats.GetPacketsReceived() != 2 {
 		t.Errorf("Expected PacketsReceived=2, got %d", stats.GetPacketsReceived())
 	}
-	if stats.BufferPeakDisplay != 200 {
-		t.Errorf("Expected BufferPeakDisplay=200, got %d", stats.BufferPeakDisplay)
+	if stats.GetBufferPeakDisplay() != 200 {
+		t.Errorf("Expected BufferPeakDisplay=200, got %d", stats.GetBufferPeakDisplay())
 	}
 	if stats.bufferPeakInternal != 50 {
 		t.Errorf("Expected bufferPeakInternal=50, got %d", stats.bufferPeakInternal)
@@ -208,8 +208,8 @@ func TestStatsReset(t *testing.T) {
 	}
 
 	// Verify buffer metrics are reset
-	if stats.BufferPeakDisplay != 0 {
-		t.Errorf("After reset, expected BufferPeakDisplay=0, got %d", stats.BufferPeakDisplay)
+	if stats.GetBufferPeakDisplay() != 0 {
+		t.Errorf("After reset, expected BufferPeakDisplay=0, got %d", stats.GetBufferPeakDisplay())
 	}
 	if stats.bufferPeakInternal != 0 {
 		t.Errorf("After reset, expected bufferPeakInternal=0, got %d", stats.bufferPeakInternal)
@@ -338,8 +338,8 @@ func TestSnapshotBufferPeak(t *testing.T) {
 	stats.SnapshotBufferPeak()
 
 	// BufferPeakDisplay should have the peak
-	if stats.BufferPeakDisplay != 150 {
-		t.Errorf("Expected BufferPeakDisplay=150, got %d", stats.BufferPeakDisplay)
+	if stats.GetBufferPeakDisplay() != 150 {
+		t.Errorf("Expected BufferPeakDisplay=150, got %d", stats.GetBufferPeakDisplay())
 	}
 
 	// bufferPeakInternal should be reset to 0
@@ -357,8 +357,8 @@ func TestSnapshotBufferPeak(t *testing.T) {
 	stats.SnapshotBufferPeak()
 
 	// BufferPeakDisplay should now show 80 (new interval peak)
-	if stats.BufferPeakDisplay != 80 {
-		t.Errorf("Expected BufferPeakDisplay=80 (new interval), got %d", stats.BufferPeakDisplay)
+	if stats.GetBufferPeakDisplay() != 80 {
+		t.Errorf("Expected BufferPeakDisplay=80 (new interval), got %d", stats.GetBufferPeakDisplay())
 	}
 
 	// bufferPeakInternal should be reset again

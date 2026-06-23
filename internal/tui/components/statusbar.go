@@ -59,7 +59,7 @@ func (s StatusBar) UpdateStats(stats *photon.Stats) StatusBar {
 		s.packetsPerSec = stats.PacketsPerSecond()
 		s.eventsDecoded = stats.GetEventsDecoded()
 		s.eventsDropped = stats.GetEventsDropped()
-		s.bufferUsage = int(stats.BufferPeakDisplay)
+		s.bufferUsage = int(stats.GetBufferPeakDisplay())
 		s.bufferCapacity = stats.BufferCapacity
 		s.uptime = stats.FormatUptime()
 	}
