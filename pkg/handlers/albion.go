@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/cantalupo555/albion-lens/pkg/events"
@@ -20,26 +21,33 @@ import (
 // data: optional structured data (FameEventData, SilverEventData, RespecEventData, etc.)
 type EventCallback func(eventType, message string, data interface{})
 
+// defaultDeathDedupWindow is how long a (victim, killer) death signature is
+// remembered so that redundant copies of the same death (delivered when the local
+// player is the killer) are collapsed into a single event. Short enough that two
+// legitimate kills this far apart are both counted. Overridable per-handler for
+// testing via AlbionHandler.deathDedupWindow.
+const defaultDeathDedupWindow = 5 * time.Second
+
 // AlbionHandler handles Albion Online game events
 type AlbionHandler struct {
 	debug     bool
 	discovery bool
 
 	// Fame tracking
-	totalFame   int64
-	sessionFame int64
+	totalFame   atomic.Int64
+	sessionFame atomic.Int64
 
 	// Silver tracking
-	sessionSilver int64
+	sessionSilver atomic.Int64
 
 	// Combat Fame Credits (respec) tracking
-	sessionRespec       int64
-	sessionRespecSilver int64
+	sessionRespec       atomic.Int64
+	sessionRespecSilver atomic.Int64
 
 	// Kill/Death tracking
-	sessionKills  int
-	sessionDeaths int
-	sessionLoot   int
+	sessionKills  atomic.Int64
+	sessionDeaths atomic.Int64
+	sessionLoot   atomic.Int64
 
 	// Items database
 	itemDB *items.ItemDatabase
@@ -48,24 +56,42 @@ type AlbionHandler struct {
 	discoveredEvents map[int16]*DiscoveredEvent
 	discoveryMu      sync.RWMutex
 
+	// Local player identity, auto-detected from the OpJoin response (operation
+	// code 2, parameters[2] = Username). Used to filter foreign loot and attribute
+	// kills/deaths to the local player. Empty until the first OpJoin is captured.
+	localPlayer   string
+	localPlayerMu sync.RWMutex
+
+	// Recent death deduplication. When the local player kills someone, the server
+	// delivers EventDied redundantly (multiple copies within the same second).
+	// We dedup by a (victim, killer) signature within deathDedupWindow.
+	recentDeaths     map[string]time.Time
+	deathsMu         sync.Mutex
+	deathDedupWindow time.Duration
+	lastDeathsPurge  time.Time
+	nowFunc          func() time.Time
+
 	// Event callback for frontend integration (TUI, Wails, etc.)
 	eventCallback EventCallback
 }
 
 // DiscoveredEvent tracks unknown events in discovery mode
 type DiscoveredEvent struct {
-	Code       int16                  `json:"code"`
-	Count      int                    `json:"count"`
-	FirstSeen  time.Time              `json:"first_seen"`
-	LastSeen   time.Time              `json:"last_seen"`
-	SampleData map[byte]interface{}   `json:"sample_data"`
-	ParamTypes map[byte]string        `json:"param_types"`
+	Code       int16                `json:"code"`
+	Count      int                  `json:"count"`
+	FirstSeen  time.Time            `json:"first_seen"`
+	LastSeen   time.Time            `json:"last_seen"`
+	SampleData map[byte]interface{} `json:"sample_data"`
+	ParamTypes map[byte]string      `json:"param_types"`
 }
 
 // NewAlbionHandler creates a new Albion event handler
 func NewAlbionHandler() *AlbionHandler {
 	return &AlbionHandler{
 		discoveredEvents: make(map[int16]*DiscoveredEvent),
+		recentDeaths:     make(map[string]time.Time),
+		deathDedupWindow: defaultDeathDedupWindow,
+		nowFunc:          time.Now,
 	}
 }
 
@@ -84,10 +110,39 @@ func (h *AlbionHandler) SetEventCallback(callback EventCallback) {
 	h.eventCallback = callback
 }
 
+// SetLocalPlayer records the local player's name, auto-detected from the OpJoin
+// response. An empty argument is ignored.
+func (h *AlbionHandler) SetLocalPlayer(name string) {
+	if name == "" {
+		return
+	}
+	h.localPlayerMu.Lock()
+	h.localPlayer = name
+	h.localPlayerMu.Unlock()
+}
+
+// GetLocalPlayer returns the local player's name, or "" if the OpJoin response
+// has not been received yet (e.g. the tool was started after the game was
+// already running and no map change / relog has occurred since).
+func (h *AlbionHandler) GetLocalPlayer() string {
+	h.localPlayerMu.RLock()
+	defer h.localPlayerMu.RUnlock()
+	return h.localPlayer
+}
+
 // notifyEvent calls the event callback if set
 func (h *AlbionHandler) notifyEvent(eventType, message string, data interface{}) {
 	if h.eventCallback != nil {
 		h.eventCallback(eventType, message, data)
+	}
+}
+
+// debugNotify emits a debug event only when debug mode is enabled. Used for
+// diagnostic signals (identity capture, kill routing, override decisions) that
+// should not pollute the normal event log.
+func (h *AlbionHandler) debugNotify(message string, data interface{}) {
+	if h.debug {
+		h.notifyEvent("debug", message, data)
 	}
 }
 
@@ -104,6 +159,7 @@ type SilverEventData struct {
 	Session    int64  // Total silver gained this session
 	LootedBy   string // Player who looted
 	LootedFrom string // Source of the loot
+	Counted    bool   // Whether this amount was added to the session total
 }
 
 // LootEventData contains loot-specific event data
@@ -136,17 +192,17 @@ type RespecEventData struct {
 
 // GetSessionKills returns the number of kills in this session
 func (h *AlbionHandler) GetSessionKills() int {
-	return h.sessionKills
+	return int(h.sessionKills.Load())
 }
 
 // GetSessionDeaths returns the number of deaths in this session
 func (h *AlbionHandler) GetSessionDeaths() int {
-	return h.sessionDeaths
+	return int(h.sessionDeaths.Load())
 }
 
 // GetSessionLoot returns the number of loot items in this session
 func (h *AlbionHandler) GetSessionLoot() int {
-	return h.sessionLoot
+	return int(h.sessionLoot.Load())
 }
 
 // LoadItemDatabase loads the item database from ao-bin-dumps
@@ -162,7 +218,17 @@ func (h *AlbionHandler) OnRequest(operationCode byte, parameters map[byte]interf
 
 // OnResponse handles operation responses (server -> client)
 func (h *AlbionHandler) OnResponse(operationCode byte, returnCode int16, debugMessage string, parameters map[byte]interface{}) {
-	// Responses are not logged to avoid polluting TUI output
+	switch operationCode {
+	case events.OperationJoin:
+		// The Join response carries the local player's identity.
+		// parameters[2] is the Username (character name).
+		if name := getString(parameters, 2); name != "" {
+			h.debugNotify("local player detected from OpJoin", name)
+			h.SetLocalPlayer(name)
+		} else {
+			h.debugNotify("OpJoin response had no player name", nil)
+		}
+	}
 }
 
 // OnEvent handles incoming game events
@@ -266,7 +332,7 @@ func (h *AlbionHandler) trackDiscoveredEvent(code int16, params map[byte]interfa
 func (h *AlbionHandler) GetDiscoveredEvents() map[int16]*DiscoveredEvent {
 	h.discoveryMu.RLock()
 	defer h.discoveryMu.RUnlock()
-	
+
 	// Return a copy
 	result := make(map[int16]*DiscoveredEvent)
 	for k, v := range h.discoveredEvents {
@@ -333,22 +399,22 @@ func (h *AlbionHandler) isKnownEventCode(code int16) bool {
 
 // GetSessionFame returns the total fame gained in this session
 func (h *AlbionHandler) GetSessionFame() int64 {
-	return h.sessionFame
+	return h.sessionFame.Load()
 }
 
 // GetSessionSilver returns the total silver looted in this session
 func (h *AlbionHandler) GetSessionSilver() int64 {
-	return h.sessionSilver
+	return h.sessionSilver.Load()
 }
 
 // GetSessionRespec returns the total combat fame credits gained in this session
 func (h *AlbionHandler) GetSessionRespec() int64 {
-	return h.sessionRespec
+	return h.sessionRespec.Load()
 }
 
 // GetSessionRespecSilver returns the total silver spent on auto-respec this session
 func (h *AlbionHandler) GetSessionRespecSilver() int64 {
-	return h.sessionRespecSilver
+	return h.sessionRespecSilver.Load()
 }
 
 // handleUpdateFame handles fame/XP gain events
@@ -369,7 +435,7 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 
 	// Deduplication: Server sends both Event #81 and #82 for the same fame gain
 	// Skip if we already processed an event with this exact totalFame
-	if totalFame == h.totalFame {
+	if totalFame == h.totalFame.Load() {
 		return
 	}
 
@@ -388,14 +454,14 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 
 	// Validation: Total fame should not decrease significantly
 	// This helps filter out events with similar structure but different purpose
-	if h.totalFame > 0 && totalFame < h.totalFame {
+	if prev := h.totalFame.Load(); prev > 0 && totalFame < prev {
 		return
 	}
-	
+
 	// Calculate values (divide by 10000 for FixPoint format)
 	// Use Floor (truncate) to match game's display behavior
 	totalFameVal := math.Floor(float64(totalFame) / 10000.0)
-	
+
 	if hasDetailedFormat {
 		// Detailed format: we have the actual gained fame
 		fameGainedVal := math.Floor(float64(fameGained) / 10000.0)
@@ -403,33 +469,33 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 
 		// Only notify if fame was actually gained
 		if fameGainedVal > 0 {
-			h.sessionFame += int64(fameGainedVal)
-			h.totalFame = totalFame // Update tracked total
+			h.sessionFame.Add(int64(fameGainedVal))
+			h.totalFame.Store(totalFame) // Update tracked total
 
 			// Message formatting is now handled by the frontend (TUI)
 			h.notifyEvent("fame", "", &FameEventData{
 				Gained:  int64(fameGainedVal),
 				Total:   int64(totalFameVal),
-				Session: h.sessionFame,
+				Session: h.sessionFame.Load(),
 			})
 		}
 	} else {
 		// Simple format: we only have total fame
 		// Calculate gained by comparing with previous total
-		if h.totalFame > 0 {
-			gained := totalFame - h.totalFame
+		if h.totalFame.Load() > 0 {
+			gained := totalFame - h.totalFame.Load()
 			if gained > 0 {
 				gainedVal := math.Floor(float64(gained) / 10000.0)
-				h.sessionFame += int64(gainedVal)
+				h.sessionFame.Add(int64(gainedVal))
 				// Message formatting is now handled by the frontend (TUI)
 				h.notifyEvent("fame", "", &FameEventData{
 					Gained:  int64(gainedVal),
 					Total:   int64(totalFameVal),
-					Session: h.sessionFame,
+					Session: h.sessionFame.Load(),
 				})
 			}
 		}
-		h.totalFame = totalFame
+		h.totalFame.Store(totalFame)
 	}
 }
 
@@ -494,14 +560,25 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 		silverAmountRaw := getInt64(params, 5)
 		// Silver also uses FixPoint format (divide by 10000)
 		silverAmount := int64(math.Floor(float64(silverAmountRaw) / 10000.0))
-		h.sessionSilver += silverAmount
+
+		// Only silver looted by the local player counts toward the session total.
+		// The event is still notified (so other players' loot stays visible in the
+		// log), but it is excluded from the running total when looted by someone
+		// else. Before the local player is known (local == ""), we count everything
+		// to preserve the previous behavior.
+		local := h.GetLocalPlayer()
+		counted := local == "" || lootedBy == local
+		if counted {
+			h.sessionSilver.Add(silverAmount)
+		}
 		// Message formatting is now handled by the frontend (TUI)
 		// We just pass the raw data
 		h.notifyEvent("silver", "", &SilverEventData{
 			Amount:     silverAmount,
-			Session:    h.sessionSilver,
+			Session:    h.sessionSilver.Load(),
 			LootedBy:   lootedBy,
 			LootedFrom: lootedFrom,
+			Counted:    counted,
 		})
 	} else {
 		// Try to get item name from database
@@ -510,7 +587,11 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 			itemName = h.itemDB.GetItemName(itemID)
 		}
 
-		h.sessionLoot++
+		// Item loot counts every event the client sees (not just the local
+		// player's loot), because the total volume of nearby loot is useful
+		// context. Silver is different — only the local player's silver
+		// contributes to the session total (see the silver branch above).
+		h.sessionLoot.Add(1)
 
 		// Message formatting is now handled by the frontend (TUI)
 		h.notifyEvent("loot", "", &LootEventData{
@@ -527,35 +608,107 @@ func (h *AlbionHandler) handleNewLoot(params map[byte]interface{}) {
 	// New loot events are informational only
 }
 
-// handleKilledPlayer handles player kill events
+// handleKilledPlayer handles player kill events.
+//
+// EventKilledPlayer (164) is only ever delivered to the local player when they are
+// the killer, and it carries no victim identifier. When the local player kills
+// someone, the server delivers it redundantly alongside EventDied. Because it has
+// no distinguishable payload, it cannot be deduped per-kill.
+//
+// Kill counting is therefore owned by handleDied (EventDied carries both victim and
+// killer names, so distinct kills are distinguishable and can be deduped correctly).
+// This handler is intentionally a no-op.
 func (h *AlbionHandler) handleKilledPlayer(params map[byte]interface{}) {
-	h.sessionKills++
-
-	// Message formatting is now handled by the frontend (TUI)
-	h.notifyEvent("kill", "", &KillEventData{
-		SessionKills: h.sessionKills,
-	})
+	// No-op: see method comment. Kills are counted via EventDied. Emit a debug
+	// signal so the receipt of this event stays traceable in debug mode.
+	h.debugNotify("EventKilledPlayer received (counted via EventDied)", nil)
 }
 
-// handleDied handles death events
+// isDuplicateDeath reports whether the given death signature was already seen
+// within deathDedupWindow. Otherwise it records the signature and returns false.
+// Expired entries are purged at most once per dedup window (lazy cleanup) to
+// avoid O(n) iteration on every call during high-frequency combat (e.g., ZvZ).
+func (h *AlbionHandler) isDuplicateDeath(key string) bool {
+	now := h.nowFunc()
+
+	h.deathsMu.Lock()
+	defer h.deathsMu.Unlock()
+
+	if now.Sub(h.lastDeathsPurge) >= h.deathDedupWindow {
+		cutoff := now.Add(-h.deathDedupWindow)
+		for k, t := range h.recentDeaths {
+			if t.Before(cutoff) {
+				delete(h.recentDeaths, k)
+			}
+		}
+		h.lastDeathsPurge = now
+	}
+
+	if _, ok := h.recentDeaths[key]; ok {
+		return true
+	}
+	h.recentDeaths[key] = now
+	return false
+}
+
+// handleDied handles death events.
+//
+// EventDied (165) is a world broadcast delivered once when other players die, but
+// delivered redundantly (multiple copies within the same second) when the local
+// player is the killer. We dedup by a (victim, killer) signature so each death is
+// processed exactly once.
+//
+// This handler is the single source of truth for both kills and deaths:
+//   - a kill is counted when the local player is the killer;
+//   - a death is counted when the local player is the victim.
 func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 	victim := getString(params, 2)
 	killer := getString(params, 10)
 
+	local := h.GetLocalPlayer()
+
+	// Dedup redundant copies of the same death. The server delivers EventDied
+	// multiple times when the local player is the killer. Only apply dedup in
+	// that case — for other deaths each EventDied is a distinct event, and
+	// applying dedup before the local player is known would consume the dedup
+	// window and permanently lose a legitimate kill.
+	if local != "" && killer == local {
+		key := victim + "\x00" + killer // use raw victim name (before "Someone" default)
+		if h.isDuplicateDeath(key) {
+			return
+		}
+	}
+
+	// Default display name for anonymous victims
 	if victim == "" {
 		victim = "Someone"
 	}
 
-	// We only increment session deaths if WE died, but we don't have local player tracking yet.
-	// For now, let's just log the event.
-	h.sessionDeaths++
+	isLocalKill := local != "" && killer == local
 
-	// Message formatting is now handled by the frontend (TUI)
-	h.notifyEvent("death", "", &DeathEventData{
-		Victim:        victim,
-		Killer:        killer,
-		SessionDeaths: h.sessionDeaths,
-	})
+	// Count a kill when the local player is the killer.
+	if isLocalKill {
+		h.sessionKills.Add(1)
+		h.notifyEvent("kill", "", &KillEventData{
+			SessionKills: int(h.sessionKills.Load()),
+		})
+	}
+
+	// Count a death only when the local player is the victim.
+	if local != "" && victim == local {
+		h.sessionDeaths.Add(1)
+	}
+
+	// Emit a death event for the local player's death or for nearby deaths
+	// (neither party is the local player). Skip when the local player is the
+	// killer — the kill event already covers it and avoids a duplicate entry.
+	if !isLocalKill {
+		h.notifyEvent("death", "", &DeathEventData{
+			Victim:        victim,
+			Killer:        killer,
+			SessionDeaths: int(h.sessionDeaths.Load()),
+		})
+	}
 }
 
 // handleUpdateReSpecPoints handles combat fame credit (respec) gain events
@@ -571,14 +724,14 @@ func (h *AlbionHandler) handleUpdateReSpecPoints(params map[byte]interface{}) {
 	gainedVal := int64(math.Floor(float64(gainedReSpec) / 10000.0))
 	silverVal := int64(math.Floor(float64(paidSilver) / 10000.0))
 
-	h.sessionRespec += gainedVal
-	h.sessionRespecSilver += silverVal
+	h.sessionRespec.Add(gainedVal)
+	h.sessionRespecSilver.Add(silverVal)
 
 	h.notifyEvent("respec", "", &RespecEventData{
 		Gained:             gainedVal,
 		PaidSilver:         silverVal,
-		SessionTotal:       h.sessionRespec,
-		SessionSilverTotal: h.sessionRespecSilver,
+		SessionTotal:       h.sessionRespec.Load(),
+		SessionSilverTotal: h.sessionRespecSilver.Load(),
 	})
 }
 

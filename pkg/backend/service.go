@@ -103,7 +103,7 @@ func (s *Service) Start() error {
 			Timestamp: time.Now(),
 			Data:      data,
 		}
-		
+
 		// Update peak buffer usage stats before sending
 		if s.parser != nil && s.parser.Stats != nil {
 			s.parser.Stats.UpdateBufferPeak(len(s.eventsChan))
@@ -325,6 +325,15 @@ func (s *Service) SessionLoot() int {
 		return 0
 	}
 	return s.handler.GetSessionLoot()
+}
+
+// LocalPlayerName returns the auto-detected local player name, or "" if the
+// OpJoin response has not been captured yet.
+func (s *Service) LocalPlayerName() string {
+	if s.handler == nil {
+		return ""
+	}
+	return s.handler.GetLocalPlayer()
 }
 
 // ParserStats returns the current parser statistics.
