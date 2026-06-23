@@ -38,8 +38,7 @@ type Stats struct {
 	bufferPeakInternal int64 // Internal accumulator for peak usage
 
 	// Internal state
-	StartTime      time.Time
-	LastPacketTime time.Time
+	StartTime time.Time
 }
 
 // ... (methods) ...
@@ -69,6 +68,11 @@ func (s *Stats) UpdateBufferPeak(current int) {
 func (s *Stats) SnapshotBufferPeak() {
 	peak := atomic.SwapInt64(&s.bufferPeakInternal, 0)
 	atomic.StoreInt64(&s.BufferPeakDisplay, peak)
+}
+
+// GetBufferPeakDisplay returns the peak buffer usage from the last snapshot.
+func (s *Stats) GetBufferPeakDisplay() int64 {
+	return atomic.LoadInt64(&s.BufferPeakDisplay)
 }
 
 // NewStats creates a new Stats instance with StartTime set to now.

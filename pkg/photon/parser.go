@@ -131,7 +131,6 @@ func (p *Parser) PendingFragmentsCount() int {
 func (p *Parser) ParsePacket(payload []byte) error {
 	p.Stats.IncrPacketsReceived()
 	p.Stats.AddBytesReceived(uint64(len(payload)))
-	p.Stats.LastPacketTime = time.Now()
 
 	if len(payload) < PhotonHeaderLength {
 		p.Stats.IncrPacketsMalformed()
