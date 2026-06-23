@@ -73,6 +73,178 @@ func TestStatsPanelViewShowsRespecSilverWhenNonZero(t *testing.T) {
 	}
 }
 
+// ============================================
+// Fame tests
+// ============================================
+
+func TestStatsPanelSetFame(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetFame(5000)
+
+	if s.fame != 5000 {
+		t.Errorf("expected fame 5000, got %d", s.fame)
+	}
+}
+
+func TestStatsPanelAddFame(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.AddFame(100)
+	s = s.AddFame(200)
+
+	if s.fame != 300 {
+		t.Errorf("expected accumulated fame 300, got %d", s.fame)
+	}
+}
+
+// ============================================
+// Silver tests
+// ============================================
+
+func TestStatsPanelSetSilver(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetSilver(8000)
+
+	if s.silver != 8000 {
+		t.Errorf("expected silver 8000, got %d", s.silver)
+	}
+}
+
+func TestStatsPanelAddSilver(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.AddSilver(500)
+	s = s.AddSilver(250)
+
+	if s.silver != 750 {
+		t.Errorf("expected accumulated silver 750, got %d", s.silver)
+	}
+}
+
+// ============================================
+// Kill/Death/Loot counter tests
+// ============================================
+
+func TestStatsPanelIncrKills(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.IncrKills()
+	s = s.IncrKills()
+	s = s.IncrKills()
+
+	if s.kills != 3 {
+		t.Errorf("expected kills 3, got %d", s.kills)
+	}
+}
+
+func TestStatsPanelIncrDeaths(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.IncrDeaths()
+	s = s.IncrDeaths()
+
+	if s.deaths != 2 {
+		t.Errorf("expected deaths 2, got %d", s.deaths)
+	}
+}
+
+func TestStatsPanelIncrLoot(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.IncrLoot()
+	s = s.IncrLoot()
+	s = s.IncrLoot()
+	s = s.IncrLoot()
+
+	if s.lootCount != 4 {
+		t.Errorf("expected lootCount 4, got %d", s.lootCount)
+	}
+}
+
+// ============================================
+// Reset tests (full)
+// ============================================
+
+func TestStatsPanelResetClearsAll(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetFame(5000)
+	s = s.SetSilver(3000)
+	s = s.SetRespec(1000)
+	s = s.SetRespecSilver(500)
+	s = s.IncrKills()
+	s = s.IncrDeaths()
+	s = s.IncrLoot()
+
+	s = s.Reset()
+
+	if s.fame != 0 {
+		t.Errorf("expected fame 0 after reset, got %d", s.fame)
+	}
+	if s.silver != 0 {
+		t.Errorf("expected silver 0 after reset, got %d", s.silver)
+	}
+	if s.respec != 0 {
+		t.Errorf("expected respec 0 after reset, got %d", s.respec)
+	}
+	if s.respecSilver != 0 {
+		t.Errorf("expected respecSilver 0 after reset, got %d", s.respecSilver)
+	}
+	if s.kills != 0 {
+		t.Errorf("expected kills 0 after reset, got %d", s.kills)
+	}
+	if s.deaths != 0 {
+		t.Errorf("expected deaths 0 after reset, got %d", s.deaths)
+	}
+	if s.lootCount != 0 {
+		t.Errorf("expected lootCount 0 after reset, got %d", s.lootCount)
+	}
+}
+
+// ============================================
+// View tests (all stats)
+// ============================================
+
+func TestStatsPanelViewShowsAllLabels(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetFullNumbers(true)
+	s = s.SetFame(1000)
+	s = s.SetSilver(2000)
+	s = s.IncrKills()
+	s = s.IncrDeaths()
+	s = s.IncrLoot()
+	s = s.SetSize(40, 14)
+
+	output := s.View()
+
+	labels := []string{"Fame", "Silver", "Respec", "Kills", "Deaths", "Loot"}
+	for _, label := range labels {
+		if !strings.Contains(output, label) {
+			t.Errorf("expected '%s' label in view", label)
+		}
+	}
+}
+
+func TestStatsPanelViewAbbreviatedNumbers(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetFullNumbers(false)
+	s = s.SetFame(1500000)
+	s = s.SetSize(40, 14)
+
+	output := s.View()
+
+	if !strings.Contains(output, "1.5M") {
+		t.Error("expected abbreviated '1.5M' in view with fullNumbers=false")
+	}
+}
+
+func TestStatsPanelViewFullNumbers(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetFullNumbers(true)
+	s = s.SetFame(1500000)
+	s = s.SetSize(40, 14)
+
+	output := s.View()
+
+	if !strings.Contains(output, "1500000") {
+		t.Error("expected full '1500000' in view with fullNumbers=true")
+	}
+}
+
 func TestStatsPanelViewNegativeSilverAbbreviated(t *testing.T) {
 	s := NewStatsPanel()
 	s = s.SetFullNumbers(false)
