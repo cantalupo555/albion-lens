@@ -3,8 +3,8 @@ package tui
 import (
 	"time"
 
-	"github.com/cantalupo555/albion-lens/pkg/photon"
 	tea "charm.land/bubbletea/v2"
+	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
 
 // EventMsg represents a game event to display in the log

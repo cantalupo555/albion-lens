@@ -59,9 +59,9 @@ func TestItemCount(t *testing.T) {
 // TestParseTierAndEnchantment tests tier and enchantment parsing
 func TestParseTierAndEnchantment(t *testing.T) {
 	testCases := []struct {
-		name              string
-		expectedTier      int
-		expectedEnchant   int
+		name            string
+		expectedTier    int
+		expectedEnchant int
 	}{
 		{"T4_BAG", 4, 0},
 		{"T8_LEATHER", 8, 0},
@@ -69,11 +69,11 @@ func TestParseTierAndEnchantment(t *testing.T) {
 		{"T8_LEATHER@3", 8, 3},
 		{"T6_SWORD@2", 6, 2},
 		{"T1_WOOD", 1, 0},
-		{"SOME_ITEM", 0, 0},        // No tier prefix
-		{"T4", 4, 0},               // Just tier
-		{"@2", 0, 2},               // Just enchantment
-		{"", 0, 0},                 // Empty string
-		{"NOTIER_ITEM@1", 0, 1},    // No tier but has enchantment
+		{"SOME_ITEM", 0, 0},     // No tier prefix
+		{"T4", 4, 0},            // Just tier
+		{"@2", 0, 2},            // Just enchantment
+		{"", 0, 0},              // Empty string
+		{"NOTIER_ITEM@1", 0, 1}, // No tier but has enchantment
 	}
 
 	for _, tc := range testCases {

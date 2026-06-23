@@ -113,8 +113,8 @@ func TestDecodeParameterTable18(t *testing.T) {
 	//   key=1, type=CompressedInt(9), value=varint 0 -> zigzag 0
 	//   key=2, type=String(7), value="ok"
 	data := []byte{
-		0x02,                   // 2 entries
-		0x01, 0x09, 0x00,       // key=1, CompressedInt, varint 0
+		0x02,             // 2 entries
+		0x01, 0x09, 0x00, // key=1, CompressedInt, varint 0
 		0x02, 0x07, 0x02, 'o', 'k', // key=2, String, len=2, "ok"
 	}
 	r := NewBufferReader(data)
@@ -142,10 +142,10 @@ func TestDecodeParameterTable18_Empty(t *testing.T) {
 func TestDeserializeShortArray18(t *testing.T) {
 	// 3 shorts: [10, 20, -1] in LE
 	data := []byte{
-		0x03,                   // array length = 3
-		0x0A, 0x00,             // 10
-		0x14, 0x00,             // 20
-		0xFF, 0xFF,             // -1
+		0x03,       // array length = 3
+		0x0A, 0x00, // 10
+		0x14, 0x00, // 20
+		0xFF, 0xFF, // -1
 	}
 	r := NewBufferReader(data)
 	arr := deserializeShortArray18(r)
@@ -170,7 +170,7 @@ func TestDeserializeShortArray18_OverflowProtection(t *testing.T) {
 	// Bits: 10 00000 00000000 00000000 00000010
 	// Group by 7 from LSB: 0000010 | 0000000 | 0000000 | 0000000 | 0000100 (5 groups)
 	// Wait: 0x80000002 = 2^31 + 2
-	// In 7-bit groups (LSB first): 
+	// In 7-bit groups (LSB first):
 	//   2 & 0x7F = 0x02, shift >> 7
 	//   0 & 0x7F = 0x00, shift >> 7
 	//   0 & 0x7F = 0x00, shift >> 7
@@ -268,9 +268,9 @@ func TestDeserializeByteArray18(t *testing.T) {
 func TestDeserializeStringArray18(t *testing.T) {
 	// ["ab", "c"]
 	data := []byte{
-		0x02,             // 2 strings
-		0x02, 'a', 'b',  // "ab"
-		0x01, 'c',        // "c"
+		0x02,           // 2 strings
+		0x02, 'a', 'b', // "ab"
+		0x01, 'c', // "c"
 	}
 	r := NewBufferReader(data)
 	arr := deserializeStringArray18(r)
@@ -317,12 +317,12 @@ func TestDeserializeDictionary18(t *testing.T) {
 	// entry: key=varint 0 (zigzag 0=0), value="x"
 	// entry: key=varint 2 (zigzag 1), value="y"
 	data := []byte{
-		0x09, 0x07,       // keyType=P18CompressedInt, valueType=P18String
-		0x02,             // size=2
-		0x00,             // key: varint 0 -> zigzag 0
-		0x01, 'x',        // value: string len=1 "x"
-		0x02,             // key: varint 2 -> zigzag 1
-		0x01, 'y',        // value: string len=1 "y"
+		0x09, 0x07, // keyType=P18CompressedInt, valueType=P18String
+		0x02,      // size=2
+		0x00,      // key: varint 0 -> zigzag 0
+		0x01, 'x', // value: string len=1 "x"
+		0x02,      // key: varint 2 -> zigzag 1
+		0x01, 'y', // value: string len=1 "y"
 	}
 	r := NewBufferReader(data)
 	dict := deserializeDictionary18(r)
@@ -343,11 +343,11 @@ func TestDeserializeDictionary18(t *testing.T) {
 func TestDeserializeHashtable18(t *testing.T) {
 	// size=2, each entry: [keyType][key][valueType][value]
 	data := []byte{
-		0x02,                   // size=2
-		0x09, 0x00,             // keyType=CompressedInt, key=varint 0 (zigzag 0)
-		0x07, 0x01, 'A',        // valueType=String, "A"
-		0x09, 0x02,             // keyType=CompressedInt, key=varint 2 (zigzag 1)
-		0x07, 0x01, 'B',        // valueType=String, "B"
+		0x02,       // size=2
+		0x09, 0x00, // keyType=CompressedInt, key=varint 0 (zigzag 0)
+		0x07, 0x01, 'A', // valueType=String, "A"
+		0x09, 0x02, // keyType=CompressedInt, key=varint 2 (zigzag 1)
+		0x07, 0x01, 'B', // valueType=String, "B"
 	}
 	r := NewBufferReader(data)
 	dict := deserializeHashtable18(r)
@@ -362,9 +362,9 @@ func TestDeserializeHashtable18(t *testing.T) {
 func TestDeserializeObjectArray18(t *testing.T) {
 	// [1, "hi"] -> types: CompressedInt, String
 	data := []byte{
-		0x02,                   // 2 elements
-		0x09, 0x00,             // CompressedInt, varint 0 (zigzag 0)
-		0x07, 0x02, 'h', 'i',   // String, len=2 "hi"
+		0x02,       // 2 elements
+		0x09, 0x00, // CompressedInt, varint 0 (zigzag 0)
+		0x07, 0x02, 'h', 'i', // String, len=2 "hi"
 	}
 	r := NewBufferReader(data)
 	arr := deserializeObjectArray18(r)
@@ -403,10 +403,10 @@ func TestDeserializeCustomType18(t *testing.T) {
 func TestDeserializeCustomTypeArray18(t *testing.T) {
 	// typeCode=5, arrayLen=2, each element: [length][data]
 	data := []byte{
-		0x02,                   // array length = 2
-		0x05,                   // custom type code
-		0x02, 0xAA, 0xBB,       // elem 0: len=2, data
-		0x01, 0xCC,             // elem 1: len=1, data
+		0x02,             // array length = 2
+		0x05,             // custom type code
+		0x02, 0xAA, 0xBB, // elem 0: len=2, data
+		0x01, 0xCC, // elem 1: len=1, data
 	}
 	r := NewBufferReader(data)
 	arr := deserializeCustomTypeArray18(r)
@@ -418,9 +418,9 @@ func TestDeserializeCustomTypeArray18(t *testing.T) {
 func TestDeserializeHashtableArray18(t *testing.T) {
 	// arrayLen=2, each element is a hashtable
 	data := []byte{
-		0x02,                   // array length = 2
-		0x00,                   // hashtable 0: empty (size=0)
-		0x00,                   // hashtable 1: empty (size=0)
+		0x02, // array length = 2
+		0x00, // hashtable 0: empty (size=0)
+		0x00, // hashtable 1: empty (size=0)
 	}
 	r := NewBufferReader(data)
 	arr := deserializeHashtableArray18(r)
@@ -433,11 +433,11 @@ func TestDeserializeDictionaryArray18(t *testing.T) {
 	// keyType=CompressedInt(9), valueType=CompressedInt(9), arrayLen=1
 	// dict 0: size=1, entry: key=0, value=0
 	data := []byte{
-		0x09, 0x09,   // keyType, valueType
-		0x01,         // array length = 1
-		0x01,         // dict 0: entry count = 1
-		0x00,         // key: varint 0
-		0x00,         // value: varint 0
+		0x09, 0x09, // keyType, valueType
+		0x01, // array length = 1
+		0x01, // dict 0: entry count = 1
+		0x00, // key: varint 0
+		0x00, // value: varint 0
 	}
 	r := NewBufferReader(data)
 	arr := deserializeDictionaryArray18(r)
