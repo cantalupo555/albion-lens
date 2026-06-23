@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/viewport"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/viewport"
+	"charm.land/lipgloss/v2"
 	"github.com/cantalupo555/albion-lens/pkg/events"
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
 )
@@ -68,13 +68,13 @@ func (e EventLog) SetSize(width, height int) EventLog {
 	}
 
 	if !e.ready {
-		e.viewport = viewport.New(viewportWidth, viewportHeight)
+		e.viewport = viewport.New(viewport.WithWidth(viewportWidth), viewport.WithHeight(viewportHeight))
 		e.ready = true
 		// Initial render
 		e = e.reRenderAll()
 	} else {
-		e.viewport.Width = viewportWidth
-		e.viewport.Height = viewportHeight
+		e.viewport.SetWidth(viewportWidth)
+		e.viewport.SetHeight(viewportHeight)
 		e.viewport.SetContent(strings.Join(e.renderedLines, "\n"))
 	}
 
@@ -252,13 +252,13 @@ func (e EventLog) formatEventMessage(event Event) string {
 
 // ScrollUp scrolls the viewport up
 func (e EventLog) ScrollUp() EventLog {
-	e.viewport.LineUp(1)
+	e.viewport.ScrollUp(1)
 	return e
 }
 
 // ScrollDown scrolls the viewport down
 func (e EventLog) ScrollDown() EventLog {
-	e.viewport.LineDown(1)
+	e.viewport.ScrollDown(1)
 	return e
 }
 

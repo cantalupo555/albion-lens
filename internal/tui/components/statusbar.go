@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cantalupo555/albion-lens/pkg/photon"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 // StatusBar displays connection status, packet stats, and uptime

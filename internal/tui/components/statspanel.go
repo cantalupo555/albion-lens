@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 // StatsPanel displays session statistics

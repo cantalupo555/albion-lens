@@ -7,7 +7,7 @@ import (
 
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 // updateModel is a test helper that calls Update and asserts the result is a Model.
@@ -94,7 +94,7 @@ func TestNewModelDefaults(t *testing.T) {
 func TestUpdateKeyQuit(t *testing.T) {
 	m := New(nil, nil, nil)
 
-	newModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	newModel, cmd := m.Update(	tea.KeyPressMsg{Code: 'q'})
 	m2 := newModel.(Model)
 
 	if !m2.quitting {
@@ -108,7 +108,7 @@ func TestUpdateKeyQuit(t *testing.T) {
 func TestUpdateKeyCtrlC(t *testing.T) {
 	m := New(nil, nil, nil)
 
-	newModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
+	newModel, cmd := m.Update(	tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
 	m2 := newModel.(Model)
 
 	if !m2.quitting {
@@ -126,12 +126,12 @@ func TestUpdateKeyDebugToggle(t *testing.T) {
 		t.Error("expected debug=false initially")
 	}
 
-	m = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m = updateModel(m, 	tea.KeyPressMsg{Code: 'd'})
 	if !m.debug {
 		t.Error("expected debug=true after pressing 'd'")
 	}
 
-	m = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	m = updateModel(m, 	tea.KeyPressMsg{Code: 'd'})
 	if m.debug {
 		t.Error("expected debug=false after pressing 'd' again")
 	}
@@ -144,7 +144,7 @@ func TestUpdateKeyFullNumbersToggle(t *testing.T) {
 		t.Error("expected fullNumbers=false initially")
 	}
 
-	m = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}})
+	m = updateModel(m, 	tea.KeyPressMsg{Code: 'f'})
 	if !m.fullNumbers {
 		t.Error("expected fullNumbers=true after pressing 'f'")
 	}
@@ -159,10 +159,10 @@ func TestUpdateKeyClear(t *testing.T) {
 	})
 
 	// Press 'c' to clear
-	m = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
+	m = updateModel(m, 	tea.KeyPressMsg{Code: 'c'})
 
 	// View should not contain the event text after clear
-	view := m.View()
+	view := m.View().Content
 	if strings.Contains(view, "test event") {
 		t.Error("expected event log to be cleared after 'c'")
 	}
@@ -178,7 +178,7 @@ func TestUpdateKeyReset(t *testing.T) {
 	})
 
 	// Press 'r' to reset
-	m = updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})
+	m = updateModel(m, 	tea.KeyPressMsg{Code: 'r'})
 
 	// Stats panel view should show 0 after reset
 	statsView := m.statsPanel.View()
@@ -191,10 +191,10 @@ func TestUpdateKeyScroll(t *testing.T) {
 	m := readyModel()
 
 	// These should not panic
-	updateModel(m, tea.KeyMsg{Type: tea.KeyUp})
-	updateModel(m, tea.KeyMsg{Type: tea.KeyDown})
-	updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}})
-	updateModel(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	updateModel(m, tea.KeyPressMsg{Code: tea.KeyUp})
+	updateModel(m, tea.KeyPressMsg{Code: tea.KeyDown})
+	updateModel(m, tea.KeyPressMsg{Code: 'k'})
+	updateModel(m, tea.KeyPressMsg{Code: 'j'})
 }
 
 // ============================================
@@ -214,7 +214,7 @@ func TestUpdateBulkEventFame(t *testing.T) {
 
 	m = updateModel(m, bulkMsg)
 
-	view := m.View()
+	view := m.View().Content
 	if !strings.Contains(view, "Fame") {
 		t.Error("expected 'Fame' in stats panel after fame event")
 	}
@@ -238,7 +238,7 @@ func TestUpdateBulkEventSilver(t *testing.T) {
 
 	m = updateModel(m, bulkMsg)
 
-	view := m.View()
+	view := m.View().Content
 	if !strings.Contains(view, "Silver") {
 		t.Error("expected 'Silver' in stats panel after silver event")
 	}
@@ -348,7 +348,7 @@ func TestViewQuitting(t *testing.T) {
 	m := New(nil, nil, nil)
 	m.quitting = true
 
-	view := m.View()
+	view := m.View().Content
 	if !strings.Contains(view, "Goodbye!") {
 		t.Errorf("expected 'Goodbye!' in view, got %q", view)
 	}
@@ -357,7 +357,7 @@ func TestViewQuitting(t *testing.T) {
 func TestViewNotReady(t *testing.T) {
 	m := New(nil, nil, nil)
 
-	view := m.View()
+	view := m.View().Content
 	if !strings.Contains(view, "Initializing") {
 		t.Errorf("expected 'Initializing' in view, got %q", view)
 	}
@@ -366,7 +366,7 @@ func TestViewNotReady(t *testing.T) {
 func TestViewReady(t *testing.T) {
 	m := readyModel()
 
-	view := m.View()
+	view := m.View().Content
 	if strings.Contains(view, "Initializing") {
 		t.Error("expected view to be past 'Initializing' state")
 	}
