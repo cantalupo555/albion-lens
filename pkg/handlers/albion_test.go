@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -89,6 +90,7 @@ func TestNotifyEventNoCallback(t *testing.T) {
 // TestSessionCounters tests kill/death/loot counters
 func TestSessionCounters(t *testing.T) {
 	handler := NewAlbionHandler()
+	handler.SetLocalPlayer("Hero")
 
 	// Initial values should be 0
 	if handler.GetSessionKills() != 0 {
@@ -101,14 +103,26 @@ func TestSessionCounters(t *testing.T) {
 		t.Error("initial loot should be 0")
 	}
 
-	// Simulate kill event
+	// EventKilledPlayer is a no-op; kills are counted via EventDied.
 	handler.OnEvent(byte(events.EventKilledPlayer), map[byte]interface{}{})
+	if handler.GetSessionKills() != 0 {
+		t.Errorf("EventKilledPlayer should not count kills, got %d", handler.GetSessionKills())
+	}
+
+	// Local player kills someone -> kill counted.
+	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Enemy",
+		10: "Hero",
+	})
 	if handler.GetSessionKills() != 1 {
 		t.Errorf("expected 1 kill, got %d", handler.GetSessionKills())
 	}
 
-	// Simulate death event
-	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{})
+	// Local player dies -> death counted.
+	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Hero",
+		10: "Enemy",
+	})
 	if handler.GetSessionDeaths() != 1 {
 		t.Errorf("expected 1 death, got %d", handler.GetSessionDeaths())
 	}
@@ -172,7 +186,7 @@ func TestHandleUpdateFameDetailedFormat(t *testing.T) {
 func TestHandleUpdateFameSimpleFormat(t *testing.T) {
 	handler := NewAlbionHandler()
 	// Set initial total fame
-	handler.totalFame = int64(40000000000) // 4M in FixPoint
+	handler.totalFame.Store(int64(40000000000)) // 4M in FixPoint
 
 	var receivedData *FameEventData
 	handler.SetEventCallback(func(eventType, message string, data interface{}) {
@@ -311,11 +325,11 @@ func TestHandleOtherGrabbedLootItem(t *testing.T) {
 	// Simulate item loot event
 	// Note: EventOtherGrabbedLoot (275) > 255, so we pass it via ParamEventCode
 	params := map[byte]interface{}{
-		1:                     "Chest",       // Looted from
-		2:                     "Player1",     // Looted by
-		3:                     false,         // Is silver (false = item)
-		4:                     int32(12345),  // Item ID
-		5:                     int32(3),      // Quantity
+		1:                     "Chest",      // Looted from
+		2:                     "Player1",    // Looted by
+		3:                     false,        // Is silver (false = item)
+		4:                     int32(12345), // Item ID
+		5:                     int32(3),     // Quantity
 		events.ParamEventCode: int16(events.EventOtherGrabbedLoot),
 	}
 
@@ -342,35 +356,32 @@ func TestHandleOtherGrabbedLootItem(t *testing.T) {
 	}
 }
 
-// TestHandleKilledPlayer tests kill event handling
+// TestHandleKilledPlayer tests that EventKilledPlayer is a no-op. Kills are
+// counted via EventDied (where killer == localPlayer), which carries a victim
+// identifier and can be deduped per kill.
 func TestHandleKilledPlayer(t *testing.T) {
 	handler := NewAlbionHandler()
+	handler.SetLocalPlayer("Hero")
 
-	var receivedData *KillEventData
+	called := false
 	handler.SetEventCallback(func(eventType, message string, data interface{}) {
 		if eventType == "kill" {
-			if killData, ok := data.(*KillEventData); ok {
-				receivedData = killData
-			}
+			called = true
 		}
 	})
 
 	handler.OnEvent(byte(events.EventKilledPlayer), map[byte]interface{}{})
 
-	if receivedData == nil {
-		t.Fatal("kill callback was not called")
+	if called {
+		t.Error("EventKilledPlayer should not produce a kill callback")
 	}
 
-	if receivedData.SessionKills != 1 {
-		t.Errorf("expected SessionKills 1, got %d", receivedData.SessionKills)
-	}
-
-	if handler.GetSessionKills() != 1 {
-		t.Errorf("expected 1 kill, got %d", handler.GetSessionKills())
+	if handler.GetSessionKills() != 0 {
+		t.Errorf("expected 0 kills (no-op), got %d", handler.GetSessionKills())
 	}
 }
 
-// TestHandleDied tests death event handling
+// TestHandleDied tests death event handling and the victim name default.
 func TestHandleDied(t *testing.T) {
 	handler := NewAlbionHandler()
 
@@ -383,6 +394,7 @@ func TestHandleDied(t *testing.T) {
 		}
 	})
 
+	// Empty victim name defaults to "Someone".
 	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{})
 
 	if receivedData == nil {
@@ -393,12 +405,13 @@ func TestHandleDied(t *testing.T) {
 		t.Errorf("expected Victim 'Someone', got %s", receivedData.Victim)
 	}
 
-	if receivedData.SessionDeaths != 1 {
-		t.Errorf("expected SessionDeaths 1, got %d", receivedData.SessionDeaths)
+	// Without a known local player, deaths are not counted.
+	if receivedData.SessionDeaths != 0 {
+		t.Errorf("expected SessionDeaths 0 (no local player), got %d", receivedData.SessionDeaths)
 	}
 
-	if handler.GetSessionDeaths() != 1 {
-		t.Errorf("expected 1 death, got %d", handler.GetSessionDeaths())
+	if handler.GetSessionDeaths() != 0 {
+		t.Errorf("expected 0 deaths (no local player), got %d", handler.GetSessionDeaths())
 	}
 }
 
@@ -542,15 +555,21 @@ func TestIsKnownEventCode(t *testing.T) {
 // TestOnEventWithParamEventCode tests that event code is read from param 252
 func TestOnEventWithParamEventCode(t *testing.T) {
 	handler := NewAlbionHandler()
-	handler.SetDiscoveryMode(true)
+
+	called := false
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "death" {
+			called = true
+		}
+	})
 
 	// Send event with event code in param 252
 	params := map[byte]interface{}{
-		events.ParamEventCode: int16(events.EventKilledPlayer),
+		events.ParamEventCode: int16(events.EventDied),
 	}
 	handler.OnEvent(0, params) // byte code is 0, but actual code is in param 252
 
-	if handler.GetSessionKills() != 1 {
+	if !called {
 		t.Error("event code from param 252 was not used")
 	}
 }
@@ -558,24 +577,29 @@ func TestOnEventWithParamEventCode(t *testing.T) {
 // TestOnEventParamEventCodeConversion tests different types for param event code
 func TestOnEventParamEventCodeConversion(t *testing.T) {
 	testCases := []struct {
-		name     string
-		codeVal  interface{}
-		expected int
+		name    string
+		codeVal interface{}
 	}{
-		{"int16", int16(events.EventKilledPlayer), 1},
-		{"int32", int32(events.EventKilledPlayer), 1},
-		{"int64", int64(events.EventKilledPlayer), 1},
+		{"int16", int16(events.EventDied)},
+		{"int32", int32(events.EventDied)},
+		{"int64", int64(events.EventDied)},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			h := NewAlbionHandler()
+			called := false
+			h.SetEventCallback(func(eventType, message string, data interface{}) {
+				if eventType == "death" {
+					called = true
+				}
+			})
 			params := map[byte]interface{}{
 				events.ParamEventCode: tc.codeVal,
 			}
 			h.OnEvent(0, params)
-			if h.GetSessionKills() != tc.expected {
-				t.Errorf("expected %d kills with %s, got %d", tc.expected, tc.name, h.GetSessionKills())
+			if !called {
+				t.Errorf("expected death callback with %s, got none", tc.name)
 			}
 		})
 	}
@@ -957,5 +981,496 @@ func TestDiscoveredEventStructure(t *testing.T) {
 	}
 	if len(event.ParamTypes) != 1 {
 		t.Errorf("ParamTypes field incorrect")
+	}
+}
+
+// TestSetLocalPlayer tests that SetLocalPlayer ignores empty values and
+// overwrites the previous name (used internally by OpJoin auto-detection).
+func TestSetLocalPlayer(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	if got := handler.GetLocalPlayer(); got != "" {
+		t.Errorf("expected empty local player initially, got %q", got)
+	}
+
+	// Empty value is ignored.
+	handler.SetLocalPlayer("")
+	if got := handler.GetLocalPlayer(); got != "" {
+		t.Errorf("empty SetLocalPlayer should be ignored, got %q", got)
+	}
+
+	handler.SetLocalPlayer("Hero")
+
+	if got := handler.GetLocalPlayer(); got != "Hero" {
+		t.Errorf("expected 'Hero', got %q", got)
+	}
+
+	// A subsequent call overwrites (e.g. relog with a different character).
+	handler.SetLocalPlayer("Hero2")
+	if got := handler.GetLocalPlayer(); got != "Hero2" {
+		t.Errorf("expected 'Hero2' after overwrite, got %q", got)
+	}
+}
+
+// TestOpJoinSetsLocalPlayer tests that the OpJoin response captures the local
+// player name from parameters[2].
+func TestOpJoinSetsLocalPlayer(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	handler.OnResponse(events.OperationJoin, 0, "", map[byte]interface{}{
+		2: "cantalupo",
+	})
+
+	if got := handler.GetLocalPlayer(); got != "cantalupo" {
+		t.Errorf("expected local player 'cantalupo', got %q", got)
+	}
+}
+
+// TestOpJoinIgnoredForUnknownOpCode tests that other operation codes do not set
+// the local player.
+func TestOpJoinIgnoredForUnknownOpCode(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	handler.OnResponse(99, 0, "", map[byte]interface{}{
+		2: "Someone",
+	})
+
+	if got := handler.GetLocalPlayer(); got != "" {
+		t.Errorf("non-Join response must not set local player, got %q", got)
+	}
+}
+
+// TestOpJoinIgnoresEmptyName tests that an OpJoin response with an empty or
+// missing player name does not set the local player.
+func TestOpJoinIgnoresEmptyName(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	// Missing parameter 2 entirely.
+	handler.OnResponse(events.OperationJoin, 0, "", map[byte]interface{}{})
+	if got := handler.GetLocalPlayer(); got != "" {
+		t.Errorf("missing OpJoin name must not set local player, got %q", got)
+	}
+
+	// Empty string parameter.
+	handler.OnResponse(events.OperationJoin, 0, "", map[byte]interface{}{
+		2: "",
+	})
+	if got := handler.GetLocalPlayer(); got != "" {
+		t.Errorf("empty OpJoin name must not set local player, got %q", got)
+	}
+}
+
+// TestDiedNoKillCountedWhenLocalUnknown tests that, before the local player is
+// known, kills are not counted even when EventDied arrives. This guards against
+// reintroducing unconditional kill counting.
+func TestDiedNoKillCountedWhenLocalUnknown(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	killCount := 0
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "kill" {
+			killCount++
+		}
+	})
+
+	// No local player set: a death where someone happens to be the killer must
+	// not be attributed as the local player's kill.
+	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Victim",
+		10: "Someone",
+	})
+
+	if handler.GetSessionKills() != 0 {
+		t.Errorf("expected 0 kills when local player unknown, got %d", handler.GetSessionKills())
+	}
+	if killCount != 0 {
+		t.Errorf("expected 0 kill callbacks when local player unknown, got %d", killCount)
+	}
+}
+
+// TestDiedCountsKillWhenLocalPlayerIsKiller tests that a kill is counted once when
+// the local player is the killer, and that redundant copies are collapsed.
+func TestDiedCountsKillWhenLocalPlayerIsKiller(t *testing.T) {
+	handler := NewAlbionHandler()
+	handler.SetLocalPlayer("cantalupo")
+
+	killCount := 0
+	deathCount := 0
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		switch eventType {
+		case "kill":
+			killCount++
+		case "death":
+			deathCount++
+		}
+	})
+
+	// The server delivers EventDied redundantly when the local player is the killer.
+	deathParams := map[byte]interface{}{
+		2:  "TNTAbyss",
+		10: "cantalupo",
+	}
+	for i := 0; i < 3; i++ {
+		handler.OnEvent(byte(events.EventDied), deathParams)
+	}
+
+	if handler.GetSessionKills() != 1 {
+		t.Errorf("expected 1 kill (deduped), got %d", handler.GetSessionKills())
+	}
+	if killCount != 1 {
+		t.Errorf("expected 1 kill callback, got %d", killCount)
+	}
+	if deathCount != 0 {
+		t.Errorf("expected 0 death callbacks for a local kill, got %d", deathCount)
+	}
+
+	// Local player was the killer, not the victim: deaths must not be counted.
+	if handler.GetSessionDeaths() != 0 {
+		t.Errorf("expected 0 deaths, got %d", handler.GetSessionDeaths())
+	}
+}
+
+// TestDiedDedupByVictimKiller tests that distinct victims within the dedup window
+// are counted separately (rapid multi-kills are preserved), while the same
+// victim+killer is collapsed.
+func TestDiedDedupByVictimKiller(t *testing.T) {
+	handler := NewAlbionHandler()
+	handler.SetLocalPlayer("Hero")
+
+	// Two different victims back-to-back: both counted.
+	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "VictimA",
+		10: "Hero",
+	})
+	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "VictimB",
+		10: "Hero",
+	})
+
+	if handler.GetSessionKills() != 2 {
+		t.Errorf("expected 2 kills for distinct victims, got %d", handler.GetSessionKills())
+	}
+
+	// A duplicate of the first kill is collapsed.
+	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "VictimA",
+		10: "Hero",
+	})
+
+	if handler.GetSessionKills() != 2 {
+		t.Errorf("expected deduped 2 kills, got %d", handler.GetSessionKills())
+	}
+}
+
+// TestDiedOnlyCountsLocalDeaths tests that a death is counted only when the local
+// player is the victim; deaths of other players do not increment sessionDeaths.
+func TestDiedOnlyCountsLocalDeaths(t *testing.T) {
+	handler := NewAlbionHandler()
+	handler.SetLocalPlayer("Hero")
+
+	// Another player dies: not counted.
+	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Stranger",
+		10: "SomeoneElse",
+	})
+	if handler.GetSessionDeaths() != 0 {
+		t.Errorf("foreign death must not count, got %d", handler.GetSessionDeaths())
+	}
+
+	// Local player dies: counted.
+	handler.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Hero",
+		10: "Killer",
+	})
+	if handler.GetSessionDeaths() != 1 {
+		t.Errorf("expected 1 local death, got %d", handler.GetSessionDeaths())
+	}
+}
+
+// silverEventParams builds a silver loot event parameter map for tests.
+// silverAmountRaw is in FixPoint format (value * 10000).
+func silverEventParams(lootedBy, lootedFrom string, silverAmountRaw int64) map[byte]interface{} {
+	return map[byte]interface{}{
+		1:                     lootedFrom,
+		2:                     lootedBy,
+		3:                     true, // is silver
+		4:                     int32(0),
+		5:                     silverAmountRaw,
+		events.ParamEventCode: int16(events.EventOtherGrabbedLoot),
+	}
+}
+
+// TestSilverExcludesForeignLoot tests that silver looted by another player is
+// notified (still visible) but not added to the session total, while silver looted
+// by the local player is both notified and counted.
+func TestSilverExcludesForeignLoot(t *testing.T) {
+	handler := NewAlbionHandler()
+	handler.SetLocalPlayer("Hero")
+
+	var events []SilverEventData
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "silver" {
+			if sd, ok := data.(*SilverEventData); ok {
+				events = append(events, *sd)
+			}
+		}
+	})
+
+	// 5000 silver looted by the local player.
+	handler.OnEvent(0, silverEventParams("Hero", "Monster", 5000*10000))
+	// 420000 silver looted by someone else (foreign).
+	handler.OnEvent(0, silverEventParams("Stranger", "Monster", 420000*10000))
+
+	if len(events) != 2 {
+		t.Fatalf("expected 2 silver callbacks, got %d", len(events))
+	}
+
+	if events[0].Amount != 5000 || events[0].LootedBy != "Hero" || !events[0].Counted {
+		t.Errorf("local silver event mismatch: %+v", events[0])
+	}
+	if events[1].Amount != 420000 || events[1].LootedBy != "Stranger" || events[1].Counted {
+		t.Errorf("foreign silver should not be counted: %+v", events[1])
+	}
+
+	// Only the local player's 5000 silver counts toward the session total.
+	if handler.GetSessionSilver() != 5000 {
+		t.Errorf("expected session silver 5000, got %d", handler.GetSessionSilver())
+	}
+}
+
+// TestSilverCountsAllWhenLocalUnknown tests that, before the local player is known,
+// all silver is counted (backward compatible).
+func TestSilverCountsAllWhenLocalUnknown(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	countedCount := 0
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "silver" {
+			if sd, ok := data.(*SilverEventData); ok && sd.Counted {
+				countedCount++
+			}
+		}
+	})
+
+	handler.OnEvent(0, silverEventParams("Stranger", "Monster", 5000*10000))
+	handler.OnEvent(0, silverEventParams("OtherGuy", "Monster", 3000*10000))
+
+	if countedCount != 2 {
+		t.Errorf("expected 2 counted events when local unknown, got %d", countedCount)
+	}
+	if handler.GetSessionSilver() != 8000 {
+		t.Errorf("expected session silver 8000 (count all), got %d", handler.GetSessionSilver())
+	}
+}
+
+// TestSilverEmptyLootedWithKnownLocal tests the malformed-packet edge case where
+// lootedBy is empty while a local player is known. Such silver must NOT be counted
+// toward the session total (it does not match the local player).
+func TestSilverEmptyLootedWithKnownLocal(t *testing.T) {
+	handler := NewAlbionHandler()
+	handler.SetLocalPlayer("Hero")
+
+	var received *SilverEventData
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "silver" {
+			if sd, ok := data.(*SilverEventData); ok {
+				received = sd
+			}
+		}
+	})
+
+	handler.OnEvent(0, silverEventParams("", "Monster", 5000*10000))
+
+	if received == nil {
+		t.Fatal("silver callback was not called")
+	}
+	if received.Counted {
+		t.Error("empty LootedBy must not be counted toward the session total")
+	}
+	if handler.GetSessionSilver() != 0 {
+		t.Errorf("expected session silver 0, got %d", handler.GetSessionSilver())
+	}
+}
+
+// TestDiedDedupWindowExpiry tests that a death signature stops being considered a
+// duplicate once deathDedupWindow has elapsed, so two legitimately separate kills of
+// the same victim far enough apart are both counted.
+func TestDiedDedupWindowExpiry(t *testing.T) {
+	handler := NewAlbionHandler()
+	handler.SetLocalPlayer("Hero")
+
+	// Use a virtual clock so the test does not have to sleep.
+	base := time.Now()
+	handler.nowFunc = func() time.Time { return base }
+	handler.deathDedupWindow = 100 * time.Millisecond
+
+	deathParams := map[byte]interface{}{
+		2:  "Victim",
+		10: "Hero",
+	}
+
+	// First kill: counted.
+	handler.OnEvent(byte(events.EventDied), deathParams)
+	if handler.GetSessionKills() != 1 {
+		t.Fatalf("expected 1 kill after first death, got %d", handler.GetSessionKills())
+	}
+
+	// Immediate duplicate: suppressed.
+	handler.OnEvent(byte(events.EventDied), deathParams)
+	if handler.GetSessionKills() != 1 {
+		t.Fatalf("expected duplicate to be suppressed, got %d", handler.GetSessionKills())
+	}
+
+	// Advance time past the dedup window: the same victim+killer is counted again.
+	base = base.Add(handler.deathDedupWindow + time.Second)
+	handler.OnEvent(byte(events.EventDied), deathParams)
+	if handler.GetSessionKills() != 2 {
+		t.Errorf("expected 2 kills after window expiry, got %d", handler.GetSessionKills())
+	}
+}
+
+// TestDiedDedupNotConsumedBeforeIdentity tests that a death arriving before the
+// local player is identified does NOT consume the dedup window. Without this
+// guard, the first real kill after identity capture would be permanently lost
+// because the dedup key was already recorded during the unknown-player phase.
+func TestDiedDedupNotConsumedBeforeIdentity(t *testing.T) {
+	handler := NewAlbionHandler()
+	// local player NOT set yet (simulating tool started mid-session)
+
+	deathParams := map[byte]interface{}{
+		2:  "Victim",
+		10: "Hero",
+	}
+
+	// Death arrives while identity is unknown: not counted, not deduped.
+	handler.OnEvent(byte(events.EventDied), deathParams)
+	if handler.GetSessionKills() != 0 {
+		t.Fatalf("expected 0 kills before identity, got %d", handler.GetSessionKills())
+	}
+
+	// Identity captured (e.g. from OpJoin). The same victim+killer death arrives
+	// again — it must NOT be treated as a duplicate because the dedup key was
+	// never recorded during the unknown phase.
+	handler.SetLocalPlayer("Hero")
+	handler.OnEvent(byte(events.EventDied), deathParams)
+	if handler.GetSessionKills() != 1 {
+		t.Errorf("expected 1 kill after identity (dedup not pre-consumed), got %d", handler.GetSessionKills())
+	}
+}
+
+// TestDebugNotifyOnLocalPlayerCapture tests that debug traces are emitted for local
+// player identity capture (only in debug mode).
+func TestDebugNotifyOnLocalPlayerCapture(t *testing.T) {
+	handler := NewAlbionHandler()
+	handler.SetDebug(true)
+
+	debugMsgs := []string{}
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "debug" {
+			debugMsgs = append(debugMsgs, message)
+		}
+	})
+
+	// OpJoin auto-detection emits a debug trace.
+	handler.OnResponse(events.OperationJoin, 0, "", map[byte]interface{}{
+		2: "Hero",
+	})
+
+	found := false
+	for _, m := range debugMsgs {
+		if m == "local player detected from OpJoin" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected OpJoin debug trace, got %v", debugMsgs)
+	}
+}
+
+// TestDebugNotifySuppressedWhenDebugOff tests that debug traces are NOT emitted when
+// debug mode is disabled.
+func TestDebugNotifySuppressedWhenDebugOff(t *testing.T) {
+	handler := NewAlbionHandler()
+	// debug is off by default
+
+	debugCount := 0
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "debug" {
+			debugCount++
+		}
+	})
+
+	handler.OnResponse(events.OperationJoin, 0, "", map[byte]interface{}{
+		2: "Hero",
+	})
+	handler.OnEvent(byte(events.EventKilledPlayer), map[byte]interface{}{})
+
+	if debugCount != 0 {
+		t.Errorf("expected no debug events when debug off, got %d", debugCount)
+	}
+}
+
+// TestSessionCountersConcurrent verifies that session counters are safe for
+// concurrent access: one goroutine writes via OnEvent while another reads via the
+// GetSession* getters. Under `go test -race` this would flag a data race if the
+// counters were still plain int/int64 fields.
+func TestSessionCountersConcurrent(t *testing.T) {
+	handler := NewAlbionHandler()
+	handler.SetLocalPlayer("Hero")
+	handler.deathDedupWindow = 0 // collapse nothing — each victim is unique anyway
+
+	var wg sync.WaitGroup
+	stop := make(chan struct{})
+
+	// Reader goroutine: polls all getters continuously until the writer is done.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				_ = handler.GetSessionKills()
+				_ = handler.GetSessionDeaths()
+				_ = handler.GetSessionLoot()
+				_ = handler.GetSessionFame()
+				_ = handler.GetSessionSilver()
+				_ = handler.GetSessionRespec()
+				_ = handler.GetSessionRespecSilver()
+			}
+		}
+	}()
+
+	// Writer goroutine: fires events that mutate every counter, then signals stop.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(stop)
+		for i := 0; i < 200; i++ {
+			handler.OnEvent(0, map[byte]interface{}{
+				0: int32(1),
+				1: int64(40_000_010_000 + i), // increasing total fame
+			})
+			handler.OnEvent(0, map[byte]interface{}{
+				1:                     "Hero",      // looted by
+				2:                     "Monster",   // looted from
+				3:                     true,        // is silver
+				4:                     int32(9999), // item id (silver)
+				5:                     int32(1000), // quantity
+				events.ParamEventCode: int16(events.EventOtherGrabbedLoot),
+			})
+			handler.OnEvent(byte(events.EventDied), map[byte]interface{}{
+				2:  fmt.Sprintf("Victim%d", i),
+				10: "Hero",
+			})
+		}
+	}()
+
+	wg.Wait()
+
+	// Final sanity: getters return sensible non-negative values.
+	if k := handler.GetSessionKills(); k < 0 {
+		t.Errorf("sessionKills should be >= 0, got %d", k)
 	}
 }

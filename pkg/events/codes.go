@@ -711,6 +711,16 @@ const (
 	ParamOperationCode = 253 // 253 - Operation code parameter key
 )
 
+// Operation codes (client/server requests and responses).
+// These are distinct from EventCode values above; Photon operation codes share
+// the byte space but identify request/response types rather than events.
+const (
+	// OperationJoin is the server response sent when the local player joins a
+	// game server. Its parameters carry the local player's identity, notably
+	// parameters[2] (Username). Used to identify the local player.
+	OperationJoin = 2
+)
+
 // EventCodeNames maps event codes to their string representation
 var EventCodeNames = map[EventCode]string{
 	EventUnused: "Unused",
