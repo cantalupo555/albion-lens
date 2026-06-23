@@ -2,7 +2,6 @@ package components
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -199,29 +198,29 @@ func (e EventLog) formatEventMessage(event Event) string {
 	case "fame":
 		if data, ok := event.Data.(*handlers.FameEventData); ok && data != nil {
 			return fmt.Sprintf("⭐ FAME: +%s | Total: %s | Session: %s",
-				formatNumber(data.Gained, e.fullNumbers),
-				formatNumber(data.Total, e.fullNumbers),
-				formatNumber(data.Session, e.fullNumbers))
+				FormatNumber(data.Gained, e.fullNumbers),
+				FormatNumber(data.Total, e.fullNumbers),
+				FormatNumber(data.Session, e.fullNumbers))
 		}
 	case "silver":
 		if data, ok := event.Data.(*handlers.SilverEventData); ok && data != nil {
 			return fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
 				data.LootedBy,
-				formatNumber(data.Amount, e.fullNumbers),
+				FormatNumber(data.Amount, e.fullNumbers),
 				data.LootedFrom,
-				formatNumber(data.Session, e.fullNumbers))
+				FormatNumber(data.Session, e.fullNumbers))
 		}
 	case "respec":
 		if data, ok := event.Data.(*handlers.RespecEventData); ok && data != nil {
 			if data.PaidSilver > 0 {
 				return fmt.Sprintf("🏆 RESPEC: +%s credits | Silver cost: -%s | Session: %s",
-					formatNumber(data.Gained, e.fullNumbers),
-					formatNumber(data.PaidSilver, e.fullNumbers),
-					formatNumber(data.SessionTotal, e.fullNumbers))
+					FormatNumber(data.Gained, e.fullNumbers),
+					FormatNumber(data.PaidSilver, e.fullNumbers),
+					FormatNumber(data.SessionTotal, e.fullNumbers))
 			}
 			return fmt.Sprintf("🏆 RESPEC: +%s credits | Session: %s",
-				formatNumber(data.Gained, e.fullNumbers),
-				formatNumber(data.SessionTotal, e.fullNumbers))
+				FormatNumber(data.Gained, e.fullNumbers),
+				FormatNumber(data.SessionTotal, e.fullNumbers))
 		}
 	case "loot":
 		if data, ok := event.Data.(*handlers.LootEventData); ok && data != nil {
@@ -249,22 +248,6 @@ func (e EventLog) formatEventMessage(event Event) string {
 	}
 	// Fallback to original message
 	return event.Message
-}
-
-// formatNumber formats a number based on fullNumbers setting
-func formatNumber(amount int64, full bool) string {
-	if full {
-		return fmt.Sprintf("%d", amount)
-	}
-	// Abbreviated format with truncation (floor) instead of rounding
-	if amount >= 1000000 {
-		val := math.Floor(float64(amount)/100000.0) / 10.0
-		return fmt.Sprintf("%.1fM", val)
-	} else if amount >= 1000 {
-		val := math.Floor(float64(amount)/100.0) / 10.0
-		return fmt.Sprintf("%.1fk", val)
-	}
-	return fmt.Sprintf("%d", amount)
 }
 
 // ScrollUp scrolls the viewport up
