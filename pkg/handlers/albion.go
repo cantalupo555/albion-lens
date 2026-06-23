@@ -160,7 +160,9 @@ func (h *AlbionHandler) handleChangeCluster(params map[byte]interface{}) {
 	// nothing materially changed.
 	if newZone.MapType == prev.MapType &&
 		newZone.ClusterIndex == prev.ClusterIndex &&
-		newZone.IslandName == prev.IslandName {
+		newZone.IslandName == prev.IslandName &&
+		newZone.MainClusterIndex == prev.MainClusterIndex &&
+		newZone.HasDungeonInfo == prev.HasDungeonInfo {
 		return
 	}
 
@@ -276,6 +278,8 @@ func resolveOperationCode(headerCode byte, parameters map[byte]interface{}) byte
 		switch v := code.(type) {
 		case byte:
 			return v
+		case int:
+			return byte(v)
 		case int16:
 			return byte(v)
 		case int32:
