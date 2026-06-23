@@ -308,7 +308,6 @@ func (m Model) updateLayout() Model {
 	}
 
 	m.statusBar = m.statusBar.SetWidth(m.width)
-	m.tabBar = m.tabBar.SetWidth(m.width)
 	m.eventLog = m.eventLog.SetSize(eventLogWidth, mainHeight)
 	m.statsPanel = m.statsPanel.SetSize(statsPanelWidth, mainHeight)
 	m.zonePanel = m.zonePanel.SetSize(m.width, mainHeight)

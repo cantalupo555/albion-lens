@@ -74,17 +74,8 @@ func TestTabBarSetActive(t *testing.T) {
 	}
 }
 
-func TestTabBarSetWidth(t *testing.T) {
-	tb := NewTabBar()
-	tb = tb.SetWidth(100)
-	if tb.width != 100 {
-		t.Errorf("expected width=100, got %d", tb.width)
-	}
-}
-
 func TestTabBarViewContainsAllTabs(t *testing.T) {
 	tb := NewTabBar()
-	tb = tb.SetWidth(80)
 
 	view := tb.View()
 
@@ -115,7 +106,6 @@ func TestTabBarViewActiveIsFirst(t *testing.T) {
 func TestTabBarViewZoneActive(t *testing.T) {
 	tb := NewTabBar()
 	tb = tb.SetActive(1) // Zone tab is active
-	tb = tb.SetWidth(80)
 
 	view := tb.View()
 

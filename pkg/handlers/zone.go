@@ -138,7 +138,7 @@ func parseChangeClusterResponse(params map[byte]interface{}) ZoneInfo {
 	info.ClusterIndex = clusterString
 
 	if clusterString != "" && strings.Contains(strings.ToLower(clusterString), "@") {
-		// Split on "@" and filter empty parts to match C# RemoveEmptyEntries semantics.
+		// Split on "@" and filter empty parts to match RemoveEmptyEntries semantics.
 		rawParts := strings.Split(clusterString, "@")
 		parts := make([]string, 0, len(rawParts))
 		for _, p := range rawParts {

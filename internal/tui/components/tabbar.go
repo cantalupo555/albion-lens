@@ -23,10 +23,11 @@ var (
 
 // TabBar renders a horizontal row of tabs and tracks the active one. It follows
 // the immutable builder pattern: all mutator methods return a new TabBar.
+// Always construct via NewTabBar; a zero-value TabBar has no tabs and all
+// navigation methods are no-ops.
 type TabBar struct {
 	tabs   []string
 	active int
-	width  int
 }
 
 // NewTabBar creates a TabBar with the default tabs (Dashboard, Zone).
@@ -44,6 +45,9 @@ func (t TabBar) Active() int {
 // SetActive returns a TabBar with the active tab set to i, clamped to valid
 // bounds.
 func (t TabBar) SetActive(i int) TabBar {
+	if len(t.tabs) == 0 {
+		return t
+	}
 	t.active = i
 	if t.active < 0 {
 		t.active = 0
@@ -56,22 +60,22 @@ func (t TabBar) SetActive(i int) TabBar {
 
 // Next advances the active tab forward, wrapping around to the first tab.
 func (t TabBar) Next() TabBar {
+	if len(t.tabs) == 0 {
+		return t
+	}
 	t.active = (t.active + 1) % len(t.tabs)
 	return t
 }
 
 // Prev moves the active tab backward, wrapping around to the last tab.
 func (t TabBar) Prev() TabBar {
+	if len(t.tabs) == 0 {
+		return t
+	}
 	t.active--
 	if t.active < 0 {
 		t.active = len(t.tabs) - 1
 	}
-	return t
-}
-
-// SetWidth sets the total render width for the tab bar.
-func (t TabBar) SetWidth(w int) TabBar {
-	t.width = w
 	return t
 }
 

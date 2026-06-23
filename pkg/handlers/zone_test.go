@@ -425,7 +425,7 @@ func TestGetCurrentZoneConcurrent(t *testing.T) {
 }
 
 // TestResolveOperationCode verifies that the actual operation code is read
-// from param[253], overriding the Photon header byte. This mirrors the C#
+// from param[253], overriding the Photon header byte. This mirrors the
 // reference AlbionParser behavior.
 func TestResolveOperationCode(t *testing.T) {
 	tests := []struct {

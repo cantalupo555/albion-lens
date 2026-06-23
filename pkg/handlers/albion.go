@@ -269,7 +269,7 @@ func (h *AlbionHandler) LoadItemDatabase(path string) error {
 
 // resolveOperationCode extracts the actual operation code from param[253].
 // Albion embeds the real code in the parameter dictionary, which can differ
-// from the Photon header byte. Mirrors the C# reference AlbionParser which
+// from the Photon header byte. Mirrors the reference AlbionParser which
 // ignores the header byte and reads from parameters[253].
 func resolveOperationCode(headerCode byte, parameters map[byte]interface{}) byte {
 	if code, ok := parameters[events.ParamOperationCode]; ok {
