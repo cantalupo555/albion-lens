@@ -200,3 +200,53 @@ func TestStatusBarViewNoBufferUsage(t *testing.T) {
 		t.Error("expected no 'Queue' section when bufferCapacity = 0")
 	}
 }
+
+// ============================================
+// SetZone tests
+// ============================================
+
+func TestStatusBarSetZone(t *testing.T) {
+	s := NewStatusBar()
+	s = s.SetZone("Random Dungeon")
+
+	if s.currentZone != "Random Dungeon" {
+		t.Errorf("expected currentZone='Random Dungeon', got %q", s.currentZone)
+	}
+}
+
+func TestStatusBarViewZoneIndicator(t *testing.T) {
+	s := NewStatusBar()
+	s = s.SetWidth(100)
+	s = s.SetOnline(true)
+	s = s.SetZone("Random Dungeon")
+
+	output := s.View()
+
+	if !strings.Contains(output, "Random Dungeon") {
+		t.Error("expected zone label in view")
+	}
+}
+
+func TestStatusBarViewNoZoneWhenEmpty(t *testing.T) {
+	s := NewStatusBar()
+	s = s.SetWidth(100)
+	s = s.SetOnline(true)
+
+	output := s.View()
+
+	if strings.Contains(output, "◎") {
+		t.Error("expected no zone indicator when zone is empty")
+	}
+}
+
+func TestStatusBarViewNoZoneWhenOffline(t *testing.T) {
+	s := NewStatusBar()
+	s = s.SetWidth(100)
+	s = s.SetZone("Random Dungeon")
+
+	output := s.View()
+
+	if strings.Contains(output, "Random Dungeon") {
+		t.Error("expected no zone indicator when offline")
+	}
+}

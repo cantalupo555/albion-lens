@@ -125,8 +125,8 @@ func TestFormatEventMessageLoot(t *testing.T) {
 		Data: &handlers.LootEventData{
 			LootedBy:   "PlayerX",
 			ItemName:   "Abyssal Sword",
-			Quantity:    3,
-			LootedFrom:  "Dungeon Boss",
+			Quantity:   3,
+			LootedFrom: "Dungeon Boss",
 		},
 		Timestamp: time.Now(),
 	}
@@ -221,6 +221,55 @@ func TestFormatEventMessageFallback(t *testing.T) {
 
 	if msg != "Custom fallback message" {
 		t.Errorf("expected fallback message, got: %s", msg)
+	}
+}
+
+func TestFormatEventMessageZoneWithPrevious(t *testing.T) {
+	e := EventLog{fullNumbers: true}
+
+	event := Event{
+		Type: "zone",
+		Data: &handlers.ZoneEventData{
+			MapType:  handlers.MapTypeIsland,
+			Display:  "Island — Farm",
+			Previous: handlers.MapTypeRandomDungeon,
+		},
+		Timestamp: time.Now(),
+	}
+
+	msg := e.formatEventMessage(event)
+
+	if !strings.Contains(msg, "Island — Farm") {
+		t.Errorf("expected zone label in message, got: %s", msg)
+	}
+	if !strings.Contains(msg, "was:") {
+		t.Errorf("expected 'was:' suffix with previous zone, got: %s", msg)
+	}
+	if !strings.Contains(msg, "Random Dungeon") {
+		t.Errorf("expected previous zone name in message, got: %s", msg)
+	}
+}
+
+func TestFormatEventMessageZoneFirstTransition(t *testing.T) {
+	e := EventLog{fullNumbers: true}
+
+	event := Event{
+		Type: "zone",
+		Data: &handlers.ZoneEventData{
+			MapType:  handlers.MapTypeIsland,
+			Display:  "Island — Farm",
+			Previous: handlers.MapTypeUnknown,
+		},
+		Timestamp: time.Now(),
+	}
+
+	msg := e.formatEventMessage(event)
+
+	if !strings.Contains(msg, "Island — Farm") {
+		t.Errorf("expected zone label in message, got: %s", msg)
+	}
+	if strings.Contains(msg, "was:") {
+		t.Errorf("should not show 'was:' on first transition, got: %s", msg)
 	}
 }
 
