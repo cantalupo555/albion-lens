@@ -13,6 +13,13 @@ import (
 	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
 
+const (
+	bulkEventChannelSize = 5                       // 5 batches × eventBatchSize = 250 events buffered
+	statsChannelSize     = 10
+	eventBatchSize       = 50
+	eventFlushInterval   = 50 * time.Millisecond
+)
+
 func main() {
 	// Parse command line flags
 	listDevices := flag.Bool("list", false, "List available network devices")
@@ -44,72 +51,11 @@ func main() {
 	svc := backend.New(opts...)
 
 	// Create channels for TUI communication
-	// Use a buffered channel for bulk messages
-	bulkEventChan := make(chan tui.BulkEventMsg, 5) // 5 batches of 50 = 250 events
-	statsChan := make(chan *photon.Stats, 10)
+	bulkEventChan := make(chan tui.BulkEventMsg, bulkEventChannelSize)
+	statsChan := make(chan *photon.Stats, statsChannelSize)
 
 	// Bridge backend events to TUI with batching
-	go func() {
-		const batchSize = 50
-		const flushInterval = 50 * time.Millisecond
-		
-		buffer := make([]tui.EventMsg, 0, batchSize)
-		ticker := time.NewTicker(flushInterval)
-		defer ticker.Stop()
-
-		flush := func() {
-			if len(buffer) == 0 {
-				return
-			}
-			// Create a copy of the buffer to send
-			msg := make(tui.BulkEventMsg, len(buffer))
-			copy(msg, buffer)
-			
-			select {
-			case bulkEventChan <- msg:
-				// Success
-			default:
-				// Channel full, drop ENTIRE batch
-				if stats := svc.ParserStats(); stats != nil {
-					// Increment dropped count for each event in the batch
-					for i := 0; i < len(buffer); i++ {
-						stats.IncrEventsDropped()
-					}
-				}
-			}
-			// Reset buffer
-			buffer = buffer[:0]
-		}
-
-		for {
-			select {
-			case event, ok := <-svc.Events:
-				if !ok {
-					// Channel closed
-					flush()
-					return
-				}
-				
-				// Add to buffer
-				buffer = append(buffer, tui.EventMsg{
-					Type:      string(event.Type),
-					Message:   event.Message,
-					Timestamp: event.Timestamp,
-					Data:      event.Data,
-				})
-
-				// Flush if full
-				if len(buffer) >= batchSize {
-					flush()
-					// Reset ticker to avoid double flushing
-					ticker.Reset(flushInterval)
-				}
-
-			case <-ticker.C:
-				flush()
-			}
-		}
-	}()
+	go bridgeEvents(svc.Events, bulkEventChan, svc.ParserStats)
 
 	// Bridge backend stats to TUI
 	go func() {
@@ -146,5 +92,71 @@ func main() {
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running TUI: %v\n", err)
 		os.Exit(1)
+	}
+}
+
+// bridgeEvents reads game events from eventsCh, batches them, and forwards
+// them as BulkEventMsg to bulkEventChan. When the channel is full, dropped
+// events are counted via statsFn.
+func bridgeEvents(
+	eventsCh <-chan backend.GameEvent,
+	bulkEventChan chan<- tui.BulkEventMsg,
+	statsFn func() *photon.Stats,
+) {
+	buffer := make([]tui.EventMsg, 0, eventBatchSize)
+	ticker := time.NewTicker(eventFlushInterval)
+	defer ticker.Stop()
+
+	flush := func() {
+		if len(buffer) == 0 {
+			return
+		}
+		// Create a copy of the buffer to send
+		msg := make(tui.BulkEventMsg, len(buffer))
+		copy(msg, buffer)
+
+		select {
+		case bulkEventChan <- msg:
+			// Success
+		default:
+			// Channel full, drop ENTIRE batch
+			if stats := statsFn(); stats != nil {
+				// Increment dropped count for each event in the batch
+				for i := 0; i < len(buffer); i++ {
+					stats.IncrEventsDropped()
+				}
+			}
+		}
+		// Reset buffer
+		buffer = buffer[:0]
+	}
+
+	for {
+		select {
+		case event, ok := <-eventsCh:
+			if !ok {
+				// Channel closed
+				flush()
+				return
+			}
+
+			// Add to buffer
+			buffer = append(buffer, tui.EventMsg{
+				Type:      string(event.Type),
+				Message:   event.Message,
+				Timestamp: event.Timestamp,
+				Data:      event.Data,
+			})
+
+			// Flush if full
+			if len(buffer) >= eventBatchSize {
+				flush()
+				// Reset ticker to avoid double flushing
+				ticker.Reset(eventFlushInterval)
+			}
+
+		case <-ticker.C:
+			flush()
+		}
 	}
 }

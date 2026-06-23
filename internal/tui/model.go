@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"math"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -320,16 +319,5 @@ func (m Model) renderHelpBar() string {
 // If fullNumbers is true, returns the full number (e.g., 4984)
 // If fullNumbers is false, returns abbreviated form (e.g., 4.9k)
 func formatNumber(amount int64, full bool) string {
-	if full {
-		return fmt.Sprintf("%d", amount)
-	}
-	// Abbreviated format with truncation (floor) instead of rounding
-	if amount >= 1000000 {
-		val := math.Floor(float64(amount)/100000.0) / 10.0
-		return fmt.Sprintf("%.1fM", val)
-	} else if amount >= 1000 {
-		val := math.Floor(float64(amount)/100.0) / 10.0
-		return fmt.Sprintf("%.1fk", val)
-	}
-	return fmt.Sprintf("%d", amount)
+	return components.FormatNumber(amount, full)
 }
