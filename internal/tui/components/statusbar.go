@@ -39,6 +39,11 @@ func (s StatusBar) SetOnline(online bool) StatusBar {
 	return s
 }
 
+// Online returns whether the status bar shows online status
+func (s StatusBar) Online() bool {
+	return s.online
+}
+
 // UpdateStats updates the stats display
 func (s StatusBar) UpdateStats(stats *photon.Stats) StatusBar {
 	if stats != nil {
