@@ -192,6 +192,7 @@ func TestEventTypeConstants(t *testing.T) {
 		{EventTypeLoot, "loot"},
 		{EventTypeKill, "kill"},
 		{EventTypeDeath, "death"},
+		{EventTypeRespec, "respec"},
 		{EventTypeInfo, "info"},
 	}
 
@@ -393,6 +394,14 @@ func TestServiceSessionMetricsWithoutHandler(t *testing.T) {
 
 	if s.SessionLoot() != 0 {
 		t.Errorf("SessionLoot: expected 0, got %d", s.SessionLoot())
+	}
+
+	if s.SessionRespec() != 0 {
+		t.Errorf("SessionRespec: expected 0, got %d", s.SessionRespec())
+	}
+
+	if s.SessionRespecSilver() != 0 {
+		t.Errorf("SessionRespecSilver: expected 0, got %d", s.SessionRespecSilver())
 	}
 }
 
