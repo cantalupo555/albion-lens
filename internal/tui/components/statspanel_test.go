@@ -72,3 +72,37 @@ func TestStatsPanelViewShowsRespecSilverWhenNonZero(t *testing.T) {
 		t.Error("View should contain silver value 300")
 	}
 }
+
+func TestStatsPanelViewNegativeSilverAbbreviated(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetFullNumbers(false)
+	s = s.SetRespec(7500)
+	s = s.SetRespecSilver(2500)
+	s = s.SetSize(35, 12)
+
+	output := s.View()
+
+	if !strings.Contains(output, "-2.5k") {
+		t.Errorf("View should show negative abbreviated silver (-2.5k), got: %s", output)
+	}
+}
+
+func TestFormatAbbreviatedPreservesSign(t *testing.T) {
+	cases := []struct {
+		input int64
+		want  string
+	}{
+		{2500, "2.5k"},
+		{-2500, "2.5k"},
+		{2500000, "2.5M"},
+		{-2500000, "2.5M"},
+		{500, "500"},
+		{-500, "-500"},
+	}
+	for _, c := range cases {
+		got := formatAbbreviated(c.input)
+		if got != c.want {
+			t.Errorf("formatAbbreviated(%d) = %q, want %q", c.input, got, c.want)
+		}
+	}
+}

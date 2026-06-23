@@ -142,14 +142,17 @@ func (s StatsPanel) View() string {
 
 	// Format numbers with + sign for positive values
 	formatNum := func(n int64) string {
-		sign := ""
-		if n >= 0 {
-			sign = "+"
-		}
 		if s.fullNumbers {
-			return fmt.Sprintf("%s%d", sign, n)
+			if n >= 0 {
+				return fmt.Sprintf("+%d", n)
+			}
+			return fmt.Sprintf("%d", n)
 		}
 		// Abbreviated format with truncation
+		sign := "+"
+		if n < 0 {
+			sign = "-"
+		}
 		return sign + formatAbbreviated(n)
 	}
 
