@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // updateModel is a test helper that calls Update and asserts the result is a Model.
@@ -292,8 +292,10 @@ func TestUpdateStatsUpdate(t *testing.T) {
 
 	m = updateModel(m, StatsUpdateMsg{Stats: stats})
 
-	if !m.statusBar.Online() {
-		t.Error("expected online=true after stats update")
+	// StatsUpdateMsg should NOT change online status — that is owned by the
+	// tick handler (polling svc.IsOnline()) and OnlineMsg.
+	if m.statusBar.Online() {
+		t.Error("expected online=false after stats update (online status is set by tick/OnlineMsg)")
 	}
 }
 

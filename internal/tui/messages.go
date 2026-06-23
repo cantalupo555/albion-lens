@@ -3,8 +3,8 @@ package tui
 import (
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // EventMsg represents a game event to display in the log
@@ -68,5 +68,18 @@ func WaitForStats(ch <-chan *photon.Stats) tea.Cmd {
 	return func() tea.Msg {
 		stats := <-ch
 		return StatsUpdateMsg{Stats: stats}
+	}
+}
+
+// WaitForOnline returns a command that waits for an online status change from
+// the channel. This gives instant feedback when the capture layer detects or
+// loses Albion traffic, without waiting for the 1-second tick.
+func WaitForOnline(ch <-chan bool) tea.Cmd {
+	return func() tea.Msg {
+		online, ok := <-ch
+		if !ok {
+			return nil // channel closed — stop listening
+		}
+		return OnlineMsg{Online: online}
 	}
 }

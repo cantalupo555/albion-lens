@@ -3,13 +3,14 @@ package components
 import (
 	"fmt"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // StatusBar displays connection status, packet stats, and uptime
 type StatusBar struct {
 	online         bool
+	playerName     string
 	packetsTotal   uint64
 	packetsPerSec  float64
 	eventsDecoded  uint64
@@ -36,6 +37,13 @@ func (s StatusBar) SetWidth(width int) StatusBar {
 // SetOnline updates the online status
 func (s StatusBar) SetOnline(online bool) StatusBar {
 	s.online = online
+	return s
+}
+
+// SetPlayerName updates the local player name. When empty and online, the
+// status bar shows a warning prompting the user to change maps or relog.
+func (s StatusBar) SetPlayerName(name string) StatusBar {
+	s.playerName = name
 	return s
 }
 
@@ -74,6 +82,20 @@ func (s StatusBar) View() string {
 			Render("● Offline")
 	}
 
+	// Player identification indicator
+	if s.online {
+		if s.playerName != "" {
+			status += "  " + lipgloss.NewStyle().
+				Foreground(lipgloss.Color("42")).
+				Render("👤 "+s.playerName)
+		} else {
+			status += "  " + lipgloss.NewStyle().
+				Foreground(lipgloss.Color("214")).
+				Bold(true).
+				Render("⚠ Player not identified — change map or relog")
+		}
+	}
+
 	// Buffer Stats Logic
 	var bufStatus string
 	if s.bufferCapacity > 0 {
@@ -84,7 +106,7 @@ func (s StatusBar) View() string {
 		} else if pct >= 50 {
 			bufColor = "214" // Yellow
 		}
-		
+
 		bufStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(bufColor))
 		bufStatus = fmt.Sprintf("│  Queue: %s", bufStyle.Render(fmt.Sprintf("%d/%d (%.0f%%)", s.bufferUsage, s.bufferCapacity, pct)))
 	}
@@ -92,26 +114,33 @@ func (s StatusBar) View() string {
 	// Stats
 	statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
 
-	// Format events with drop warning if needed
-	eventsDisplay := fmt.Sprintf("Events: %d", s.eventsDecoded)
-	if s.eventsDropped > 0 {
-		// RED with warning icon when drops detected
-		dropStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")). // Red
-			Bold(true)
-		eventsDisplay = fmt.Sprintf("Events: %d  %s",
-			s.eventsDecoded,
-			dropStyle.Render(fmt.Sprintf("⚠ Dropped: %d", s.eventsDropped)))
-	}
+	var stats string
+	if !s.online {
+		// When offline, show a simple waiting message instead of zeroes.
+		stats = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("241")).
+			Render("Waiting for Albion Online traffic...")
+	} else {
+		// Format events with drop warning if needed
+		eventsDisplay := fmt.Sprintf("Events: %d", s.eventsDecoded)
+		if s.eventsDropped > 0 {
+			dropStyle := lipgloss.NewStyle().
+				Foreground(lipgloss.Color("196")). // Red
+				Bold(true)
+			eventsDisplay = fmt.Sprintf("Events: %d  %s",
+				s.eventsDecoded,
+				dropStyle.Render(fmt.Sprintf("⚠ Dropped: %d", s.eventsDropped)))
+		}
 
-	stats := statsStyle.Render(fmt.Sprintf(
-		"Packets: %d (%.1f/s)  │  %s  │  %s  %s",
-		s.packetsTotal,
-		s.packetsPerSec,
-		eventsDisplay,
-		s.uptime,
-		bufStatus, // Append buffer status at the end
-	))
+		stats = statsStyle.Render(fmt.Sprintf(
+			"Packets: %d (%.1f/s)  │  %s  │  %s  %s",
+			s.packetsTotal,
+			s.packetsPerSec,
+			eventsDisplay,
+			s.uptime,
+			bufStatus,
+		))
+	}
 
 	// Combine
 	content := fmt.Sprintf("%s  │  %s", status, stats)

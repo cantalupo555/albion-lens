@@ -3,12 +3,12 @@ package tui
 import (
 	"fmt"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/cantalupo555/albion-lens/internal/tui/components"
 	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // Model is the main TUI model
@@ -23,6 +23,7 @@ type Model struct {
 	// Channels for receiving data from parser
 	bulkEventChan chan BulkEventMsg
 	statsChan     chan *photon.Stats
+	onlineChan    <-chan bool
 
 	// UI state
 	width    int
@@ -49,6 +50,7 @@ func New(svc *backend.Service, bulkEventChan chan BulkEventMsg, statsChan chan *
 	// Sync debug state from service
 	if svc != nil {
 		m.debug = svc.IsDebug()
+		m.onlineChan = svc.OnlineStatus
 	}
 	return m
 }
@@ -67,6 +69,11 @@ func (m Model) Init() tea.Cmd {
 	// Listen for stats if channel provided
 	if m.statsChan != nil {
 		cmds = append(cmds, WaitForStats(m.statsChan))
+	}
+
+	// Listen for online status changes if channel provided
+	if m.onlineChan != nil {
+		cmds = append(cmds, WaitForOnline(m.onlineChan))
 	}
 
 	return tea.Batch(cmds...)
@@ -187,7 +194,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Stats update from parser
 	case StatsUpdateMsg:
 		m.statusBar = m.statusBar.UpdateStats(msg.Stats)
-		m.statusBar = m.statusBar.SetOnline(true)
 
 		// Continue listening for stats
 		if m.statsChan != nil {
@@ -198,10 +204,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Online status change
 	case OnlineMsg:
 		m.statusBar = m.statusBar.SetOnline(msg.Online)
-		return m, nil
+		// Continue listening for status changes
+		if m.onlineChan != nil {
+			cmds = append(cmds, WaitForOnline(m.onlineChan))
+		}
+		return m, tea.Batch(cmds...)
 
 	// Periodic tick
 	case TickMsg:
+		// Refresh player identification and online status from the backend
+		if m.svc != nil {
+			m.statusBar = m.statusBar.SetPlayerName(m.svc.LocalPlayerName())
+			m.statusBar = m.statusBar.SetOnline(m.svc.IsOnline())
+		}
 		// Refresh display periodically
 		cmds = append(cmds, TickCmd())
 		return m, tea.Batch(cmds...)

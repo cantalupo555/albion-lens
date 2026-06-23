@@ -6,15 +6,15 @@ import (
 	"os"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cantalupo555/albion-lens/internal/tui"
 	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/capture"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 const (
-	bulkEventChannelSize = 5                       // 5 batches × eventBatchSize = 250 events buffered
+	bulkEventChannelSize = 5 // 5 batches × eventBatchSize = 250 events buffered
 	statsChannelSize     = 10
 	eventBatchSize       = 50
 	eventFlushInterval   = 50 * time.Millisecond

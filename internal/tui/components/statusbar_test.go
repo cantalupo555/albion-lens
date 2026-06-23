@@ -75,12 +75,12 @@ func TestStatusBarUpdateStatsNil(t *testing.T) {
 
 func TestStatusBarUpdateStats(t *testing.T) {
 	stats := &photon.Stats{
-		PacketsReceived:  uint64(100),
-		EventsDecoded:    uint64(50),
-		EventsDropped:    uint64(5),
+		PacketsReceived:   uint64(100),
+		EventsDecoded:     uint64(50),
+		EventsDropped:     uint64(5),
 		BufferPeakDisplay: 30,
-		BufferCapacity:   200,
-		StartTime:        time.Now(),
+		BufferCapacity:    200,
+		StartTime:         time.Now(),
 	}
 
 	s := NewStatusBar()
@@ -139,6 +139,7 @@ func TestStatusBarViewDroppedEvents(t *testing.T) {
 
 	s := NewStatusBar()
 	s = s.SetWidth(100)
+	s = s.SetOnline(true)
 	s = s.UpdateStats(stats)
 
 	output := s.View()
@@ -157,6 +158,7 @@ func TestStatusBarViewNoDroppedEvents(t *testing.T) {
 
 	s := NewStatusBar()
 	s = s.SetWidth(100)
+	s = s.SetOnline(true)
 	s = s.UpdateStats(stats)
 
 	output := s.View()
@@ -175,6 +177,7 @@ func TestStatusBarViewBufferUsage(t *testing.T) {
 
 	s := NewStatusBar()
 	s = s.SetWidth(100)
+	s = s.SetOnline(true)
 	s = s.UpdateStats(stats)
 
 	output := s.View()
