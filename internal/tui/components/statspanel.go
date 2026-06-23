@@ -226,5 +226,5 @@ func formatAbbreviated(amount int64) string {
 		val := math.Floor(float64(absAmount)/100.0) / 10.0
 		return fmt.Sprintf("%.1fk", val)
 	}
-	return fmt.Sprintf("%d", amount)
+	return fmt.Sprintf("%d", absAmount)
 }

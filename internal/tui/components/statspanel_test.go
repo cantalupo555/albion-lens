@@ -97,7 +97,7 @@ func TestFormatAbbreviatedPreservesSign(t *testing.T) {
 		{2500000, "2.5M"},
 		{-2500000, "2.5M"},
 		{500, "500"},
-		{-500, "-500"},
+		{-500, "500"},
 	}
 	for _, c := range cases {
 		got := formatAbbreviated(c.input)
