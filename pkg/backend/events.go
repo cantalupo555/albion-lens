@@ -13,6 +13,7 @@ const (
 	EventTypeLoot   EventType = "loot"
 	EventTypeKill   EventType = "kill"
 	EventTypeDeath  EventType = "death"
+	EventTypeRespec EventType = "respec"
 	EventTypeInfo   EventType = "info"
 )
 

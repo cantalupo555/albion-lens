@@ -521,6 +521,7 @@ func TestIsKnownEventCode(t *testing.T) {
 
 	knownCodes := []int16{
 		int16(events.EventUpdateFame),
+		int16(events.EventUpdateReSpecPoints),
 		int16(events.EventKilledPlayer),
 		int16(events.EventDied),
 		int16(events.EventOtherGrabbedLoot),
@@ -807,6 +808,129 @@ func TestSilverEventDataStructure(t *testing.T) {
 	}
 	if data.LootedFrom != "Monster" {
 		t.Errorf("LootedFrom field incorrect")
+	}
+}
+
+// TestHandleUpdateReSpecPoints tests respec credit handling (Event #84)
+func TestHandleUpdateReSpecPoints(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	var receivedData *RespecEventData
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "respec" {
+			receivedData = data.(*RespecEventData)
+		}
+	})
+
+	// Values are in FixPoint format (multiply by 10000)
+	params := map[byte]interface{}{
+		2:                     int64(10000000), // Gained respec (1000 in FixPoint)
+		3:                     int64(5000000),  // Paid silver (500 in FixPoint)
+		events.ParamEventCode: int16(events.EventUpdateReSpecPoints),
+	}
+
+	handler.OnEvent(byte(events.EventUpdateReSpecPoints), params)
+
+	if receivedData == nil {
+		t.Fatal("respec callback was not called")
+	}
+
+	if receivedData.Gained != 1000 {
+		t.Errorf("expected gained 1000, got %d", receivedData.Gained)
+	}
+
+	if receivedData.PaidSilver != 500 {
+		t.Errorf("expected paid silver 500, got %d", receivedData.PaidSilver)
+	}
+
+	if receivedData.SessionTotal != 1000 {
+		t.Errorf("expected session total 1000, got %d", receivedData.SessionTotal)
+	}
+
+	if receivedData.SessionSilverTotal != 500 {
+		t.Errorf("expected session silver total 500, got %d", receivedData.SessionSilverTotal)
+	}
+
+	if handler.GetSessionRespec() != 1000 {
+		t.Errorf("expected session respec 1000, got %d", handler.GetSessionRespec())
+	}
+
+	if handler.GetSessionRespecSilver() != 500 {
+		t.Errorf("expected session respec silver 500, got %d", handler.GetSessionRespecSilver())
+	}
+}
+
+// TestHandleUpdateReSpecPointsZeroGained tests that events with zero gained are ignored
+func TestHandleUpdateReSpecPointsZeroGained(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	callCount := 0
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "respec" {
+			callCount++
+		}
+	})
+
+	params := map[byte]interface{}{
+		2:                     int64(0), // Zero gained
+		3:                     int64(0),
+		events.ParamEventCode: int16(events.EventUpdateReSpecPoints),
+	}
+
+	handler.OnEvent(byte(events.EventUpdateReSpecPoints), params)
+
+	if callCount != 0 {
+		t.Errorf("expected 0 callbacks for zero gained, got %d", callCount)
+	}
+
+	if handler.GetSessionRespec() != 0 {
+		t.Errorf("expected session respec 0, got %d", handler.GetSessionRespec())
+	}
+}
+
+// TestHandleUpdateReSpecPointsAccumulation tests multiple events accumulate correctly
+func TestHandleUpdateReSpecPointsAccumulation(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	var lastSessionTotal int64
+	var lastSessionSilverTotal int64
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "respec" {
+			if respecData, ok := data.(*RespecEventData); ok {
+				lastSessionTotal = respecData.SessionTotal
+				lastSessionSilverTotal = respecData.SessionSilverTotal
+			}
+		}
+	})
+
+	// First event: 500 credits, 100 silver
+	handler.OnEvent(byte(events.EventUpdateReSpecPoints), map[byte]interface{}{
+		2:                     int64(5000000), // 500 in FixPoint
+		3:                     int64(1000000), // 100 in FixPoint
+		events.ParamEventCode: int16(events.EventUpdateReSpecPoints),
+	})
+
+	// Second event: 300 credits, 50 silver
+	handler.OnEvent(byte(events.EventUpdateReSpecPoints), map[byte]interface{}{
+		2:                     int64(3000000), // 300 in FixPoint
+		3:                     int64(500000),  // 50 in FixPoint
+		events.ParamEventCode: int16(events.EventUpdateReSpecPoints),
+	})
+
+	if lastSessionTotal != 800 {
+		t.Errorf("expected session total 800, got %d", lastSessionTotal)
+	}
+
+	if lastSessionSilverTotal != 150 {
+		t.Errorf("expected session silver total 150, got %d", lastSessionSilverTotal)
+	}
+
+	if handler.GetSessionRespec() != 800 {
+		t.Errorf("expected session respec 800, got %d", handler.GetSessionRespec())
+	}
+
+	if handler.GetSessionRespecSilver() != 150 {
+		t.Errorf("expected session respec silver 150, got %d", handler.GetSessionRespecSilver())
 	}
 }
 

@@ -287,6 +287,22 @@ func (s *Service) SessionSilver() int64 {
 	return s.handler.GetSessionSilver()
 }
 
+// SessionRespec returns the total combat fame credits gained in this session.
+func (s *Service) SessionRespec() int64 {
+	if s.handler == nil {
+		return 0
+	}
+	return s.handler.GetSessionRespec()
+}
+
+// SessionRespecSilver returns the total silver spent on auto-respec this session.
+func (s *Service) SessionRespecSilver() int64 {
+	if s.handler == nil {
+		return 0
+	}
+	return s.handler.GetSessionRespecSilver()
+}
+
 // SessionKills returns the number of kills in this session.
 func (s *Service) SessionKills() int {
 	if s.handler == nil {

@@ -15,9 +15,9 @@ import (
 )
 
 // EventCallback is called when a game event is processed
-// eventType: "fame", "silver", "loot", "combat", "info", "death", "kill"
+// eventType: "fame", "silver", "loot", "respec", "combat", "info", "death", "kill"
 // message: formatted message to display
-// data: optional structured data (FameEventData, SilverEventData, etc.)
+// data: optional structured data (FameEventData, SilverEventData, RespecEventData, etc.)
 type EventCallback func(eventType, message string, data interface{})
 
 // AlbionHandler handles Albion Online game events
@@ -31,6 +31,10 @@ type AlbionHandler struct {
 
 	// Silver tracking
 	sessionSilver int64
+
+	// Combat Fame Credits (respec) tracking
+	sessionRespec       int64
+	sessionRespecSilver int64
 
 	// Kill/Death tracking
 	sessionKills  int
@@ -122,6 +126,14 @@ type DeathEventData struct {
 	SessionDeaths int    // Total deaths in this session
 }
 
+// RespecEventData contains respec-specific event data
+type RespecEventData struct {
+	Gained             int64 // Credits gained in this event
+	PaidSilver         int64 // Silver paid for auto-respec in this event
+	SessionTotal       int64 // Total credits gained this session
+	SessionSilverTotal int64 // Total silver spent on auto-respec this session
+}
+
 // GetSessionKills returns the number of kills in this session
 func (h *AlbionHandler) GetSessionKills() int {
 	return h.sessionKills
@@ -201,6 +213,10 @@ func (h *AlbionHandler) OnEvent(eventCode byte, parameters map[byte]interface{})
 
 	case events.EventDied:
 		h.handleDied(parameters)
+		handled = true
+
+	case events.EventUpdateReSpecPoints:
+		h.handleUpdateReSpecPoints(parameters)
 		handled = true
 
 	default:
@@ -298,6 +314,7 @@ func (h *AlbionHandler) isKnownEventCode(code int16) bool {
 		events.EventHarvestStart, events.EventHarvestCancel,
 		events.EventHarvestFinished, events.EventTakeSilver,
 		events.EventUpdateMoney, events.EventUpdateFame, events.EventUpdateLearningPoints,
+		events.EventUpdateReSpecPoints,
 		events.EventNewLoot, events.EventAttachItemContainer,
 		events.EventDetachItemContainer, events.EventCharacterStats,
 		events.EventPartyInvitation, events.EventPartyJoinRequest,
@@ -322,6 +339,16 @@ func (h *AlbionHandler) GetSessionFame() int64 {
 // GetSessionSilver returns the total silver looted in this session
 func (h *AlbionHandler) GetSessionSilver() int64 {
 	return h.sessionSilver
+}
+
+// GetSessionRespec returns the total combat fame credits gained in this session
+func (h *AlbionHandler) GetSessionRespec() int64 {
+	return h.sessionRespec
+}
+
+// GetSessionRespecSilver returns the total silver spent on auto-respec this session
+func (h *AlbionHandler) GetSessionRespecSilver() int64 {
+	return h.sessionRespecSilver
 }
 
 // handleUpdateFame handles fame/XP gain events
@@ -528,6 +555,30 @@ func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 		Victim:        victim,
 		Killer:        killer,
 		SessionDeaths: h.sessionDeaths,
+	})
+}
+
+// handleUpdateReSpecPoints handles combat fame credit (respec) gain events
+// Event #84: server sends credits gained and silver paid for auto-respec
+func (h *AlbionHandler) handleUpdateReSpecPoints(params map[byte]interface{}) {
+	gainedReSpec := getInt64(params, 2)
+	if gainedReSpec <= 0 {
+		return
+	}
+
+	paidSilver := getInt64(params, 3)
+
+	gainedVal := int64(math.Floor(float64(gainedReSpec) / 10000.0))
+	silverVal := int64(math.Floor(float64(paidSilver) / 10000.0))
+
+	h.sessionRespec += gainedVal
+	h.sessionRespecSilver += silverVal
+
+	h.notifyEvent("respec", "", &RespecEventData{
+		Gained:             gainedVal,
+		PaidSilver:         silverVal,
+		SessionTotal:       h.sessionRespec,
+		SessionSilverTotal: h.sessionRespecSilver,
 	})
 }
 

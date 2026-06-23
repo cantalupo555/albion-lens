@@ -172,6 +172,8 @@ func (e EventLog) renderSingleEvent(event Event) string {
 		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
 	case "silver":
 		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+	case "respec":
+		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("220"))
 	case "loot":
 		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	case "combat", "kill", "death":
@@ -208,6 +210,18 @@ func (e EventLog) formatEventMessage(event Event) string {
 				formatNumber(data.Amount, e.fullNumbers),
 				data.LootedFrom,
 				formatNumber(data.Session, e.fullNumbers))
+		}
+	case "respec":
+		if data, ok := event.Data.(*handlers.RespecEventData); ok && data != nil {
+			if data.PaidSilver > 0 {
+				return fmt.Sprintf("🏆 RESPEC: +%s credits | Silver cost: -%s | Session: %s",
+					formatNumber(data.Gained, e.fullNumbers),
+					formatNumber(data.PaidSilver, e.fullNumbers),
+					formatNumber(data.SessionTotal, e.fullNumbers))
+			}
+			return fmt.Sprintf("🏆 RESPEC: +%s credits | Session: %s",
+				formatNumber(data.Gained, e.fullNumbers),
+				formatNumber(data.SessionTotal, e.fullNumbers))
 		}
 	case "loot":
 		if data, ok := event.Data.(*handlers.LootEventData); ok && data != nil {

@@ -16,6 +16,7 @@ var (
 	ColorSilver = ColorWarning
 	ColorLoot   = ColorMagenta
 	ColorCombat = ColorDanger
+	ColorRespec = lipgloss.Color("220") // Gold
 )
 
 // Base styles
@@ -67,6 +68,9 @@ var (
 	CombatStyle = lipgloss.NewStyle().
 			Foreground(ColorCombat)
 
+	RespecStyle = lipgloss.NewStyle().
+			Foreground(ColorRespec)
+
 	// Stats label style
 	LabelStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("255"))
@@ -87,6 +91,8 @@ func GetEventStyle(eventType string) lipgloss.Style {
 		return LootStyle
 	case "combat", "kill", "death":
 		return CombatStyle
+	case "respec":
+		return RespecStyle
 	default:
 		return lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
 	}
