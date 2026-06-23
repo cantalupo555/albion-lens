@@ -528,30 +528,6 @@ func TestGetDiscoveredEventsReturnsCopy(t *testing.T) {
 	}
 }
 
-// TestIsKnownEventCode tests known event code detection
-func TestIsKnownEventCode(t *testing.T) {
-	handler := NewAlbionHandler()
-
-	knownCodes := []int16{
-		int16(events.EventUpdateFame),
-		int16(events.EventUpdateReSpecPoints),
-		int16(events.EventKilledPlayer),
-		int16(events.EventDied),
-		int16(events.EventOtherGrabbedLoot),
-	}
-
-	for _, code := range knownCodes {
-		if !handler.isKnownEventCode(code) {
-			t.Errorf("code %d should be known", code)
-		}
-	}
-
-	// Test unknown code
-	if handler.isKnownEventCode(9999) {
-		t.Error("code 9999 should be unknown")
-	}
-}
-
 // TestOnEventWithParamEventCode tests that event code is read from param 252
 func TestOnEventWithParamEventCode(t *testing.T) {
 	handler := NewAlbionHandler()
@@ -749,28 +725,6 @@ func TestHelperToInt64(t *testing.T) {
 		result := toInt64(tc.input)
 		if result != tc.expected {
 			t.Errorf("toInt64(%v) = %d, expected %d", tc.input, result, tc.expected)
-		}
-	}
-}
-
-// TestFormatSilver tests the formatSilver helper function
-func TestFormatSilver(t *testing.T) {
-	testCases := []struct {
-		input    int64
-		expected string
-	}{
-		{500, "500"},
-		{1000, "1.0k"},
-		{1500, "1.5k"},
-		{10000, "10.0k"},
-		{1000000, "1.0M"},
-		{2500000, "2.5M"},
-	}
-
-	for _, tc := range testCases {
-		result := formatSilver(tc.input)
-		if result != tc.expected {
-			t.Errorf("formatSilver(%d) = '%s', expected '%s'", tc.input, result, tc.expected)
 		}
 	}
 }

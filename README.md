@@ -13,7 +13,7 @@ Cross-platform network analyzer for Albion Online written in Go.
 
 - UDP packet capture for Albion Online (ports 5055/5056)
 - Photon Engine protocol parser
-- Protocol16 decoding
+- Protocol18 decoding
 - Fame (XP) tracking with session counting
 - Silver tracking
 - Loot events with item names (via ao-bin-dumps)

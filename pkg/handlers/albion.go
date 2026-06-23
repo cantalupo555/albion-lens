@@ -366,37 +366,6 @@ func (h *AlbionHandler) SaveDiscoveredEvents(filename string) error {
 	return os.WriteFile(filename, data, 0644)
 }
 
-// isKnownEventCode checks if an event code is in our known list
-func (h *AlbionHandler) isKnownEventCode(code int16) bool {
-	knownCodes := []events.EventCode{
-		events.EventUnused, events.EventLeave, events.EventJoinFinished,
-		events.EventMove, events.EventTeleport, events.EventHealthUpdate,
-		events.EventHealthUpdates, events.EventEnergyUpdate, events.EventAttack,
-		events.EventCastStart, events.EventCastHit, events.EventKilledPlayer,
-		events.EventDied, events.EventKnockedDown, events.EventInventoryPutItem,
-		events.EventInventoryDeleteItem, events.EventNewCharacter,
-		events.EventNewEquipmentItem, events.EventNewSiegeBannerItem,
-		events.EventNewSimpleItem, events.EventNewFurnitureItem,
-		events.EventHarvestStart, events.EventHarvestCancel,
-		events.EventHarvestFinished, events.EventTakeSilver,
-		events.EventUpdateMoney, events.EventUpdateFame, events.EventUpdateLearningPoints,
-		events.EventUpdateReSpecPoints,
-		events.EventNewLoot, events.EventAttachItemContainer,
-		events.EventDetachItemContainer, events.EventCharacterStats,
-		events.EventPartyInvitation, events.EventPartyJoinRequest,
-		events.EventPartyJoined, events.EventPartyDisbanded,
-		events.EventPartyPlayerJoined, events.EventPartyPlayerLeft,
-		events.EventOtherGrabbedLoot, events.EventInCombatStateUpdate,
-	}
-
-	for _, known := range knownCodes {
-		if events.EventCode(code) == known {
-			return true
-		}
-	}
-	return false
-}
-
 // GetSessionFame returns the total fame gained in this session
 func (h *AlbionHandler) GetSessionFame() int64 {
 	return h.sessionFame.Load()
@@ -784,14 +753,4 @@ func getBool(params map[byte]interface{}, key byte) bool {
 		}
 	}
 	return false
-}
-
-// formatSilver formats silver amount in a human-readable way
-func formatSilver(amount int64) string {
-	if amount >= 1000000 {
-		return fmt.Sprintf("%.1fM", float64(amount)/1000000.0)
-	} else if amount >= 1000 {
-		return fmt.Sprintf("%.1fk", float64(amount)/1000.0)
-	}
-	return fmt.Sprintf("%d", amount)
 }
