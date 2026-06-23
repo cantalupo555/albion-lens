@@ -79,21 +79,3 @@ var (
 	ValueStyle = lipgloss.NewStyle().
 			Bold(true)
 )
-
-// GetEventStyle returns the appropriate style for an event type
-func GetEventStyle(eventType string) lipgloss.Style {
-	switch eventType {
-	case "fame":
-		return FameStyle
-	case "silver":
-		return SilverStyle
-	case "loot":
-		return LootStyle
-	case "combat", "kill", "death":
-		return CombatStyle
-	case "respec":
-		return RespecStyle
-	default:
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
-	}
-}
