@@ -9,14 +9,16 @@ import (
 
 // StatsPanel displays session statistics
 type StatsPanel struct {
-	fame        int64
-	silver      int64
-	kills       int
-	deaths      int
-	lootCount   int
-	width       int
-	height      int
-	fullNumbers bool
+	fame         int64
+	silver       int64
+	respec       int64
+	respecSilver int64
+	kills        int
+	deaths       int
+	lootCount    int
+	width        int
+	height       int
+	fullNumbers  bool
 }
 
 // NewStatsPanel creates a new StatsPanel component
@@ -63,6 +65,18 @@ func (s StatsPanel) SetSilver(amount int64) StatsPanel {
 	return s
 }
 
+// SetRespec sets the session respec credits total
+func (s StatsPanel) SetRespec(amount int64) StatsPanel {
+	s.respec = amount
+	return s
+}
+
+// SetRespecSilver sets the session respec silver cost total
+func (s StatsPanel) SetRespecSilver(amount int64) StatsPanel {
+	s.respecSilver = amount
+	return s
+}
+
 // IncrKills increments the kill counter
 func (s StatsPanel) IncrKills() StatsPanel {
 	s.kills++
@@ -85,6 +99,8 @@ func (s StatsPanel) IncrLoot() StatsPanel {
 func (s StatsPanel) Reset() StatsPanel {
 	s.fame = 0
 	s.silver = 0
+	s.respec = 0
+	s.respecSilver = 0
 	s.kills = 0
 	s.deaths = 0
 	s.lootCount = 0
@@ -104,6 +120,13 @@ func (s StatsPanel) View() string {
 	silverValueStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("214")).
 		Bold(true)
+
+	respecValueStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("220")).
+		Bold(true)
+
+	respecSilverStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("214"))
 
 	killsValueStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("196")).
@@ -130,7 +153,19 @@ func (s StatsPanel) View() string {
 		return sign + formatAbbreviated(n)
 	}
 
-	rows := []string{
+	respecRow := fmt.Sprintf("%s %s",
+		labelStyle.Render("Respec"),
+		respecValueStyle.Render(formatNum(s.respec)),
+	)
+	if s.respecSilver > 0 {
+		respecRow = fmt.Sprintf("%s %s %s",
+			labelStyle.Render("Respec"),
+			respecValueStyle.Render(formatNum(s.respec)),
+			respecSilverStyle.Render(fmt.Sprintf("(%s silver)", formatNum(-s.respecSilver))),
+		)
+	}
+
+	statRows := []string{
 		fmt.Sprintf("%s %s",
 			labelStyle.Render("Fame"),
 			fameValueStyle.Render(formatNum(s.fame)),
@@ -139,6 +174,7 @@ func (s StatsPanel) View() string {
 			labelStyle.Render("Silver"),
 			silverValueStyle.Render(formatNum(s.silver)),
 		),
+		respecRow,
 		fmt.Sprintf("%s %s",
 			labelStyle.Render("Kills"),
 			killsValueStyle.Render(fmt.Sprintf("%d", s.kills)),
@@ -153,7 +189,7 @@ func (s StatsPanel) View() string {
 		),
 	}
 
-	content := lipgloss.JoinVertical(lipgloss.Left, rows...)
+	content := lipgloss.JoinVertical(lipgloss.Left, statRows...)
 
 	boxStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).

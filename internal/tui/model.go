@@ -145,6 +145,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						data.LootedFrom,
 						formatNumber(data.Session, m.fullNumbers))
 				}
+			case "respec":
+				if data, ok := eventMsg.Data.(*handlers.RespecEventData); ok && data != nil {
+					m.statsPanel = m.statsPanel.SetRespec(data.SessionTotal)
+					m.statsPanel = m.statsPanel.SetRespecSilver(data.SessionSilverTotal)
+					if data.PaidSilver > 0 {
+						displayMsg = fmt.Sprintf("🏆 RESPEC: +%s credits | Silver cost: -%s | Session: %s",
+							formatNumber(data.Gained, m.fullNumbers),
+							formatNumber(data.PaidSilver, m.fullNumbers),
+							formatNumber(data.SessionTotal, m.fullNumbers))
+					} else {
+						displayMsg = fmt.Sprintf("🏆 RESPEC: +%s credits | Session: %s",
+							formatNumber(data.Gained, m.fullNumbers),
+							formatNumber(data.SessionTotal, m.fullNumbers))
+					}
+				}
 			case "loot":
 				m.statsPanel = m.statsPanel.IncrLoot()
 			case "kill":
