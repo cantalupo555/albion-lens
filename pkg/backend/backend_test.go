@@ -194,6 +194,7 @@ func TestEventTypeConstants(t *testing.T) {
 		{EventTypeDeath, "death"},
 		{EventTypeRespec, "respec"},
 		{EventTypeInfo, "info"},
+		{EventTypeZone, "zone"},
 	}
 
 	for _, tc := range testCases {

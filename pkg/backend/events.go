@@ -15,6 +15,7 @@ const (
 	EventTypeDeath  EventType = "death"
 	EventTypeRespec EventType = "respec"
 	EventTypeInfo   EventType = "info"
+	EventTypeZone   EventType = "zone"
 )
 
 // GameEvent represents a game event for display in frontends
