@@ -266,6 +266,7 @@ func TestHandleUpdateFameLowTotalIgnored(t *testing.T) {
 // TestHandleOtherGrabbedLootSilver tests silver loot handling
 func TestHandleOtherGrabbedLootSilver(t *testing.T) {
 	handler := NewAlbionHandler()
+	handler.SetLocalPlayer("Player1")
 
 	var receivedData *SilverEventData
 	handler.SetEventCallback(func(eventType, message string, data interface{}) {
@@ -1194,7 +1195,7 @@ func TestSilverExcludesForeignLoot(t *testing.T) {
 
 // TestSilverCountsAllWhenLocalUnknown tests that, before the local player is known,
 // all silver is counted (backward compatible).
-func TestSilverCountsAllWhenLocalUnknown(t *testing.T) {
+func TestSilverNotCountedWhenLocalUnknown(t *testing.T) {
 	handler := NewAlbionHandler()
 
 	countedCount := 0
@@ -1209,11 +1210,11 @@ func TestSilverCountsAllWhenLocalUnknown(t *testing.T) {
 	handler.OnEvent(0, silverEventParams("Stranger", "Monster", 5000*10000))
 	handler.OnEvent(0, silverEventParams("OtherGuy", "Monster", 3000*10000))
 
-	if countedCount != 2 {
-		t.Errorf("expected 2 counted events when local unknown, got %d", countedCount)
+	if countedCount != 0 {
+		t.Errorf("expected 0 counted events when local unknown, got %d", countedCount)
 	}
-	if handler.GetSessionSilver() != 8000 {
-		t.Errorf("expected session silver 8000 (count all), got %d", handler.GetSessionSilver())
+	if handler.GetSessionSilver() != 0 {
+		t.Errorf("expected session silver 0 (nothing counted), got %d", handler.GetSessionSilver())
 	}
 }
 
