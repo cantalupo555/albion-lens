@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "reviewers": ["cantalupo555"],
+  "prCreation": "immediate",
+  "postUpdateOptions": ["gomodTidy"],
+  "packageRules": [
+    {
+      "matchManagers": ["gomod"],
+      "labels": ["backend", "maintenance", "dependencies"],
+      "commitMessagePrefix": "chore(deps): "
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "labels": ["github_actions", "ci", "dependencies"],
+      "commitMessagePrefix": "ci(deps): "
+    }
+  ]
+}
