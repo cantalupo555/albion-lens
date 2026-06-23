@@ -1,0 +1,8540 @@
+[
+  {
+    "Index": "Debug",
+    "Name": "Debug",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-0001a",
+    "Name": "ISLAND-GUILD-0001a_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-0001a",
+    "Name": "ISLAND-PLAYER-0001a_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-0001f",
+    "Name": "ISLAND-PLAYER-0001f_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-0001e",
+    "Name": "ISLAND-PLAYER-0001e_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-0001d",
+    "Name": "ISLAND-PLAYER-0001d_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-0001c",
+    "Name": "ISLAND-PLAYER-0001c_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-0001b",
+    "Name": "ISLAND-PLAYER-0001b_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-0001b",
+    "Name": "ISLAND-GUILD-0001b_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-0001c",
+    "Name": "ISLAND-GUILD-0001c_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-0001d",
+    "Name": "ISLAND-GUILD-0001d_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-0001e",
+    "Name": "ISLAND-GUILD-0001e_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-0001f",
+    "Name": "ISLAND-GUILD-0001f_ISL_DL_T1_NON",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "0004",
+    "Name": "Swamp Cross",
+    "Tier": "2",
+    "Area": ""
+  },
+  {
+    "Index": "4206",
+    "Name": "Tharcal Fissure",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "MushroomCave-GROUP",
+    "Name": "Mushroom Cave",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "MushroomCave-SOLO",
+    "Name": "Mushroom Cave",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "FishyBusiness-GROUP",
+    "Name": "Fishy Business",
+    "Tier": "4",
+    "Area": ""
+  },
+  {
+    "Index": "FishyBusiness-SOLO",
+    "Name": "Fishy Business",
+    "Tier": "4",
+    "Area": ""
+  },
+  {
+    "Index": "StoneWars-GROUP",
+    "Name": "Stone Wars",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "StoneWars-SOLO",
+    "Name": "Stone Wars",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "4209",
+    "Name": "Cairn Darg",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4210",
+    "Name": "Gwan Gorge",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4215",
+    "Name": "Malag Crevasse",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4216",
+    "Name": "Creag Morr",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4213",
+    "Name": "Cairn Camain",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4212",
+    "Name": "Cairn Glascore",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4207",
+    "Name": "Pen Gent",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4201",
+    "Name": "Pen Garn",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4203",
+    "Name": "Crose Gorge",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3201",
+    "Name": "Birken Fell",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3204",
+    "Name": "Eldon Hill",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3203",
+    "Name": "Lewsdon Hill",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3207",
+    "Name": "Blackthorn Quarry",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3206",
+    "Name": "Haytor",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3209",
+    "Name": "Brent Knoll",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3210",
+    "Name": "Mase Knoll",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3212",
+    "Name": "Croker Hill",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3215",
+    "Name": "Goffers Knoll",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3213",
+    "Name": "Vixen Tor",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2215",
+    "Name": "Prospector's Hope",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2213",
+    "Name": "Steelhide Meadow",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2212",
+    "Name": "Longmarch Meadow",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2209",
+    "Name": "Lazygrass Plain",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2210",
+    "Name": "Snapshaft Trough",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2207",
+    "Name": "Drywater Meadow",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2206",
+    "Name": "Parchthroat Plain",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2204",
+    "Name": "Deadvein Gully",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2203",
+    "Name": "Roastcorpse Steppe",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2201",
+    "Name": "Kindlegrass Steppe",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1215",
+    "Name": "Ferndell",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1213",
+    "Name": "Wyre Forest",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1212",
+    "Name": "Stagbourne",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1210",
+    "Name": "Murkweald",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1209",
+    "Name": "Longtimber Glen",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1207",
+    "Name": "Birchcopse",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1206",
+    "Name": "Willow Wood",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1204",
+    "Name": "Oakcopse",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1203",
+    "Name": "Rowanwood",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1201",
+    "Name": "Larchroad",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4204",
+    "Name": "Pen Kerrig",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0214",
+    "Name": "Slimehag",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0212",
+    "Name": "Bonepool Marsh",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0211",
+    "Name": "Spectral Sump",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0203",
+    "Name": "Willowsigh Marsh",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0208",
+    "Name": "Stumprot Swamp",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0206",
+    "Name": "Dusklight Fen",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0209",
+    "Name": "Dewleaf Fen",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0205",
+    "Name": "Stinkhag",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0202",
+    "Name": "Chillhag",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2208",
+    "Name": "Slowtree Plain",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2211",
+    "Name": "Smoothfloor Cleft",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3205",
+    "Name": "Gutras Hill",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3202",
+    "Name": "Mardale",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0210",
+    "Name": "Wispwhisper Marsh",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0213",
+    "Name": "Curlew Fen",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3211",
+    "Name": "Saddle Tor",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0204",
+    "Name": "Windripple Fen",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4208",
+    "Name": "Mawar Gorge",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1202",
+    "Name": "Russerdell",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4202",
+    "Name": "Bryn Gorge",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4205",
+    "Name": "Cairn Gorm",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "LumberCampGROUP",
+    "Name": "Lumber Lunacy",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "RecruitmentOfTheDead-GROUP",
+    "Name": "Preaching to the Dead",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "RecruitmentOfTheDead-SOLO",
+    "Name": "Preaching to the Dead",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "3208",
+    "Name": "Bowscale Fell",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4214",
+    "Name": "Cairn Fidair",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4211",
+    "Name": "Creag Garr",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0207",
+    "Name": "Nightcreak Marsh",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2214",
+    "Name": "Fractured Ground",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2202",
+    "Name": "Cracked Earth",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1208",
+    "Name": "Redlake",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1211",
+    "Name": "Yew Wood",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1205",
+    "Name": "Highbole Glen",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1214",
+    "Name": "Hornbeam Wood",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2002",
+    "Name": "Steppe Cross",
+    "Tier": "2",
+    "Area": ""
+  },
+  {
+    "Index": "3002",
+    "Name": "Highland Cross",
+    "Tier": "2",
+    "Area": ""
+  },
+  {
+    "Index": "3214",
+    "Name": "Haldon Tor",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "LumberCampSOLO",
+    "Name": "Lumber Lunacy",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "3004",
+    "Name": "Martlock",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4000",
+    "Name": "Fort Sterling",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1006",
+    "Name": "Forest Cross",
+    "Tier": "2",
+    "Area": ""
+  },
+  {
+    "Index": "4006",
+    "Name": "Mountain Cross",
+    "Tier": "2",
+    "Area": ""
+  },
+  {
+    "Index": "0000",
+    "Name": "Thetford",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "0201",
+    "Name": "Sleetwater Basin",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1000",
+    "Name": "Lymhurst",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "0005",
+    "Name": "Camlann",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2009",
+    "Name": "Astolat",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "Mine-SOLO",
+    "Name": "Curious Excavation",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "SewersMaintenance-GROUP",
+    "Name": "Lurking Underneath",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "2000",
+    "Name": "Bridgewatch",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "PSG-0003",
+    "Name": "Rock Adit",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0004",
+    "Name": "Sabertooth Den",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0005",
+    "Name": "Swamp Burrow",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0006",
+    "Name": "Ore Adit",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0007",
+    "Name": "Forest Burrow",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "CenterCity-DNG-01",
+    "Name": "The Underway",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3003",
+    "Name": "Caerleon",
+    "Tier": "7",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3245",
+    "Name": "Runnel Sink",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1007",
+    "Name": "Inis Mon",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "ThreeSisters-GROUP",
+    "Name": "Three Sisters",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "FistfulOfSilver-GROUP",
+    "Name": "A Fistful of Silver",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "1246",
+    "Name": "Cedarcopse",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3249",
+    "Name": "Bellever Tor",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4249",
+    "Name": "Pen Uchaf",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2205",
+    "Name": "Shiftshadow Expanse",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3005",
+    "Name": "Caerleon Market",
+    "Tier": "7",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3006",
+    "Name": "Bank of Caerleon",
+    "Tier": "7",
+    "Area": "CTY"
+  },
+  {
+    "Index": "EternalBattle-GROUP",
+    "Name": "Eternal Battle",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "SewersMaintenance-SOLO",
+    "Name": "Lurking Underneath",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ARENA-01",
+    "Name": "Arena1",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "ARENA-01#1",
+    "Name": "Arena2",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ARENA-STANDARD",
+    "Name": "The Arena",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "RecruitmentOfTheDead-HRD",
+    "Name": "Preaching to the Dead",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "0006",
+    "Name": "Bank of Thetford",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "0007",
+    "Name": "Thetford Market",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1001",
+    "Name": "Bank of Lymhurst",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1002",
+    "Name": "Lymhurst Market",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2003",
+    "Name": "Bank of Bridgewatch",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2004",
+    "Name": "Bridgewatch Market",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3007",
+    "Name": "Bank of Martlock",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3008",
+    "Name": "Martlock Market",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4001",
+    "Name": "Bank of Fort Sterling",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4002",
+    "Name": "Fort Sterling Market",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "EternalBattle-HRD",
+    "Name": "Eternal Battle",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "FishyBusiness-HRD",
+    "Name": "Fishy Business",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "LumberCamp-HRD",
+    "Name": "Lumber Lunacy",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "MushroomCave-HRD",
+    "Name": "Mushroom Cave",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "SewersMaintenance-HRD",
+    "Name": "Lurking Underneath",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "StoneWars-HRD",
+    "Name": "Stone Wars",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ThreeSisters-HRD",
+    "Name": "Three Sisters",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "FistfulOfSilver-HRD",
+    "Name": "A Fistful Of Silver",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "Torturer-GROUP",
+    "Name": "In the Raven's Claws",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "Torturer-HRD",
+    "Name": "In the Raven's Claws",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ARENA-FarmLand",
+    "Name": "Farmland Skirmish",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "ARENA-HomeTerritory",
+    "Name": "HomeTerritory Skirmish",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "ARENA-Resources",
+    "Name": "Resource Skirmish",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "ARENA-Resources1",
+    "Name": "Resource Skirmish",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "ARENA-Resources2",
+    "Name": "Resource Skirmish 2",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "CrystalRealm",
+    "Name": "Crystal Realm",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "CrystalRealm-CrystalLeague-NonLethal",
+    "Name": "Crystal Realm",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "1008",
+    "Name": "The Lighthouse",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "1009",
+    "Name": "Forgotten Woods",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "1010",
+    "Name": "Mountain Fort",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "1011",
+    "Name": "The Cove",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "3013-Auction2",
+    "Name": "Caerleon Market",
+    "Tier": "7",
+    "Area": "CTY"
+  },
+  {
+    "Index": "ARENA-City",
+    "Name": "ARENA-City",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "HIDEOUT-0001a",
+    "Name": "HIDEOUT",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "HIDEOUT-0001b",
+    "Name": "HIDEOUT",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "HIDEOUT-0001c",
+    "Name": "HIDEOUT",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "2305",
+    "Name": "Northstrand Dunes",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2326",
+    "Name": "Northstrand Beach",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0324",
+    "Name": "Scuttlesink Mouth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1306",
+    "Name": "Deepwood Dell",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4308",
+    "Name": "Whitebank Stream",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4309",
+    "Name": "Whitebank Shore",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4311",
+    "Name": "Whitebank Cross",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4326",
+    "Name": "Whitebank Wall",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0307",
+    "Name": "Meltwater Bog",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4305",
+    "Name": "Whitebank Descent",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4338",
+    "Name": "Whitebank Ridge",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1326",
+    "Name": "Timberslope Dell",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1340",
+    "Name": "Deepwood Pines",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4306",
+    "Name": "Frostpeak Vista",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4324",
+    "Name": "Frostpeak Ascent",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4327",
+    "Name": "Floatshoal Fissure",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4339",
+    "Name": "Floatshoal Bight",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "PSG-0039#2",
+    "Name": "Darkseep Core",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "0325",
+    "Name": "Meltwater Delta",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0338",
+    "Name": "Meltwater Sump",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2307",
+    "Name": "Skysand Plateau",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4307",
+    "Name": "Everwinter Crossing",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4323",
+    "Name": "Everwinter Plain",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4325",
+    "Name": "Everwinter Gorge",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0353",
+    "Name": "Scuttlesink Marsh",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1305",
+    "Name": "Brambleshore Hinterlands",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3338",
+    "Name": "Shaleheath Steep",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4321",
+    "Name": "Everwinter Reach",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4322",
+    "Name": "Everwinter Peak",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4337",
+    "Name": "Everwinter Passage",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4340",
+    "Name": "Everwinter Expanse",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4353",
+    "Name": "Everwinter Incline",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "PSG-0042#1",
+    "Name": "Stoneslip Passage",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0049#1",
+    "Name": "Whitecap Cave",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "0306",
+    "Name": "Scuttlesink Pools",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1325",
+    "Name": "Timbertop Dale",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1338",
+    "Name": "Timbertop Wood",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1353",
+    "Name": "Timbertop Escarp",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3326",
+    "Name": "Shaleheath Hills",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4310",
+    "Name": "Everwinter Shores",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0305",
+    "Name": "Wetgrave Bog",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0339",
+    "Name": "Wetgrave Swale",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0342",
+    "Name": "Wetgrave Marsh",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1339",
+    "Name": "Timberslope Grove",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1354",
+    "Name": "Timberslope Bridge",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2306",
+    "Name": "Swiftsands Plain",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2308",
+    "Name": "Drybasin Riverbed",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2339",
+    "Name": "Swiftsands Basin",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2354",
+    "Name": "Swiftsands Chaparral",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3327",
+    "Name": "Skylake Bridge",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1355",
+    "Name": "Greenshore Bay",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3305",
+    "Name": "Flatrock Cliffs",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0315",
+    "Name": "Skullmarsh Lower",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0343",
+    "Name": "Skullmarsh Upper",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1307",
+    "Name": "Greenshore Peninsula",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1308",
+    "Name": "Giantweald Dale",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1311",
+    "Name": "Watchwood Precipice",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1315",
+    "Name": "Watchwood Grove",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1328",
+    "Name": "Giantweald Woods",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1329",
+    "Name": "Watchwood Lakeside",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1330",
+    "Name": "Watchwood Bluffs",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1341",
+    "Name": "Giantweald Edge",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2309",
+    "Name": "Slakesands Canyon",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2341",
+    "Name": "Drybasin Oasis",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2342",
+    "Name": "Slakesands Mesa",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3328",
+    "Name": "Flatrock Plateau",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4315",
+    "Name": "Munten Rise",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4331",
+    "Name": "Munten Tundra",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4345",
+    "Name": "Munten Fell",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1313",
+    "Name": "Hightree Steep",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1316",
+    "Name": "Hightree Lake",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1317",
+    "Name": "Hightree Dale",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1319",
+    "Name": "Hightree Strand",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1320",
+    "Name": "Hightree Glade",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1322",
+    "Name": "Hightree Enclave",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1332",
+    "Name": "Hightree Pass",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1335",
+    "Name": "Hightree Levee",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1336",
+    "Name": "Hightree Cliffs",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1345",
+    "Name": "Hightree Isle",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1347",
+    "Name": "Hightree Hillock",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4332",
+    "Name": "Glacierbreak Summit",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0308",
+    "Name": "Drownfield Course",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0309",
+    "Name": "Widemoor Shore",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0312",
+    "Name": "Widemoor Pool",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0314",
+    "Name": "Willowshade Wetlands",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0316",
+    "Name": "Widemoor Estuary",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0327",
+    "Name": "Widemoor Hills",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0328",
+    "Name": "Drownfield Wetland",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0330",
+    "Name": "Widemoor End",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0331",
+    "Name": "Willowshade Pools",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0333",
+    "Name": "Widemoor Woods",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0344",
+    "Name": "Willowshade Hills",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1309",
+    "Name": "Timberscar Dell",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1342",
+    "Name": "Timberscar Copse",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2327",
+    "Name": "Drytop Riverbed",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2328",
+    "Name": "Drytop Pillars",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "PSG-0044#1",
+    "Name": "Stalagmite Adit",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "0310",
+    "Name": "Drownfield Mire",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0313",
+    "Name": "Drownfield Fen",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0329",
+    "Name": "Drownfield Slough",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0332",
+    "Name": "Drownfield Rut",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0340",
+    "Name": "Drownfield Quag",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0354",
+    "Name": "Meltwater Channel",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0355",
+    "Name": "Drownfield Sink",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1312",
+    "Name": "Deadpine Forest",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2340",
+    "Name": "Skysand Ridge",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2355",
+    "Name": "Citadel of Ash",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4312",
+    "Name": "Glacierfall Passage",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4317",
+    "Name": "Whitepeak Ascent",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4329",
+    "Name": "Glacierfall Canyon",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4341",
+    "Name": "Everwinter Gap",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4343",
+    "Name": "Glacierfall Cross",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4344",
+    "Name": "Glacierfall Valley",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4348",
+    "Name": "Whitepeak Spring",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4355",
+    "Name": "Glacierfall Pass",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4357",
+    "Name": "Whitepeak Tundra",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0321",
+    "Name": "Springsump Basin",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0335",
+    "Name": "Springsump Wetland",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0351",
+    "Name": "Springsump Melt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1314",
+    "Name": "Southgrove Escarp",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1337",
+    "Name": "Southgrove Copse",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1350",
+    "Name": "Southgrove Thicket",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2315",
+    "Name": "Dryvein Cross",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2316",
+    "Name": "Sunstrand Shoal",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2317",
+    "Name": "Sunstrand Delta",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2319",
+    "Name": "Dryvein Plain",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2320",
+    "Name": "Farshore Esker",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2334",
+    "Name": "Dryvein Oasis",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2335",
+    "Name": "Sunstrand Dunes",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2336",
+    "Name": "Farshore Heath",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2348",
+    "Name": "Sunstrand Quicksands",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3317",
+    "Name": "Battlebrae Peaks",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3325",
+    "Name": "Stonelake Fields",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3336",
+    "Name": "Stonelake Hillock",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3358",
+    "Name": "Stonemouth Southbluff",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4336",
+    "Name": "Frostspring Passage",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4351",
+    "Name": "Frostspring Volcano",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4352",
+    "Name": "Whitewall Ridge",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4359",
+    "Name": "Whitewall Pass",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0311",
+    "Name": "Runnelvein Slough",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0326",
+    "Name": "Runnelvein Bog",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0341",
+    "Name": "Runnelvein Sink",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1310",
+    "Name": "Giantweald Copse",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1327",
+    "Name": "Deepwood Gorge",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1331",
+    "Name": "Giantweald Roots",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1343",
+    "Name": "Deepwood Copse",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1344",
+    "Name": "Giantweald Glade",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1356",
+    "Name": "Eye of the Forest",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1357",
+    "Name": "Eldersleep",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3339",
+    "Name": "Skylake Hinterlands",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3353",
+    "Name": "Thunderrock Draw",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4313",
+    "Name": "Floatshoal Floe",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4318",
+    "Name": "Iceburn Firth",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4319",
+    "Name": "Flammog Fork",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4328",
+    "Name": "Iceburn Peaks",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4330",
+    "Name": "Flammog Valley",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4342",
+    "Name": "Iceburn Cliffs",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4346",
+    "Name": "Iceburn Tundra",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4354",
+    "Name": "Flammog Desolation",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4356",
+    "Name": "Glacierfall Fissure",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "PSG-0053#1",
+    "Name": "Driprock Tunnel",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0051#1",
+    "Name": "Shale Underway",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0052#1",
+    "Name": "Smuggler's Rut",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0038#2",
+    "Name": "Crosscut Skip",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "0317",
+    "Name": "Widemoor Delta",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0318",
+    "Name": "Willowshade Mire",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0319",
+    "Name": "Willowshade Lake",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0320",
+    "Name": "Willowshade Icemarsh",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0334",
+    "Name": "Widemoor Flats",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0345",
+    "Name": "Willowshade Sink",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0348",
+    "Name": "Widemoor Fen",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0350",
+    "Name": "Twinchannel Narrows",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0357",
+    "Name": "Unhallowed Cloister",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1323",
+    "Name": "Westweald Thicket",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1334",
+    "Name": "Driftwood Glen",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1351",
+    "Name": "Westweald Shore",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2312",
+    "Name": "Sandmount Strand",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2314",
+    "Name": "Bleachskull Steppe",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2318",
+    "Name": "Sandmount Esker",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2321",
+    "Name": "Sandrift Steppe",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2322",
+    "Name": "Sandrift Prairie",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2323",
+    "Name": "Sandrift Coast",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2324",
+    "Name": "Sandrift Shore",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2325",
+    "Name": "Farshore Bay",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2333",
+    "Name": "Bleachskull Desert",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2337",
+    "Name": "Sandrift Expanse",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2338",
+    "Name": "Farshore Lagoon",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2349",
+    "Name": "Sandmount Desert",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2350",
+    "Name": "Sandrift Dunes",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2351",
+    "Name": "Farshore Drylands",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2352",
+    "Name": "Sandrift Fringe",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2353",
+    "Name": "Farshore Cape",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2358",
+    "Name": "Sandmount Ascent",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3309",
+    "Name": "Braemore Upland",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3318",
+    "Name": "Windgrass Border",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3320",
+    "Name": "Windgrass Gully",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3321",
+    "Name": "Windgrass Rill",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3322",
+    "Name": "Windgrass Precipice",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3331",
+    "Name": "Braemore Lowland",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3333",
+    "Name": "Windgrass Fields",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3334",
+    "Name": "Windgrass Coast",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3346",
+    "Name": "Highstone Mound",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4314",
+    "Name": "Avalanche Ravine",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4316",
+    "Name": "Frostbite Chasm",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4320",
+    "Name": "Frostseep Ravine",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4335",
+    "Name": "Frostbite Mountain",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4347",
+    "Name": "Frostseep Crevasse",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0322",
+    "Name": "Longfen Marsh",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0323",
+    "Name": "Mudfoot Sump",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0337",
+    "Name": "Mudfoot Mounds",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0352",
+    "Name": "Longfen Veins",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0359",
+    "Name": "Deathreach Priory",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1324",
+    "Name": "Greenhollow Vale",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1352",
+    "Name": "Greenhollow Copse",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3315",
+    "Name": "Highstone Plains",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3316",
+    "Name": "Battlebrae Flatland",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3319",
+    "Name": "Highstone Grassland",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3323",
+    "Name": "Gravemound Brim",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3324",
+    "Name": "Gravemound Hills",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3337",
+    "Name": "Gravemound Slope",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3349",
+    "Name": "Battlebrae Meadow",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3350",
+    "Name": "Windgrass Terrace",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3351",
+    "Name": "Gravemound Knoll",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3352",
+    "Name": "Gravemound Cliffs",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3357",
+    "Name": "Highstone Loch",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3359",
+    "Name": "Redtree Enclave",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "PSG-0052#2",
+    "Name": "Deathcap Channel",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0052#3",
+    "Name": "Glowmire Grotto",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0051#2",
+    "Name": "Lurkers' Hollow",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0050#1",
+    "Name": "Middlemurk Path",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0048#1",
+    "Name": "Craglight Cavern",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "0346",
+    "Name": "Deathwisp Sink",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0347",
+    "Name": "Deathwisp Bog",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0349",
+    "Name": "Sunkenbough Woods",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0356",
+    "Name": "Black Monastery",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0358",
+    "Name": "Sunkenbough Spring",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1318",
+    "Name": "Rivercopse Crossing",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1321",
+    "Name": "Driftwood Vale",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1333",
+    "Name": "Hightree Borderlands",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1346",
+    "Name": "Rivercopse Curve",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1348",
+    "Name": "Driftwood Hollow",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1349",
+    "Name": "Rivercopse Path",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1358",
+    "Name": "Darkbough Snag",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1359",
+    "Name": "Rivercopse Fount",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2310",
+    "Name": "Sunfang Ravine",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2330",
+    "Name": "Sunfang Approach",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2331",
+    "Name": "Parchsand Cliffs",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2343",
+    "Name": "Sunfang Cliffs",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2344",
+    "Name": "Sunfang Wasteland",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2356",
+    "Name": "Wailing Bulwark",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2357",
+    "Name": "Sunfang Dawn",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2359",
+    "Name": "Parchsand Drought",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3306",
+    "Name": "Murdergulch Cross",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3307",
+    "Name": "Murdergulch Gap",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3308",
+    "Name": "Razorrock Passage",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3310",
+    "Name": "Razorrock Valley",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3311",
+    "Name": "Highstone Meadow",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3312",
+    "Name": "Battlebrae Plain",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3313",
+    "Name": "Battlebrae Lake",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3314",
+    "Name": "Stonemouth Northbluff",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3329",
+    "Name": "Thunderrock Rapids",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3330",
+    "Name": "Razorrock Ravine",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3332",
+    "Name": "Razorrock Edge",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3335",
+    "Name": "Stonemouth Bay",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3340",
+    "Name": "Thunderrock Ascent",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3341",
+    "Name": "Thunderrock Upland",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3342",
+    "Name": "Murdergulch Trail",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3343",
+    "Name": "Razorrock Chasm",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3344",
+    "Name": "Razorrock Verge",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3345",
+    "Name": "Razorrock Bank",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3347",
+    "Name": "Highstone Plateau",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3348",
+    "Name": "Battlebrae Grassland",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3354",
+    "Name": "Murdergulch Divide",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3355",
+    "Name": "Murdergulch Ravine",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3356",
+    "Name": "Razorrock Gulch",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4333",
+    "Name": "Firesink Caldera",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4334",
+    "Name": "Whitecliff Peak",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4349",
+    "Name": "Firesink Trench",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4350",
+    "Name": "Whitecliff Expanse",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4358",
+    "Name": "Avalanche Incline",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "PSG-0051#3",
+    "Name": "Bedrock Passage",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0051#4",
+    "Name": "Everglow Deep",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "0336",
+    "Name": "Longfen Arms",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2311",
+    "Name": "Thirstwater Steppe",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2313",
+    "Name": "Dryvein Riverbed",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2329",
+    "Name": "Thirstwater Waste",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2332",
+    "Name": "Dryvein Steppe",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2345",
+    "Name": "Dryvein End",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2346",
+    "Name": "Thirstwater Gully",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2347",
+    "Name": "Dryvein Confluence",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2360",
+    "Name": "Daemonium Keep",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "PSG-0004#1",
+    "Name": "Nightbloom Track",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0045#1",
+    "Name": "Mudrock Burrow",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0053#2",
+    "Name": "Deathcreep Adit",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "4300",
+    "Name": "Arthur's Rest",
+    "Tier": "1",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1012",
+    "Name": "Merlyn's Rest",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "0360-HALL-01",
+    "Name": "Conquerors' Hall Lvl. 1",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "0361-HALL-02",
+    "Name": "Conquerors' Hall Lvl. 2",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1013-HALL-01",
+    "Name": "Conquerors' Hall Lvl. 1",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1014-HALL-02",
+    "Name": "Conquerors' Hall Lvl. 2",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2010-HALL-01",
+    "Name": "Conquerors' Hall Lvl. 1",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2011-HALL-02",
+    "Name": "Conquerors' Hall Lvl. 2",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3014-HALL-01",
+    "Name": "Conquerors' Hall Lvl. 1",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3015-HALL-02",
+    "Name": "Conquerors' Hall Lvl. 2",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4007-HALL-01",
+    "Name": "Conquerors' Hall Lvl. 1",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4008-HALL-02",
+    "Name": "Conquerors' Hall Lvl. 2",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "0008",
+    "Name": "Morgana's Rest",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "TNL-001",
+    "Name": "Ouyos-Aoeuam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-002",
+    "Name": "Coues-Exakrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-003",
+    "Name": "Puros-Amayam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-004",
+    "Name": "Pures-Ouozlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-005",
+    "Name": "Soros-Axaesum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-006",
+    "Name": "Huyos-Uxeulum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-007",
+    "Name": "Ceres-Iooinum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-008",
+    "Name": "Cetos-Obaelos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-009",
+    "Name": "Oieos-Umiutum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-010",
+    "Name": "Sebos-Avoirom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-011",
+    "Name": "Teros-Auiusum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-012",
+    "Name": "Oebos-Ixakaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-013",
+    "Name": "Touos-Uoemtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-014",
+    "Name": "Xasos-Aeoilos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-015",
+    "Name": "Xuros-Eyoztum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-016",
+    "Name": "Pasos-Avosam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-017",
+    "Name": "Oasos-Uromlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-018",
+    "Name": "Casos-Uruxtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-019",
+    "Name": "Ceros-Aeaylum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-020",
+    "Name": "Xouos-Aioblos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-021",
+    "Name": "Oasos-Eraerom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-022",
+    "Name": "Tetos-Igaelum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-023",
+    "Name": "Hynos-Oiaelos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-024",
+    "Name": "Hebos-Ulamsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-025",
+    "Name": "Hiros-Iuaerom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-026",
+    "Name": "Cynos-Avixnum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-027",
+    "Name": "Conos-Avaelum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-028",
+    "Name": "Tetos-Ulaurom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-029",
+    "Name": "Oures-Araosum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-030",
+    "Name": "Hures-Ugumtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-031",
+    "Name": "Hasos-Iuimaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-032",
+    "Name": "Foros-Egoisum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-033",
+    "Name": "Hasos-Agoitum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-034",
+    "Name": "Setos-Avamsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-035",
+    "Name": "Tonos-Obayam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-036",
+    "Name": "Honos-Umayaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-037",
+    "Name": "Huyes-Ogozlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-038",
+    "Name": "Curos-Avulsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-039",
+    "Name": "Cebos-Avemlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-040",
+    "Name": "Hasos-Inayaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-041",
+    "Name": "Sasos-Egeylos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-042",
+    "Name": "Coros-Aiayrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-043",
+    "Name": "Hiros-Exozlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-044",
+    "Name": "Tiros-Ouultum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-045",
+    "Name": "Cases-Ugumlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-046",
+    "Name": "Fynes-Unavtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-047",
+    "Name": "Fetos-Aiaylos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-048",
+    "Name": "Fouos-Agosaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-049",
+    "Name": "Huyos-Eyoztum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-050",
+    "Name": "Poues-Unatam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-051",
+    "Name": "Fouos-Amaurom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-052",
+    "Name": "Suyos-Onaytum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-053",
+    "Name": "Xasos-Oneulum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-054",
+    "Name": "Oynos-Oyozam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-055",
+    "Name": "Coros-Atinaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-056",
+    "Name": "Sasos-Oiozlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-057",
+    "Name": "Xynos-Oyogam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-058",
+    "Name": "Cynos-Oxaeaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-059",
+    "Name": "Tynos-Atatlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-060",
+    "Name": "Firos-Enomaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-061",
+    "Name": "Hynes-Exemrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-062",
+    "Name": "Hebes-Ouaylos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-063",
+    "Name": "Foues-Aeaosum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-064",
+    "Name": "Xilos-Osayam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-065",
+    "Name": "Casos-Ayosrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-066",
+    "Name": "Souos-Ososlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-067",
+    "Name": "Xebos-Emimsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-068",
+    "Name": "Oetos-Oyexlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-069",
+    "Name": "Xebos-Exostum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-070",
+    "Name": "Tynos-Eyexrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-071",
+    "Name": "Casos-Aximam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-072",
+    "Name": "Hasos-Ayousum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-073",
+    "Name": "Fasos-Ayiotum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-074",
+    "Name": "Pebos-Avosrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-075",
+    "Name": "Sases-Avuotum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-076",
+    "Name": "Xases-Oxoulum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-077",
+    "Name": "Hieos-Avaolum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-078",
+    "Name": "Xasos-Aoemaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-079",
+    "Name": "Hasos-Osuorom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-080",
+    "Name": "Oynos-Eramtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-081",
+    "Name": "Couos-Ayayaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-082",
+    "Name": "Siros-Obobrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-083",
+    "Name": "Souos-Umogaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-084",
+    "Name": "Cilos-Avioaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-085",
+    "Name": "Fonos-Aiugsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-086",
+    "Name": "Synos-Ayailos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-087",
+    "Name": "Xiles-Aiavlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-088",
+    "Name": "Sases-Aoarsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-089",
+    "Name": "Casos-Aiagsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-090",
+    "Name": "Tieos-Ayoslum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-091",
+    "Name": "Hieos-Aiigaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-092",
+    "Name": "Poros-Aiayrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-093",
+    "Name": "Cilos-Ofailos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-094",
+    "Name": "Silos-Apenlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-095",
+    "Name": "Fynos-Alodrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-096",
+    "Name": "Firos-Ezatam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-097",
+    "Name": "Firos-Osinsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-098",
+    "Name": "Soues-Uzurtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-099",
+    "Name": "Ooros-Ataltum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-100",
+    "Name": "Hynes-Ieatun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-101",
+    "Name": "Fuyes-Izohun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-102",
+    "Name": "Xetos-Obursum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-103",
+    "Name": "Oetos-Ofailos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-104",
+    "Name": "Tynos-Igurlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-105",
+    "Name": "Puros-Ofavam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-106",
+    "Name": "Setos-Aiaitum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-107",
+    "Name": "Tynos-Uxavrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-108",
+    "Name": "Souos-Availos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-109",
+    "Name": "Sebos-Ugersum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-110",
+    "Name": "Peros-Aiataum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-111",
+    "Name": "Pieos-Ofairom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-112",
+    "Name": "Sieos-Ofugtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-113",
+    "Name": "Tasos-Iriglos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-114",
+    "Name": "Tiros-Odoxlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-115",
+    "Name": "Xases-Ataglos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-116",
+    "Name": "Oires-Oloblum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-117",
+    "Name": "Firos-Aiavam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-118",
+    "Name": "Heros-Atoyam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-119",
+    "Name": "Petos-Aietam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-120",
+    "Name": "Touos-Ataglos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-121",
+    "Name": "Poros-Oconun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-122",
+    "Name": "Honos-Oyezam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-123",
+    "Name": "Fieos-Atezsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-124",
+    "Name": "Ooros-Ecunsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-125",
+    "Name": "Coros-Alieam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-126",
+    "Name": "Couos-Opodam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-127",
+    "Name": "Horos-Ohenlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-128",
+    "Name": "Files-Azazsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-129",
+    "Name": "Sasos-Abizaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-130",
+    "Name": "Fones-Opavun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-131",
+    "Name": "Fiees-Ohohtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-132",
+    "Name": "Siros-Ofurlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-133",
+    "Name": "Oiros-Alaiam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-134",
+    "Name": "Xiros-Aiairom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-135",
+    "Name": "Silos-Oyarlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-136",
+    "Name": "Fonos-Oleraum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-137",
+    "Name": "Fieos-Aiuttum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-138",
+    "Name": "Filos-Abalam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-139",
+    "Name": "Synos-Oyarlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-140",
+    "Name": "Febos-Acalun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-141",
+    "Name": "Pieos-Eterrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-142",
+    "Name": "Feros-Oyuctum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-143",
+    "Name": "Pynos-Opabrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-144",
+    "Name": "Foros-Uzazlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-145",
+    "Name": "Cieos-Atatlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-146",
+    "Name": "Huros-Atontum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-147",
+    "Name": "Tonos-Aboysum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-148",
+    "Name": "Hiles-Izizaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-149",
+    "Name": "Sebos-Oyohun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-150",
+    "Name": "Cilos-Otatrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-201",
+    "Name": "Oasitos-Aoeuam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-202",
+    "Name": "Curites-Exakrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-203",
+    "Name": "Petitos-Amayam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-204",
+    "Name": "Pynites-Ouozlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-205",
+    "Name": "Suyitos-Axaesum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-206",
+    "Name": "Honitos-Uxeulum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-207",
+    "Name": "Cuyites-Iooinum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-208",
+    "Name": "Cieitos-Obaelos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-209",
+    "Name": "Oonitos-Umiutum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-210",
+    "Name": "Siritos-Avoirom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-211",
+    "Name": "Tuyitos-Auiusum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-212",
+    "Name": "Oieitos-Ixakaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-213",
+    "Name": "Turitos-Uoemtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-214",
+    "Name": "Xouitos-Aeoilos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-215",
+    "Name": "Xouitos-Eyoztum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-216",
+    "Name": "Peritos-Avosam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-217",
+    "Name": "Oynitos-Uromlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-218",
+    "Name": "Conitos-Uruxtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-219",
+    "Name": "Cebitos-Aeaylum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-220",
+    "Name": "Xuyitos-Aioblos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-221",
+    "Name": "Oebitos-Eraerom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-222",
+    "Name": "Tebitos-Igaelum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-223",
+    "Name": "Huritos-Oiaelos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-224",
+    "Name": "Hynitos-Ulamsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-225",
+    "Name": "Hetitos-Iuaerom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-226",
+    "Name": "Cetitos-Avixnum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-227",
+    "Name": "Casitos-Avaelum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-228",
+    "Name": "Tasitos-Ulaurom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-229",
+    "Name": "Oynites-Araosum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-230",
+    "Name": "Hilites-Ugumtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-231",
+    "Name": "Huritos-Iuimaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-232",
+    "Name": "Fynitos-Egoisum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-233",
+    "Name": "Huyitos-Agoitum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-234",
+    "Name": "Soritos-Avamsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-235",
+    "Name": "Tasitos-Obayam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-236",
+    "Name": "Hasitos-Umayaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-237",
+    "Name": "Hynites-Ogozlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-238",
+    "Name": "Ceritos-Avulsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-239",
+    "Name": "Coritos-Avemlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-240",
+    "Name": "Heritos-Inayaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-241",
+    "Name": "Seritos-Egeylos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-242",
+    "Name": "Cetitos-Aiayrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-243",
+    "Name": "Heritos-Exozlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-244",
+    "Name": "Tieitos-Ouultum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-245",
+    "Name": "Cieites-Ugumlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-246",
+    "Name": "Fieites-Unavtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-247",
+    "Name": "Foritos-Aiaylos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-248",
+    "Name": "Fynitos-Agosaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-249",
+    "Name": "Heritos-Eyoztum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-250",
+    "Name": "Pirites-Unatam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-251",
+    "Name": "Fonitos-Amaurom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-252",
+    "Name": "Seritos-Onaytum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-253",
+    "Name": "Xetitos-Oneulum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-254",
+    "Name": "Oebitos-Oyozam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-255",
+    "Name": "Casitos-Atinaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-256",
+    "Name": "Souitos-Oiozlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-257",
+    "Name": "Xebitos-Oyogam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-258",
+    "Name": "Conitos-Oxaeaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-259",
+    "Name": "Turitos-Atatlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-260",
+    "Name": "Feritos-Enomaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-261",
+    "Name": "Hebites-Exemrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-262",
+    "Name": "Hurites-Ouaylos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-263",
+    "Name": "Fynites-Aeaosum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-264",
+    "Name": "Xoritos-Osayam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-265",
+    "Name": "Cieitos-Ayosrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-266",
+    "Name": "Synitos-Ososlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-267",
+    "Name": "Xetitos-Emimsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-268",
+    "Name": "Oeritos-Oyexlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-269",
+    "Name": "Xoritos-Exostum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-270",
+    "Name": "Tieitos-Eyexrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-271",
+    "Name": "Cetitos-Aximam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-272",
+    "Name": "Hynitos-Ayousum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-273",
+    "Name": "Fuyitos-Ayiotum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-274",
+    "Name": "Petitos-Avosrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-275",
+    "Name": "Suyites-Avuotum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-276",
+    "Name": "Xerites-Oxoulum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-277",
+    "Name": "Hasitos-Avaolum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-278",
+    "Name": "Xilitos-Aoemaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-279",
+    "Name": "Hilitos-Osuorom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-280",
+    "Name": "Oiritos-Eramtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-281",
+    "Name": "Curitos-Ayayaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-282",
+    "Name": "Setitos-Obobrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-283",
+    "Name": "Sasitos-Umogaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-284",
+    "Name": "Cieitos-Avioaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-285",
+    "Name": "Fynitos-Aiugsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-286",
+    "Name": "Sonitos-Ayailos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-287",
+    "Name": "Xonites-Aiavlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-288",
+    "Name": "Synites-Aoarsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-289",
+    "Name": "Cynitos-Aiagsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-290",
+    "Name": "Tetitos-Ayoslum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-291",
+    "Name": "Hilitos-Aiigaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-292",
+    "Name": "Ponitos-Aiayrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-293",
+    "Name": "Conitos-Ofailos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-294",
+    "Name": "Soritos-Apenlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-295",
+    "Name": "Firitos-Alodrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-296",
+    "Name": "Fynitos-Ezatam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-297",
+    "Name": "Feritos-Osinsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-298",
+    "Name": "Suyites-Uzurtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-299",
+    "Name": "Ouritos-Ataltum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-300",
+    "Name": "Hurites-Ieatun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-301",
+    "Name": "Filites-Izohun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-302",
+    "Name": "Xynitos-Obursum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-303",
+    "Name": "Ouritos-Ofailos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-304",
+    "Name": "Tonitos-Igurlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-305",
+    "Name": "Piritos-Ofavam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-306",
+    "Name": "Soritos-Aiaitum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-307",
+    "Name": "Tonitos-Uxavrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-308",
+    "Name": "Synitos-Availos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-309",
+    "Name": "Sasitos-Ugersum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-310",
+    "Name": "Puyitos-Aiataum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-311",
+    "Name": "Pouitos-Ofairom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-312",
+    "Name": "Suyitos-Ofugtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-313",
+    "Name": "Toritos-Iriglos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-314",
+    "Name": "Tebitos-Odoxlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-315",
+    "Name": "Xurites-Ataglos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-316",
+    "Name": "Oynites-Oloblum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-317",
+    "Name": "Furitos-Aiavam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-318",
+    "Name": "Hynitos-Atoyam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-319",
+    "Name": "Pynitos-Aietam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-320",
+    "Name": "Tilitos-Ataglos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-321",
+    "Name": "Peritos-Oconun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-322",
+    "Name": "Hynitos-Oyezam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-323",
+    "Name": "Fasitos-Atezsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-324",
+    "Name": "Oeritos-Ecunsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-325",
+    "Name": "Casitos-Alieam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-326",
+    "Name": "Cilitos-Opodam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-327",
+    "Name": "Huyitos-Ohenlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-328",
+    "Name": "Fasites-Azazsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-329",
+    "Name": "Silitos-Abizaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-330",
+    "Name": "Febites-Opavun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-331",
+    "Name": "Ferites-Ohohtum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-332",
+    "Name": "Synitos-Ofurlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-333",
+    "Name": "Oouitos-Alaiam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-334",
+    "Name": "Xoritos-Aiairom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-335",
+    "Name": "Sasitos-Oyarlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-336",
+    "Name": "Fasitos-Oleraum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-337",
+    "Name": "Fouitos-Aiuttum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-338",
+    "Name": "Fynitos-Abalam",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-339",
+    "Name": "Suyitos-Oyarlos",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-340",
+    "Name": "Fuyitos-Acalun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-341",
+    "Name": "Pilitos-Eterrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-342",
+    "Name": "Fasitos-Oyuctum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-343",
+    "Name": "Piritos-Opabrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-344",
+    "Name": "Filitos-Uzazlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-345",
+    "Name": "Cynitos-Atatlum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-346",
+    "Name": "Hebitos-Atontum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-347",
+    "Name": "Tuyitos-Aboysum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-348",
+    "Name": "Honites-Izizaum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-349",
+    "Name": "Siritos-Oyohun",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-350",
+    "Name": "Cieitos-Otatrom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-001",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-002",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-003",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0038",
+    "Name": "PSG-0038",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0039",
+    "Name": "PSG-0039",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0042",
+    "Name": "PSG-0042",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0044",
+    "Name": "PSG-0044",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0045",
+    "Name": "PSG-0045",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0048",
+    "Name": "PSG-0048",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0049",
+    "Name": "PSG-0049",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0050",
+    "Name": "PSG-0050",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0051",
+    "Name": "PSG-0051",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0052",
+    "Name": "PSG-0052",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0053",
+    "Name": "PSG-0053",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0054",
+    "Name": "PSG-0054",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-004",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-005",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-006",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-007",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0008",
+    "Name": "PSG-0008",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0009",
+    "Name": "PSG-0009",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0010",
+    "Name": "PSG-0010",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0011",
+    "Name": "PSG-0011",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0012",
+    "Name": "PSG-0012",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0013",
+    "Name": "PSG-0013",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0014",
+    "Name": "PSG-0014",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0015",
+    "Name": "PSG-0015",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0016",
+    "Name": "PSG-0016",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0017",
+    "Name": "PSG-0017",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0018",
+    "Name": "PSG-0018",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0019",
+    "Name": "PSG-0019",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0020",
+    "Name": "PSG-0020",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0021",
+    "Name": "PSG-0021",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0022",
+    "Name": "PSG-0022",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0023",
+    "Name": "PSG-0023",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0024",
+    "Name": "PSG-0024",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0025",
+    "Name": "PSG-0025",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0026",
+    "Name": "PSG-0026",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0027",
+    "Name": "PSG-0027",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0028",
+    "Name": "PSG-0028",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0029",
+    "Name": "PSG-0029",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0030",
+    "Name": "PSG-0030",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0031",
+    "Name": "PSG-0031",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0032",
+    "Name": "PSG-0032",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0033",
+    "Name": "PSG-0033",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0034",
+    "Name": "PSG-0034",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0035",
+    "Name": "PSG-0035",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0036",
+    "Name": "PSG-0036",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0037",
+    "Name": "PSG-0037",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0040",
+    "Name": "PSG-0040",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0041",
+    "Name": "PSG-0041",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0043",
+    "Name": "PSG-0043",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0046",
+    "Name": "PSG-0046",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0047",
+    "Name": "PSG-0047",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-151",
+    "Name": "Quaent-Vynsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-351",
+    "Name": "Quaent-Al-Vynsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-152",
+    "Name": "Quaent-Tersis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-352",
+    "Name": "Quaent-Al-Tersis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-153",
+    "Name": "Quaent-Viesom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-353",
+    "Name": "Quaent-Al-Viesom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-154",
+    "Name": "Quatun-Nusas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-354",
+    "Name": "Quatun-Et-Nusas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-155",
+    "Name": "Quaent-Qintis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-355",
+    "Name": "Quaent-Al-Qintis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-156",
+    "Name": "Quatun-Odetum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-356",
+    "Name": "Quatun-Et-Odetum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-157",
+    "Name": "Quaent-Al-Odesum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-357",
+    "Name": "Quaent-In-Odesum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-158",
+    "Name": "Quaent-Al-Nusis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-358",
+    "Name": "Quaent-In-Nusis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-159",
+    "Name": "Qiient-Tersom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-359",
+    "Name": "Qiient-In-Tersom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-160",
+    "Name": "Qiient-Odesas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-360",
+    "Name": "Qiient-Qi-Odesas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-161",
+    "Name": "Qiient-Nutis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-361",
+    "Name": "Qiient-In-Nutis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-162",
+    "Name": "Qiient-Vyntum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-362",
+    "Name": "Qiient-In-Vyntum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-163",
+    "Name": "Qiient-Al-Odesum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-363",
+    "Name": "Qiient-Si-Odesum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-164",
+    "Name": "Qiient-Al-Vynsis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-364",
+    "Name": "Qiient-Qi-Vynsis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-165",
+    "Name": "Qiitun-Et-Vynsom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-365",
+    "Name": "Qiitun-Si-Vynsom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-166",
+    "Name": "Qiient-Al-Tersas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-366",
+    "Name": "Qiient-Qi-Tersas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-167",
+    "Name": "Qiitun-Vietis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-367",
+    "Name": "Qiitun-Et-Vietis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-168",
+    "Name": "Qiient-Et-Tertum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-368",
+    "Name": "Qiient-Si-Tertum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-169",
+    "Name": "Qiient-Qinsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-369",
+    "Name": "Qiient-Et-Qinsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-170",
+    "Name": "Qiient-Al-Viesis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-370",
+    "Name": "Qiient-In-Viesis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-171",
+    "Name": "Qiient-Al-Nusom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-371",
+    "Name": "Qiient-Qi-Nusom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-172",
+    "Name": "Qiient-Et-Nusas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-372",
+    "Name": "Qiient-Si-Nusas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-173",
+    "Name": "Qiient-Et-Odetis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-373",
+    "Name": "Qiient-Sa-Odetis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-174",
+    "Name": "Qiient-In-Odetum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-374",
+    "Name": "Qiient-Oc-Odetum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-175",
+    "Name": "Qiitun-Duosum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-375",
+    "Name": "Qiitun-Al-Duosum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-176",
+    "Name": "Qiient-Al-Qinsis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-376",
+    "Name": "Qiient-In-Qinsis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-177",
+    "Name": "Secent-Odesom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-377",
+    "Name": "Secent-Qi-Odesom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-178",
+    "Name": "Sectun-Tersas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-378",
+    "Name": "Sectun-Et-Tersas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-179",
+    "Name": "Secent-Al-Odetis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-379",
+    "Name": "Secent-Si-Odetis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-180",
+    "Name": "Secent-Vyntum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-380",
+    "Name": "Secent-Et-Vyntum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-181",
+    "Name": "Secent-Viesum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-381",
+    "Name": "Secent-Al-Viesum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-182",
+    "Name": "Secent-Et-Odesis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-382",
+    "Name": "Secent-Sa-Odesis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-183",
+    "Name": "Sectun-Qinsom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-383",
+    "Name": "Sectun-In-Qinsom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-184",
+    "Name": "Secent-Al-Qinsom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-384",
+    "Name": "Secent-Qi-Qinsom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-185",
+    "Name": "Sectun-Al-Vyntis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-385",
+    "Name": "Sectun-In-Vyntis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-186",
+    "Name": "Secent-Nutum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-386",
+    "Name": "Secent-Al-Nutum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-187",
+    "Name": "Secent-Al-Tersum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-387",
+    "Name": "Secent-In-Tersum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-188",
+    "Name": "Sectun-In-Odesis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-388",
+    "Name": "Sectun-Oc-Odesis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-189",
+    "Name": "Secent-Duosom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-389",
+    "Name": "Secent-Al-Duosom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-190",
+    "Name": "Secent-Et-Qinsas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-390",
+    "Name": "Secent-Si-Qinsas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-191",
+    "Name": "Setent-Vietis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-391",
+    "Name": "Setent-Al-Vietis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-192",
+    "Name": "Settun-Odetum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-392",
+    "Name": "Settun-Et-Odetum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-193",
+    "Name": "Setent-Nusum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-393",
+    "Name": "Setent-Et-Nusum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-194",
+    "Name": "Settun-Vynsis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-394",
+    "Name": "Settun-Al-Vynsis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-195",
+    "Name": "Settun-Tersom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-395",
+    "Name": "Settun-Al-Tersom",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-196",
+    "Name": "Setent-Duosas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-396",
+    "Name": "Setent-Al-Duosas",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-197",
+    "Name": "Setent-Qintis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-397",
+    "Name": "Setent-Et-Qintis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-198",
+    "Name": "Settun-Al-Odetum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-398",
+    "Name": "Settun-In-Odetum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-199",
+    "Name": "Setent-Al-Qinsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-399",
+    "Name": "Setent-In-Qinsum",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-200",
+    "Name": "Settun-Al-Nusis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "TNL-400",
+    "Name": "Settun-In-Nusis",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-008",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-009",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-010",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-011",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-012",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-013",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-014",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-015",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-016",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-017",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-018",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-019",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CORRUPT-020",
+    "Name": "Corrupted Lair",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "CrystalRealmDebug",
+    "Name": "CrystalRealmDebug",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "0362-HALL-1-4",
+    "Name": "Conquerors' Hall Lvl. 3",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1015-HALL-1-4",
+    "Name": "Conquerors' Hall Lvl. 3",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2012-HALL-1-4",
+    "Name": "Conquerors' Hall Lvl. 3",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3016-HALL-1-4-MART",
+    "Name": "Conquerors' Hall Lvl. 3",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4009-HALL-1-4",
+    "Name": "Conquerors' Hall Lvl. 3",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "ChampionsRealmLive",
+    "Name": "Champions' Realm",
+    "Tier": "4",
+    "Area": ""
+  },
+  {
+    "Index": "VegAnimTest",
+    "Name": "VegAnimTest",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "CrystalRealm20v20",
+    "Name": "Large Crystal Realm",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "HELLGATE-01-10v10-01",
+    "Name": "The Plains",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-01-2v2-01",
+    "Name": "The Plains",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-01-5v5-01",
+    "Name": "The Plains",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-02-10v10-01",
+    "Name": "The Hill",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-02-2v2-01",
+    "Name": "The Hill",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-02-5v5-01",
+    "Name": "The Hill",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-03-10v10-01",
+    "Name": "The Boneyard",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-03-2v2-01",
+    "Name": "The Boneyard",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-03-5v5-01",
+    "Name": "The Boneyard",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-04-10v10-01",
+    "Name": "The Four Bridges",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-04-2v2-01",
+    "Name": "The Four Bridges",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-04-5v5-01",
+    "Name": "The Four Bridges",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-05-10v10-01",
+    "Name": "The Traverse",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-05-2v2-01",
+    "Name": "The Traverse",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-05-5v5-01",
+    "Name": "The Traverse",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-06-10v10-01",
+    "Name": "The Fortress",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-06-2v2-01",
+    "Name": "The Fortress",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-06-5v5-01",
+    "Name": "The Fortress",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-07-10v10-01",
+    "Name": "The Pit",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-07-2v2-01",
+    "Name": "The Pit",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-07-5v5-01",
+    "Name": "The Pit",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-08-10v10-01",
+    "Name": "The Courtyard",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-08-2v2-01",
+    "Name": "The Courtyard",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-08-5v5-01",
+    "Name": "The Courtyard",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-09-10v10-01",
+    "Name": "The Tribunal",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-09-2v2-01",
+    "Name": "The Tribunal",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-09-5v5-01",
+    "Name": "The Tribunal",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-10-10v10-01",
+    "Name": "The Citadel",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-10-2v2-01",
+    "Name": "The Citadel",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-10-5v5-01",
+    "Name": "The Citadel",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "0215",
+    "Name": "Murky Fen",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0216",
+    "Name": "Fog Fen",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0217",
+    "Name": "Drownhorse Basin",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0218",
+    "Name": "Slithertail Marsh",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0219",
+    "Name": "Wanderlure Basin",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0220",
+    "Name": "Falsestep Marsh",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0221",
+    "Name": "Darkground Swamp",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0222",
+    "Name": "Anklesnag Mire",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0223",
+    "Name": "Dusktree Swamp",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1216",
+    "Name": "Flynsdell",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1217",
+    "Name": "Pinecopse",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1218",
+    "Name": "Deeproot Wood",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1220",
+    "Name": "Aspenwood",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1221",
+    "Name": "Spindlewood",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1222",
+    "Name": "Owlsong Glen",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "1223",
+    "Name": "Nightbloom Forest",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2216",
+    "Name": "Dryfield Meadow",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2217",
+    "Name": "Sandgust Cleft",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2218",
+    "Name": "Longshadow Plain",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2219",
+    "Name": "Flatriver Trough",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2220",
+    "Name": "Redstone Plain",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2221",
+    "Name": "Flimmerair Steppe",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "2222",
+    "Name": "Goldshimmer Plain",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3216",
+    "Name": "Kilmar Tor",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3217",
+    "Name": "Carns Hill",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3218",
+    "Name": "Brons Hill",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3219",
+    "Name": "Felniks Hill",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3220",
+    "Name": "Adrens Hill",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3221",
+    "Name": "Garrow Fell",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "3222",
+    "Name": "Broken Fell",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4217",
+    "Name": "Pen Fenair",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4218",
+    "Name": "Cairn Drain",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4219",
+    "Name": "Caulder Fissure",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4220",
+    "Name": "Cairn Cloch",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4221",
+    "Name": "Creag Dhor",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4222",
+    "Name": "Creag Meagir",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "4223",
+    "Name": "Domhain Chasm",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "PSG-0006#1",
+    "Name": "Creag's Way",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0006#2",
+    "Name": "Chasmlight Cave",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-H-0001",
+    "Name": "PSG-H-0001",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-H-0001#1",
+    "Name": "Boulder Deep",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-H-0002",
+    "Name": "PSG-H-0002",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-H-0002#1",
+    "Name": "Drystone Channel",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0001",
+    "Name": "Chasmlight Cave",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0002",
+    "Name": "PSG-0002",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-01-10v10-01-HRD",
+    "Name": "The Plains",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-01-2v2-01-HRD",
+    "Name": "The Plains",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-01-5v5-01-HRD",
+    "Name": "The Plains",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-02-10v10-01-HRD",
+    "Name": "The Hill",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-02-2v2-01-HRD",
+    "Name": "The Hill",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-02-5v5-01-HRD",
+    "Name": "The Hill",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-03-10v10-01-HRD",
+    "Name": "The Boneyard",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-03-2v2-01-HRD",
+    "Name": "The Boneyard",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-03-5v5-01-HRD",
+    "Name": "The Boneyard",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-04-10v10-01-HRD",
+    "Name": "The Four Bridges",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-04-2v2-01-HRD",
+    "Name": "The Four Bridges",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-04-5v5-01-HRD",
+    "Name": "The Four Bridges",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-05-10v10-01-HRD",
+    "Name": "The Traverse",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-05-2v2-01-HRD",
+    "Name": "The Traverse",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-05-5v5-01-HRD",
+    "Name": "The Traverse",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-06-10v10-01-HRD",
+    "Name": "The Fortress",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-06-2v2-01-HRD",
+    "Name": "The Fortress",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-06-5v5-01-HRD",
+    "Name": "The Fortress",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-07-10v10-01-HRD",
+    "Name": "The Pit",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-07-2v2-01-HRD",
+    "Name": "The Pit",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-07-5v5-01-HRD",
+    "Name": "The Pit",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-08-10v10-01-HRD",
+    "Name": "The Courtyard",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-08-2v2-01-HRD",
+    "Name": "The Courtyard",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-08-5v5-01-HRD",
+    "Name": "The Courtyard",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-09-10v10-01-HRD",
+    "Name": "The Tribunal",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-09-2v2-01-HRD",
+    "Name": "The Tribunal",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-09-5v5-01-HRD",
+    "Name": "The Tribunal",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-10-10v10-01-HRD",
+    "Name": "The Citadel",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-10-2v2-01-HRD",
+    "Name": "The Citadel",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "HELLGATE-10-5v5-01-HRD",
+    "Name": "The Citadel",
+    "Tier": "7",
+    "Area": ""
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-010",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-011",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-012",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-013",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-014",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-015",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-016",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-018",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-019",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-01",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-020",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-021",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-022",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-023",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-024",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-025",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-026",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-027",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-04",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-08",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-09",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-001",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-002",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-003",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-010",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-011",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-012",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-017",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-018",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-019",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-01",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-020",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-021",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-022",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-023",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-024",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-025",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-027",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-02",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-03",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-04",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-05",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-06",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-07",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-08",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-09",
+    "Name": "Cathedral of Light",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-001",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-002",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-003",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-010",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-011",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-012",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-017",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-018",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-019",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-01",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-020",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-021",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-022",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-023",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-024",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-025",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-027",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-02",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-03",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-04",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-05",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-06",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-07",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-08",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-09",
+    "Name": "Chambers of Truth",
+    "Tier": "8",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-002",
+    "Name": "Hallowed Crypt",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-003",
+    "Name": "Hallowed Crypt",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-004",
+    "Name": "Hallowed Crypt",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-007",
+    "Name": "Hallowed Crypt",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-010",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-011",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-012",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-013",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-014",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-015",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-016",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-017",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-018",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-019",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-01",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-020",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-021",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-022",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-023",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-024",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-025",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-026",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-027",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-02",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-03",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-05",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-07",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-08",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-09",
+    "Name": "Exalted Crypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-002",
+    "Name": "Hallowed Undercrypt",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-003",
+    "Name": "Hallowed Undercrypt",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-004",
+    "Name": "Hallowed Undercrypt",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-007",
+    "Name": "Hallowed Undercrypt",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-010",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-011",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-012",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-013",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-014",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-015",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-016",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-017",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-018",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-019",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-01",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-020",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-021",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-022",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-023",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-024",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-025",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-026",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-027",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-02",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-03",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-05",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-07",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-08",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-09",
+    "Name": "Exalted Undercrypt",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-01-MAIN-01",
+    "Name": "Deepwood Enclave",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-KPR-01-MAIN-02",
+    "Name": "Deepwood Enclave",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-KPR-01-MAIN-03",
+    "Name": "Deepwood Enclave",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-017",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-02-MAIN-01",
+    "Name": "Trinity Hall",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-02-MAIN-02",
+    "Name": "Trinity Hall",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-02-MAIN-03",
+    "Name": "Trinity Hall",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-02-MAIN-04",
+    "Name": "Trinity Hall",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0363-HALL-04",
+    "Name": "Conquerors' Hall Lvl. 4",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1016-HALL-04",
+    "Name": "Conquerors' Hall Lvl. 4",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2013-HALL-04",
+    "Name": "Conquerors' Hall Lvl. 4",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3017-HALL-04-MART",
+    "Name": "Conquerors' Hall Lvl. 4",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4010-HALL-04",
+    "Name": "Conquerors' Hall Lvl. 4",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-06",
+    "Name": "DNG-UND-01-MAIN-06",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-06",
+    "Name": "DNG-UND-01-SUB-06",
+    "Tier": "7",
+    "Area": "OUT"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-028",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "LEGACY-KEEPER-01",
+    "Name": "LEGACY-KEEPER-01",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "LEGACY-KEEPER-SOLO-01",
+    "Name": "LEGACY-KEEPER-SOLO-01",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "LEGACY-UNDEAD-01",
+    "Name": "LEGACY-UNDEAD-01",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "LEGACY-UNDEAD-02",
+    "Name": "LEGACY-UNDEAD-02",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "DNG-HER-01-MAIN-01",
+    "Name": "Heretic Cellar Network",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0301",
+    "Name": "Thetford Portal",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1301",
+    "Name": "Lymhurst Portal",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2301",
+    "Name": "Bridgewatch Portal",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3301",
+    "Name": "Martlock Portal",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4301",
+    "Name": "Fort Sterling Portal",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "0302",
+    "Name": "0302",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0303",
+    "Name": "0303",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "0304",
+    "Name": "0304",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1302",
+    "Name": "1302",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1303",
+    "Name": "1303",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "1304",
+    "Name": "1304",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2302",
+    "Name": "2302",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2303",
+    "Name": "2303",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "2304",
+    "Name": "2304",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3302",
+    "Name": "3302",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3303",
+    "Name": "3303",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "3304",
+    "Name": "3304",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4302",
+    "Name": "4302",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4303",
+    "Name": "4303",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "4304",
+    "Name": "4304",
+    "Tier": "5",
+    "Area": "OUT"
+  },
+  {
+    "Index": "CrystalRealm02",
+    "Name": "Crystal Realm",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "CrystalRealm02-CrystalLeague-NonLethal",
+    "Name": "Crystal Realm",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "DNG-HER-01-MAIN-02",
+    "Name": "Heretic Cellar Network",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-HER-01-MAIN-03",
+    "Name": "Heretic Cellar Network",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-HER-01-MAIN-04",
+    "Name": "Heretic Cellar Network",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-HER-01-MAIN-05",
+    "Name": "Heretic Cellar Network",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "CrystalRealm-Nonlethal",
+    "Name": "Crystal Realm",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "CrystalRealm02-Nonlethal",
+    "Name": "Crystal Realm",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "5000",
+    "Name": "Brecilien",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "5001",
+    "Name": "Brecilien",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "5002",
+    "Name": "Brecilien Bank",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "5003",
+    "Name": "Brecilien Market",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "ISLAND-PLAYER-MISTS-0001f",
+    "Name": "ISLAND-PLAYER-MISTS-0001f",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "5100",
+    "Name": "Brecilien Weald",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "5101",
+    "Name": "Brecilien Copse",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "5102",
+    "Name": "Brecilien Grove",
+    "Tier": "5",
+    "Area": ""
+  },
+  {
+    "Index": "5103",
+    "Name": "Brecilien Thicket",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MISTS-0001a",
+    "Name": "ISLAND-PLAYER-MISTS-0001a",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MISTS-0001b",
+    "Name": "ISLAND-PLAYER-MISTS-0001b",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MISTS-0001c",
+    "Name": "ISLAND-PLAYER-MISTS-0001c",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MISTS-0001d",
+    "Name": "ISLAND-PLAYER-MISTS-0001d",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MISTS-0001e",
+    "Name": "ISLAND-PLAYER-MISTS-0001e",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "DNG-MISTS-UND-WIP-01-01",
+    "Name": "Mists Dungeon",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "0364-HALL-05",
+    "Name": "Conquerors' Hall Lvl. 5",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1017-HALL-05",
+    "Name": "Conquerors' Hall Lvl. 5",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2014-HALL-05",
+    "Name": "Conquerors' Hall Lvl. 5",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3018-HALL-05",
+    "Name": "Conquerors' Hall Lvl. 5",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4011-HALL-05",
+    "Name": "Conquerors' Hall Lvl. 5",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3010",
+    "Name": "3010",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3012-HALL-02",
+    "Name": "3012-HALL-02",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "ISLAND-PLAYER-FOREST-0001a",
+    "Name": "ISLAND-PLAYER-FOREST-0001a",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-FOREST-0001b",
+    "Name": "ISLAND-PLAYER-FOREST-0001b",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-FOREST-0001c",
+    "Name": "ISLAND-PLAYER-FOREST-0001c",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-FOREST-0001d",
+    "Name": "ISLAND-PLAYER-FOREST-0001d",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-FOREST-0001e",
+    "Name": "ISLAND-PLAYER-FOREST-0001e",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-FOREST-0001f",
+    "Name": "ISLAND-PLAYER-FOREST-0001f",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-HIGHLAND-0001a",
+    "Name": "ISLAND-PLAYER-HIGHLAND-0001a",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-HIGHLAND-0001b",
+    "Name": "ISLAND-PLAYER-HIGHLAND-0001b",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-HIGHLAND-0001c",
+    "Name": "ISLAND-PLAYER-HIGHLAND-0001c",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-HIGHLAND-0001d",
+    "Name": "ISLAND-PLAYER-HIGHLAND-0001d",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-HIGHLAND-0001e",
+    "Name": "ISLAND-PLAYER-HIGHLAND-0001e",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-HIGHLAND-0001f",
+    "Name": "ISLAND-PLAYER-HIGHLAND-0001f",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MOUNTAIN-0001a",
+    "Name": "ISLAND-PLAYER-MOUNTAIN-0001a",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MOUNTAIN-0001b",
+    "Name": "ISLAND-PLAYER-MOUNTAIN-0001b",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MOUNTAIN-0001c",
+    "Name": "ISLAND-PLAYER-MOUNTAIN-0001c",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MOUNTAIN-0001d",
+    "Name": "ISLAND-PLAYER-MOUNTAIN-0001d",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MOUNTAIN-0001e",
+    "Name": "ISLAND-PLAYER-MOUNTAIN-0001e",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-MOUNTAIN-0001f",
+    "Name": "ISLAND-PLAYER-MOUNTAIN-0001f",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-CAERLEON-0001a",
+    "Name": "ISLAND-PLAYER-CAERLEON-0001a",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-CAERLEON-0001b",
+    "Name": "ISLAND-PLAYER-CAERLEON-0001b",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-CAERLEON-0001c",
+    "Name": "ISLAND-PLAYER-CAERLEON-0001c",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-CAERLEON-0001d",
+    "Name": "ISLAND-PLAYER-CAERLEON-0001d",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-CAERLEON-0001e",
+    "Name": "ISLAND-PLAYER-CAERLEON-0001e",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-CAERLEON-0001f",
+    "Name": "ISLAND-PLAYER-CAERLEON-0001f",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-STEPPE-0001a",
+    "Name": "ISLAND-PLAYER-STEPPE-0001a",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-STEPPE-0001b",
+    "Name": "ISLAND-PLAYER-STEPPE-0001b",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-STEPPE-0001c",
+    "Name": "ISLAND-PLAYER-STEPPE-0001c",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-STEPPE-0001d",
+    "Name": "ISLAND-PLAYER-STEPPE-0001d",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-STEPPE-0001e",
+    "Name": "ISLAND-PLAYER-STEPPE-0001e",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-STEPPE-0001f",
+    "Name": "ISLAND-PLAYER-STEPPE-0001f",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-SWAMP-0001a",
+    "Name": "ISLAND-PLAYER-SWAMP-0001a",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-SWAMP-0001b",
+    "Name": "ISLAND-PLAYER-SWAMP-0001b",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-SWAMP-0001c",
+    "Name": "ISLAND-PLAYER-SWAMP-0001c",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-SWAMP-0001d",
+    "Name": "ISLAND-PLAYER-SWAMP-0001d",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-SWAMP-0001e",
+    "Name": "ISLAND-PLAYER-SWAMP-0001e",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-SWAMP-0001f",
+    "Name": "ISLAND-PLAYER-SWAMP-0001f",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "0365-HALL-06",
+    "Name": "Conquerors' Hall Lvl. 6",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1018-HALL-06",
+    "Name": "Conquerors' Hall Lvl. 6",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2015-HALL-06",
+    "Name": "Conquerors' Hall Lvl. 6",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3019-HALL-06",
+    "Name": "Conquerors' Hall Lvl. 6",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4012-HALL-06",
+    "Name": "Conquerors' Hall Lvl. 6",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "ISLAND-GUILD-FOREST-0001a",
+    "Name": "ISLAND-GUILD-FOREST-0001a",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-FOREST-0001b",
+    "Name": "ISLAND-GUILD-FOREST-0001b",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-FOREST-0001c",
+    "Name": "ISLAND-GUILD-FOREST-0001c",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-FOREST-0001d",
+    "Name": "ISLAND-GUILD-FOREST-0001d",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-FOREST-0001e",
+    "Name": "ISLAND-GUILD-FOREST-0001e",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-FOREST-0001f",
+    "Name": "ISLAND-GUILD-FOREST-0001f",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-CAERLEON-0001a",
+    "Name": "ISLAND-GUILD-CAERLEON-0001a",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-CAERLEON-0001b",
+    "Name": "ISLAND-GUILD-CAERLEON-0001b",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-CAERLEON-0001c",
+    "Name": "ISLAND-GUILD-CAERLEON-0001c",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-CAERLEON-0001d",
+    "Name": "ISLAND-GUILD-CAERLEON-0001d",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-CAERLEON-0001e",
+    "Name": "ISLAND-GUILD-CAERLEON-0001e",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-CAERLEON-0001f",
+    "Name": "ISLAND-GUILD-CAERLEON-0001f",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-HIGHLAND-0001a",
+    "Name": "ISLAND-GUILD-HIGHLAND-0001a",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-HIGHLAND-0001b",
+    "Name": "ISLAND-GUILD-HIGHLAND-0001b",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-HIGHLAND-0001c",
+    "Name": "ISLAND-GUILD-HIGHLAND-0001c",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-HIGHLAND-0001d",
+    "Name": "ISLAND-GUILD-HIGHLAND-0001d",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-HIGHLAND-0001e",
+    "Name": "ISLAND-GUILD-HIGHLAND-0001e",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-HIGHLAND-0001f",
+    "Name": "ISLAND-GUILD-HIGHLAND-0001f",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-MOUNTAIN-0001a",
+    "Name": "ISLAND-GUILD-MOUNTAIN-0001a",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-MOUNTAIN-0001b",
+    "Name": "ISLAND-GUILD-MOUNTAIN-0001b",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-MOUNTAIN-0001c",
+    "Name": "ISLAND-GUILD-MOUNTAIN-0001c",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-MOUNTAIN-0001d",
+    "Name": "ISLAND-GUILD-MOUNTAIN-0001d",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-MOUNTAIN-0001e",
+    "Name": "ISLAND-GUILD-MOUNTAIN-0001e",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-MOUNTAIN-0001f",
+    "Name": "ISLAND-GUILD-MOUNTAIN-0001f",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-STEPPE-0001a",
+    "Name": "ISLAND-GUILD-STEPPE-0001a",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-STEPPE-0001b",
+    "Name": "ISLAND-GUILD-STEPPE-0001b",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-STEPPE-0001c",
+    "Name": "ISLAND-GUILD-STEPPE-0001c",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-STEPPE-0001d",
+    "Name": "ISLAND-GUILD-STEPPE-0001d",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-STEPPE-0001e",
+    "Name": "ISLAND-GUILD-STEPPE-0001e",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-STEPPE-0001f",
+    "Name": "ISLAND-GUILD-STEPPE-0001f",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-SWAMP-0001a",
+    "Name": "ISLAND-GUILD-SWAMP-0001a",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-SWAMP-0001b",
+    "Name": "ISLAND-GUILD-SWAMP-0001b",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-SWAMP-0001c",
+    "Name": "ISLAND-GUILD-SWAMP-0001c",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-SWAMP-0001d",
+    "Name": "ISLAND-GUILD-SWAMP-0001d",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-SWAMP-0001e",
+    "Name": "ISLAND-GUILD-SWAMP-0001e",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-GUILD-SWAMP-0001f",
+    "Name": "ISLAND-GUILD-SWAMP-0001f",
+    "Tier": "1",
+    "Area": ""
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-029",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-029",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-028",
+    "Name": "DNG-UND-01-MAIN-028",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-028",
+    "Name": "DNG-UND-01-SUB-028",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-006",
+    "Name": "DNG-UND-01-MAIN-006",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-006",
+    "Name": "DNG-UND-01-SUB-006",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-009",
+    "Name": "DNG-UND-01-MAIN-009",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-009",
+    "Name": "DNG-UND-01-SUB-009",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-008",
+    "Name": "DNG-UND-01-MAIN-008",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-008",
+    "Name": "DNG-UND-01-SUB-008",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-028",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-030",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-MAIN-031",
+    "Name": "Cathedral of Light",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-028",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-030",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-MOR-01-SUB-031",
+    "Name": "Chambers of Truth",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-029",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-030",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-031",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-032",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-KPR-02-MAIN-033",
+    "Name": "Stoneroot Caverns",
+    "Tier": "5",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-MAIN-005",
+    "Name": "DNG-UND-01-MAIN-005",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DNG-UND-01-SUB-005",
+    "Name": "DNG-UND-01-SUB-005",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "BLACKBANK-2310",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-0321",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-0307",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-4322",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-2336",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-0320",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-0341",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-0344",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-0349",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-0353",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-1312",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-1323",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-1339",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-1342",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-1343",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-1348",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-1359",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-2308",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-2311",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-2333",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-2342",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-2344",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-2347",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-2348",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-3306",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-3344",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-3345",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-3351",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-3355",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-3357",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-4313",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-4318",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-4345",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-4351",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "BLACKBANK-4357",
+    "Name": "Smuggler's Den",
+    "Tier": "6",
+    "Area": "CTY"
+  },
+  {
+    "Index": "0366-HALL-07",
+    "Name": "Conquerors' Hall Lvl. 7",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1019-HALL-07",
+    "Name": "Conquerors' Hall Lvl. 7",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2016-HALL-07",
+    "Name": "Conquerors' Hall Lvl. 7",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3020-HALL-07",
+    "Name": "Conquerors' Hall Lvl. 7",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4013-HALL-07",
+    "Name": "Conquerors' Hall Lvl. 7",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "ISLAND-PLAYER-CAERLEON-0001e-SHOWROOM",
+    "Name": "Showroom Island",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "ISLAND-PLAYER-FOREST-0001e-SHOWROOM",
+    "Name": "Showroom Island",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "ISLAND-PLAYER-HIGHLAND-0001e-SHOWROOM",
+    "Name": "Showroom Island",
+    "Tier": "3",
+    "Area": "ROY"
+  },
+  {
+    "Index": "ISLAND-PLAYER-MOUNTAIN-0001e-SHOWROOM",
+    "Name": "Showroom Island",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-STEPPE-0001e-SHOWROOM",
+    "Name": "Showroom Island",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "ISLAND-PLAYER-SWAMP-0001e-SHOWROOM",
+    "Name": "Showroom Island",
+    "Tier": "",
+    "Area": ""
+  },
+  {
+    "Index": "0000-HellDen",
+    "Name": "Antiquarian's Den",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1000-HellDen",
+    "Name": "Antiquarian's Den",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2000-HellDen",
+    "Name": "Antiquarian's Den",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3003-HellDen",
+    "Name": "Antiquarian's Den",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3004-HellDen",
+    "Name": "Antiquarian's Den",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4000-HellDen",
+    "Name": "Antiquarian's Den",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "DebugCreatureArena",
+    "Name": "DebugCreatureArena",
+    "Tier": "6",
+    "Area": ""
+  },
+  {
+    "Index": "1900-DynamicTest",
+    "Name": "1900-DynamicTest",
+    "Tier": "6",
+    "Area": "ROY"
+  },
+  {
+    "Index": "0367-HALL-08",
+    "Name": "Conquerors' Hall Lvl. 8",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "1020-HALL-08",
+    "Name": "Conquerors' Hall Lvl. 8",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "2017-HALL-08",
+    "Name": "Conquerors' Hall Lvl. 8",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "3021-HALL-08",
+    "Name": "Conquerors' Hall Lvl. 8",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "4014-HALL-08",
+    "Name": "Conquerors' Hall Lvl. 8",
+    "Tier": "1",
+    "Area": "CTY"
+  },
+  {
+    "Index": "ARENA-1v1-01",
+    "Name": "1v1 Arena",
+    "Tier": "7",
+    "Area": "ROY"
+  },
+  {
+    "Index": "CrystalRealm03",
+    "Name": "Crystal Realm",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "CrystalRealm20v20-02",
+    "Name": "CrystalRealm20v20-02",
+    "Tier": "4",
+    "Area": "ROY"
+  },
+  {
+    "Index": "DRAGON-ISLANDS-001",
+    "Name": "DRAGON-ISLANDS-001",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "DRAGON-ISLANDS-002",
+    "Name": "DRAGON-ISLANDS-002",
+    "Tier": "8",
+    "Area": ""
+  },
+  {
+    "Index": "PSG-0055",
+    "Name": "Redstone Pass",
+    "Tier": "",
+    "Area": ""
+  }
+]
