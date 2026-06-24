@@ -336,6 +336,15 @@ func (s *Service) LocalPlayerName() string {
 	return s.handler.GetLocalPlayer()
 }
 
+// CurrentZone returns the current zone identity, or a zero-value ZoneInfo if
+// the ChangeCluster response has not been captured yet.
+func (s *Service) CurrentZone() handlers.ZoneInfo {
+	if s.handler == nil {
+		return handlers.ZoneInfo{}
+	}
+	return s.handler.GetCurrentZone()
+}
+
 // ParserStats returns the current parser statistics.
 func (s *Service) ParserStats() *photon.Stats {
 	if s.parser == nil {

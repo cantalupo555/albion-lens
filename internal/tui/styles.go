@@ -78,4 +78,15 @@ var (
 	// Stats value style
 	ValueStyle = lipgloss.NewStyle().
 			Bold(true)
+
+	// Tab bar styles
+	TabActiveStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("0")).
+			Background(ColorPrimary).
+			Padding(0, 1)
+
+	TabInactiveStyle = lipgloss.NewStyle().
+				Foreground(ColorSecondary).
+				Padding(0, 1)
 )

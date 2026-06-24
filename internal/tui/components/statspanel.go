@@ -197,8 +197,8 @@ func (s StatsPanel) View() string {
 	boxStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
-		Width(s.width - 2).
-		Height(s.height - 2).
+		Width(s.width-2).
+		Height(s.height-2).
 		Padding(0, 1)
 
 	titleStyle := lipgloss.NewStyle().

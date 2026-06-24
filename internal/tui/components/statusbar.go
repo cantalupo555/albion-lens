@@ -3,14 +3,15 @@ package components
 import (
 	"fmt"
 
-	"github.com/cantalupo555/albion-lens/pkg/photon"
 	"charm.land/lipgloss/v2"
+	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
 
 // StatusBar displays connection status, packet stats, and uptime
 type StatusBar struct {
 	online         bool
 	playerName     string
+	currentZone    string
 	packetsTotal   uint64
 	packetsPerSec  float64
 	eventsDecoded  uint64
@@ -44,6 +45,13 @@ func (s StatusBar) SetOnline(online bool) StatusBar {
 // status bar shows a warning prompting the user to change maps or relog.
 func (s StatusBar) SetPlayerName(name string) StatusBar {
 	s.playerName = name
+	return s
+}
+
+// SetZone updates the current zone label. When empty, the zone indicator is
+// omitted from the status bar (before the first ChangeCluster is captured).
+func (s StatusBar) SetZone(zone string) StatusBar {
+	s.currentZone = zone
 	return s
 }
 
@@ -94,6 +102,13 @@ func (s StatusBar) View() string {
 				Bold(true).
 				Render("⚠ Player not identified — change map or relog")
 		}
+	}
+
+	// Zone indicator (shown when a zone has been detected)
+	if s.online && s.currentZone != "" {
+		status += "  " + lipgloss.NewStyle().
+			Foreground(lipgloss.Color("39")).
+			Render("◎ "+s.currentZone)
 	}
 
 	// Buffer Stats Logic

@@ -103,7 +103,7 @@ func (e EventLog) AddEvents(newEvents []Event) EventLog {
 	// Trim old events if needed
 	if len(e.events) > maxEvents {
 		e.events = e.events[len(e.events)-maxEvents:] // Keep newest maxEvents
-		
+
 		// Trim the rendered cache to match
 		if len(e.renderedLines) > len(e.events)-len(newEvents) {
 			keepCount := maxEvents - len(newEvents)
@@ -146,7 +146,7 @@ func (e EventLog) reRenderAll() EventLog {
 	for _, event := range e.events {
 		e.renderedLines = append(e.renderedLines, e.renderSingleEvent(event))
 	}
-	
+
 	if e.ready {
 		if len(e.renderedLines) == 0 {
 			emptyStyle := lipgloss.NewStyle().
@@ -177,6 +177,8 @@ func (e EventLog) renderSingleEvent(event Event) string {
 		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 	case "combat", "kill", "death":
 		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
+	case "zone":
+		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
 	case "debug":
 		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 	default:
@@ -240,6 +242,17 @@ func (e EventLog) formatEventMessage(event Event) string {
 				return fmt.Sprintf("💀 %s died! (Killed by %s)", data.Victim, data.Killer)
 			}
 			return fmt.Sprintf("💀 %s died!", data.Victim)
+		}
+	case "zone":
+		if data, ok := event.Data.(*handlers.ZoneEventData); ok && data != nil {
+			label := data.Display
+			if label == "" {
+				label = "Unknown"
+			}
+			if data.Previous != handlers.MapTypeUnknown {
+				return fmt.Sprintf("◎ Entered %s (was: %s)", label, data.Previous.String())
+			}
+			return fmt.Sprintf("◎ Entered %s", label)
 		}
 	case "debug":
 		if code, ok := event.Data.(events.EventCode); ok {

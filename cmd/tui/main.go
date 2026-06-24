@@ -6,11 +6,11 @@ import (
 	"os"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/cantalupo555/albion-lens/internal/tui"
 	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/capture"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
-	tea "charm.land/bubbletea/v2"
 )
 
 const (

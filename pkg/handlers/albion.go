@@ -16,9 +16,9 @@ import (
 )
 
 // EventCallback is called when a game event is processed
-// eventType: "fame", "silver", "loot", "respec", "combat", "info", "death", "kill"
+// eventType: "fame", "silver", "loot", "respec", "combat", "info", "death", "kill", "zone"
 // message: formatted message to display
-// data: optional structured data (FameEventData, SilverEventData, RespecEventData, etc.)
+// data: optional structured data (FameEventData, SilverEventData, RespecEventData, ZoneEventData, etc.)
 type EventCallback func(eventType, message string, data interface{})
 
 // defaultDeathDedupWindow is how long a (victim, killer) death signature is
@@ -61,6 +61,13 @@ type AlbionHandler struct {
 	// kills/deaths to the local player. Empty until the first OpJoin is captured.
 	localPlayer   string
 	localPlayerMu sync.RWMutex
+
+	// Current zone identity, auto-detected from the ChangeCluster response
+	// (operation code 41, parameters[0] = cluster string). Used to show which
+	// map the player is currently in. Zero-value (MapTypeUnknown, empty
+	// ClusterIndex) until the first ChangeCluster is captured.
+	currentZone ZoneInfo
+	zoneMu      sync.RWMutex
 
 	// Recent death deduplication. When the local player kills someone, the server
 	// delivers EventDied redundantly (multiple copies within the same second).
@@ -130,6 +137,48 @@ func (h *AlbionHandler) GetLocalPlayer() string {
 	return h.localPlayer
 }
 
+// GetCurrentZone returns the current zone identity, or a zero-value ZoneInfo
+// (MapTypeUnknown, empty ClusterIndex) if the ChangeCluster response has not
+// been received yet (same "unknown until detected" semantics as GetLocalPlayer).
+func (h *AlbionHandler) GetCurrentZone() ZoneInfo {
+	h.zoneMu.RLock()
+	defer h.zoneMu.RUnlock()
+	return h.currentZone
+}
+
+// handleChangeCluster parses the ChangeCluster response, updates the current
+// zone state, and emits a zone event. Duplicate responses (same map type,
+// cluster index, and island name) are suppressed to avoid log spam.
+func (h *AlbionHandler) handleChangeCluster(params map[byte]interface{}) {
+	newZone := parseChangeClusterResponse(params)
+
+	h.zoneMu.RLock()
+	prev := h.currentZone
+	h.zoneMu.RUnlock()
+
+	// Dedup: the server may resend the same ChangeCluster response. Skip if
+	// nothing materially changed.
+	if newZone.MapType == prev.MapType &&
+		newZone.ClusterIndex == prev.ClusterIndex &&
+		newZone.IslandName == prev.IslandName &&
+		newZone.MainClusterIndex == prev.MainClusterIndex &&
+		newZone.HasDungeonInfo == prev.HasDungeonInfo {
+		return
+	}
+
+	h.zoneMu.Lock()
+	h.currentZone = newZone
+	h.zoneMu.Unlock()
+
+	h.notifyEvent("zone", "", &ZoneEventData{
+		MapType:      newZone.MapType,
+		Display:      newZone.DisplayString(),
+		IslandName:   newZone.IslandName,
+		ClusterIndex: newZone.ClusterIndex,
+		Previous:     prev.MapType,
+	})
+}
+
 // notifyEvent calls the event callback if set
 func (h *AlbionHandler) notifyEvent(eventType, message string, data interface{}) {
 	if h.eventCallback != nil {
@@ -190,6 +239,15 @@ type RespecEventData struct {
 	SessionSilverTotal int64 // Total silver spent on auto-respec this session
 }
 
+// ZoneEventData contains zone-transition event data emitted on ChangeCluster.
+type ZoneEventData struct {
+	MapType      MapType // The map type entered
+	Display      string  // Human-friendly label (ZoneInfo.DisplayString())
+	IslandName   string  // Island name (non-empty only on islands)
+	ClusterIndex string  // Raw cluster string from param[0]
+	Previous     MapType // The zone the player left (MapTypeUnknown on first transition)
+}
+
 // GetSessionKills returns the number of kills in this session
 func (h *AlbionHandler) GetSessionKills() int {
 	return int(h.sessionKills.Load())
@@ -211,6 +269,28 @@ func (h *AlbionHandler) LoadItemDatabase(path string) error {
 	return h.itemDB.LoadFromPath(path)
 }
 
+// resolveOperationCode extracts the actual operation code from param[253].
+// Albion embeds the real code in the parameter dictionary, which can differ
+// from the Photon header byte. Mirrors the reference AlbionParser which
+// ignores the header byte and reads from parameters[253].
+func resolveOperationCode(headerCode byte, parameters map[byte]interface{}) byte {
+	if code, ok := parameters[events.ParamOperationCode]; ok {
+		switch v := code.(type) {
+		case byte:
+			return v
+		case int:
+			return byte(v)
+		case int16:
+			return byte(v)
+		case int32:
+			return byte(v)
+		case int64:
+			return byte(v)
+		}
+	}
+	return headerCode
+}
+
 // OnRequest handles operation requests (client -> server)
 func (h *AlbionHandler) OnRequest(operationCode byte, parameters map[byte]interface{}) {
 	// Requests are not logged to avoid polluting TUI output
@@ -218,6 +298,9 @@ func (h *AlbionHandler) OnRequest(operationCode byte, parameters map[byte]interf
 
 // OnResponse handles operation responses (server -> client)
 func (h *AlbionHandler) OnResponse(operationCode byte, returnCode int16, debugMessage string, parameters map[byte]interface{}) {
+	// Albion embeds the real operation code in param[253], not the Photon header byte.
+	operationCode = resolveOperationCode(operationCode, parameters)
+
 	switch operationCode {
 	case events.OperationJoin:
 		// The Join response carries the local player's identity.
@@ -228,6 +311,9 @@ func (h *AlbionHandler) OnResponse(operationCode byte, returnCode int16, debugMe
 		} else {
 			h.debugNotify("OpJoin response had no player name", nil)
 		}
+
+	case events.OperationChangeCluster:
+		h.handleChangeCluster(parameters)
 	}
 }
 
@@ -533,10 +619,10 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 		// Only silver looted by the local player counts toward the session total.
 		// The event is still notified (so other players' loot stays visible in the
 		// log), but it is excluded from the running total when looted by someone
-		// else. Before the local player is known (local == ""), we count everything
-		// to preserve the previous behavior.
+		// else. Before the local player is known (local == ""), nothing is
+		// counted to avoid inflating the session with other players' loot.
 		local := h.GetLocalPlayer()
-		counted := local == "" || lootedBy == local
+		counted := local != "" && lootedBy == local
 		if counted {
 			h.sessionSilver.Add(silverAmount)
 		}

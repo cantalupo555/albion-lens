@@ -10,9 +10,9 @@ import (
 
 const (
 	// Header sizes
-	PhotonHeaderLength        = 12
-	CommandHeaderLength       = 12
-	FragmentHeaderLength      = 20
+	PhotonHeaderLength   = 12
+	CommandHeaderLength  = 12
+	FragmentHeaderLength = 20
 
 	// Command types
 	CommandTypeDisconnect     = 4
@@ -43,7 +43,7 @@ type PhotonHandler interface {
 type Parser struct {
 	handler          PhotonHandler
 	pendingFragments map[int32]*fragmentedPacket
-	fragmentsMu      sync.RWMutex  // Protects pendingFragments
+	fragmentsMu      sync.RWMutex // Protects pendingFragments
 	debug            bool
 	stopCleanup      chan struct{} // Signal to stop cleanup goroutine
 	Stats            *Stats        // Parser statistics

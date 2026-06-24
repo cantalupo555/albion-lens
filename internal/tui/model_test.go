@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
-	tea "charm.land/bubbletea/v2"
 )
 
 // updateModel is a test helper that calls Update and asserts the result is a Model.
@@ -91,10 +92,132 @@ func TestNewModelDefaults(t *testing.T) {
 // Update: keyboard input tests
 // ============================================
 
+func TestUpdateKeyTabNext(t *testing.T) {
+	m := readyModel()
+
+	if m.tabBar.Active() != TabDashboard {
+		t.Fatalf("expected Dashboard active initially, got %d", m.tabBar.Active())
+	}
+
+	m = updateModel(m, tea.KeyPressMsg{Code: tea.KeyTab})
+
+	if m.tabBar.Active() != TabZone {
+		t.Errorf("expected Zone active after Tab, got %d", m.tabBar.Active())
+	}
+}
+
+func TestUpdateKeyTabPrev(t *testing.T) {
+	m := readyModel()
+
+	m = updateModel(m, tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift})
+
+	if m.tabBar.Active() != TabZone {
+		t.Errorf("expected Zone active after Shift+Tab, got %d", m.tabBar.Active())
+	}
+}
+
+func TestUpdateKeyNumberSwitch(t *testing.T) {
+	m := readyModel()
+
+	// Press '2' → Zone tab.
+	m = updateModel(m, tea.KeyPressMsg{Code: '2'})
+	if m.tabBar.Active() != TabZone {
+		t.Errorf("expected Zone active after '2', got %d", m.tabBar.Active())
+	}
+
+	// Press '1' → Dashboard tab.
+	m = updateModel(m, tea.KeyPressMsg{Code: '1'})
+	if m.tabBar.Active() != TabDashboard {
+		t.Errorf("expected Dashboard active after '1', got %d", m.tabBar.Active())
+	}
+}
+
+func TestUpdateKeyClearRouting(t *testing.T) {
+	m := readyModel()
+
+	// Add events to both event log and zone panel.
+	m = updateModel(m, BulkEventMsg{
+		{Type: "info", Message: "log event", Timestamp: time.Now()},
+	})
+	m = updateModel(m, BulkEventMsg{
+		{
+			Type:      "zone",
+			Timestamp: time.Now(),
+			Data: &handlers.ZoneEventData{
+				MapType: handlers.MapTypeIsland,
+				Display: "Island",
+			},
+		},
+	})
+
+	// Switch to Zone tab and clear — should clear zone panel, not event log.
+	m = updateModel(m, tea.KeyPressMsg{Code: tea.KeyTab})
+	m = updateModel(m, tea.KeyPressMsg{Code: 'c'})
+
+	// Switch back to Dashboard and verify event log is intact.
+	m = updateModel(m, tea.KeyPressMsg{Code: '1'})
+	view := m.View().Content
+	if !strings.Contains(view, "log event") {
+		t.Error("expected event log to retain events after clearing zone panel")
+	}
+}
+
+func TestUpdateKeyScrollRouting(t *testing.T) {
+	m := readyModel()
+
+	// These should not panic on either tab.
+	m = updateModel(m, tea.KeyPressMsg{Code: tea.KeyTab})
+	updateModel(m, tea.KeyPressMsg{Code: tea.KeyUp})
+	updateModel(m, tea.KeyPressMsg{Code: tea.KeyDown})
+
+	m = updateModel(m, tea.KeyPressMsg{Code: '1'})
+	updateModel(m, tea.KeyPressMsg{Code: 'k'})
+	updateModel(m, tea.KeyPressMsg{Code: 'j'})
+}
+
+// ============================================
+// Update: BulkEventMsg zone tests
+// ============================================
+
+func TestUpdateBulkEventZone(t *testing.T) {
+	m := readyModel()
+
+	bulkMsg := BulkEventMsg{
+		{
+			Type:      "zone",
+			Timestamp: time.Now(),
+			Data: &handlers.ZoneEventData{
+				MapType: handlers.MapTypeIsland,
+				Display: "Island — Farm",
+			},
+		},
+	}
+
+	m = updateModel(m, bulkMsg)
+
+	// Zone tab should contain the transition.
+	m = updateModel(m, tea.KeyPressMsg{Code: '2'})
+	view := m.View().Content
+	if !strings.Contains(view, "Island") {
+		t.Error("expected 'Island' in zone panel view after zone event")
+	}
+
+	// Dashboard event log should also show the zone transition.
+	m = updateModel(m, tea.KeyPressMsg{Code: '1'})
+	dashView := m.View().Content
+	if !strings.Contains(dashView, "Island") {
+		t.Error("expected zone transition in dashboard event log")
+	}
+}
+
+// ============================================
+// Original keyboard input tests
+// ============================================
+
 func TestUpdateKeyQuit(t *testing.T) {
 	m := New(nil, nil, nil)
 
-	newModel, cmd := m.Update(	tea.KeyPressMsg{Code: 'q'})
+	newModel, cmd := m.Update(tea.KeyPressMsg{Code: 'q'})
 	m2 := newModel.(Model)
 
 	if !m2.quitting {
@@ -108,7 +231,7 @@ func TestUpdateKeyQuit(t *testing.T) {
 func TestUpdateKeyCtrlC(t *testing.T) {
 	m := New(nil, nil, nil)
 
-	newModel, cmd := m.Update(	tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
+	newModel, cmd := m.Update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
 	m2 := newModel.(Model)
 
 	if !m2.quitting {
@@ -126,12 +249,12 @@ func TestUpdateKeyDebugToggle(t *testing.T) {
 		t.Error("expected debug=false initially")
 	}
 
-	m = updateModel(m, 	tea.KeyPressMsg{Code: 'd'})
+	m = updateModel(m, tea.KeyPressMsg{Code: 'd'})
 	if !m.debug {
 		t.Error("expected debug=true after pressing 'd'")
 	}
 
-	m = updateModel(m, 	tea.KeyPressMsg{Code: 'd'})
+	m = updateModel(m, tea.KeyPressMsg{Code: 'd'})
 	if m.debug {
 		t.Error("expected debug=false after pressing 'd' again")
 	}
@@ -144,7 +267,7 @@ func TestUpdateKeyFullNumbersToggle(t *testing.T) {
 		t.Error("expected fullNumbers=false initially")
 	}
 
-	m = updateModel(m, 	tea.KeyPressMsg{Code: 'f'})
+	m = updateModel(m, tea.KeyPressMsg{Code: 'f'})
 	if !m.fullNumbers {
 		t.Error("expected fullNumbers=true after pressing 'f'")
 	}
@@ -159,7 +282,7 @@ func TestUpdateKeyClear(t *testing.T) {
 	})
 
 	// Press 'c' to clear
-	m = updateModel(m, 	tea.KeyPressMsg{Code: 'c'})
+	m = updateModel(m, tea.KeyPressMsg{Code: 'c'})
 
 	// View should not contain the event text after clear
 	view := m.View().Content
@@ -178,7 +301,7 @@ func TestUpdateKeyReset(t *testing.T) {
 	})
 
 	// Press 'r' to reset
-	m = updateModel(m, 	tea.KeyPressMsg{Code: 'r'})
+	m = updateModel(m, tea.KeyPressMsg{Code: 'r'})
 
 	// Stats panel view should show 0 after reset
 	statsView := m.statsPanel.View()
@@ -324,6 +447,36 @@ func TestUpdateSessionStatsMsg(t *testing.T) {
 	}
 }
 
+func TestUpdateTickMsg(t *testing.T) {
+	// TickMsg with a nil svc: must not panic, returns a TickCmd.
+	m := readyModel()
+	_, cmd := m.Update(TickMsg(time.Now()))
+	if cmd == nil {
+		t.Error("expected non-nil command from TickMsg (TickCmd)")
+	}
+}
+
+func TestUpdateTickMsgWithService(t *testing.T) {
+	// TickMsg with a non-nil svc exercises the zone-refresh path.
+	// backend.New() has a nil handler, so CurrentZone() returns zero-value
+	// ZoneInfo — but the code path must not panic.
+	svc := backend.New()
+	m := New(svc, nil, nil)
+	m = updateModel(m, tea.WindowSizeMsg{Width: 80, Height: 24})
+
+	_, cmd := m.Update(TickMsg(time.Now()))
+	if cmd == nil {
+		t.Error("expected non-nil command from TickMsg")
+	}
+
+	// Zone display should be empty (zero-value ZoneInfo.DisplayString() == ""),
+	// so no zone indicator should appear in the status bar.
+	view := m.View().Content
+	if strings.Contains(view, "◎") {
+		t.Error("expected no zone indicator with nil handler")
+	}
+}
+
 func TestUpdateWindowSizeMsg(t *testing.T) {
 	m := New(nil, nil, nil)
 
@@ -375,5 +528,40 @@ func TestViewReady(t *testing.T) {
 	}
 	if !strings.Contains(view, "Session Stats") {
 		t.Error("expected 'Session Stats' section in ready view")
+	}
+}
+
+func TestViewZoneTab(t *testing.T) {
+	m := readyModel()
+
+	// Switch to Zone tab.
+	m = updateModel(m, tea.KeyPressMsg{Code: '2'})
+
+	view := m.View().Content
+	if !strings.Contains(view, "Zone") {
+		t.Error("expected 'Zone' panel in zone tab view")
+	}
+	if !strings.Contains(view, "Current:") {
+		t.Error("expected 'Current:' label in zone tab view")
+	}
+	if !strings.Contains(view, "Time:") {
+		t.Error("expected 'Time:' label in zone tab view")
+	}
+}
+
+func TestViewHelpBarTabIndicator(t *testing.T) {
+	m := readyModel()
+
+	// Dashboard active.
+	helpDash := m.renderHelpBar()
+	if !strings.Contains(helpDash, "[DASH]") {
+		t.Error("expected [DASH] indicator on dashboard tab")
+	}
+
+	// Switch to Zone.
+	m = updateModel(m, tea.KeyPressMsg{Code: tea.KeyTab})
+	helpZone := m.renderHelpBar()
+	if !strings.Contains(helpZone, "[ZONE]") {
+		t.Error("expected [ZONE] indicator on zone tab")
 	}
 }

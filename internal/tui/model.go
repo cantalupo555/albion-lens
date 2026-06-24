@@ -2,13 +2,14 @@ package tui
 
 import (
 	"fmt"
+	"time"
 
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/cantalupo555/albion-lens/internal/tui/components"
 	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
-	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 )
 
 // Model is the main TUI model
@@ -16,6 +17,8 @@ type Model struct {
 	statusBar  components.StatusBar
 	eventLog   components.EventLog
 	statsPanel components.StatsPanel
+	tabBar     components.TabBar
+	zonePanel  components.ZonePanel
 
 	// Backend service reference for runtime control
 	svc *backend.Service
@@ -36,12 +39,21 @@ type Model struct {
 	fullNumbers bool // Show full numbers instead of abbreviated (e.g., 4984 vs 4.9k)
 }
 
+// Tab indices for navigation. Kept as constants so the help bar and key
+// handlers stay in sync if new tabs are added.
+const (
+	TabDashboard = iota
+	TabZone
+)
+
 // New creates a new TUI Model
 func New(svc *backend.Service, bulkEventChan chan BulkEventMsg, statsChan chan *photon.Stats) Model {
 	m := Model{
 		statusBar:     components.NewStatusBar(),
 		eventLog:      components.NewEventLog(),
 		statsPanel:    components.NewStatsPanel(),
+		tabBar:        components.NewTabBar(),
+		zonePanel:     components.NewZonePanel(),
 		svc:           svc,
 		bulkEventChan: bulkEventChan,
 		statsChan:     statsChan,
@@ -99,8 +111,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "Q", "ctrl+c":
 			m.quitting = true
 			return m, tea.Quit
+		case "tab":
+			m.tabBar = m.tabBar.Next()
+			return m, nil
+		case "shift+tab":
+			m.tabBar = m.tabBar.Prev()
+			return m, nil
+		case "1":
+			m.tabBar = m.tabBar.SetActive(TabDashboard)
+			return m, nil
+		case "2":
+			m.tabBar = m.tabBar.SetActive(TabZone)
+			return m, nil
 		case "c", "C":
-			m.eventLog = m.eventLog.Clear()
+			if m.tabBar.Active() == TabZone {
+				m.zonePanel = m.zonePanel.Clear()
+			} else {
+				m.eventLog = m.eventLog.Clear()
+			}
 			return m, nil
 		case "d", "D":
 			m.debug = !m.debug
@@ -118,10 +146,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.statsPanel = m.statsPanel.Reset()
 			return m, nil
 		case "up", "k":
-			m.eventLog = m.eventLog.ScrollUp()
+			if m.tabBar.Active() == TabZone {
+				m.zonePanel = m.zonePanel.ScrollUp()
+			} else {
+				m.eventLog = m.eventLog.ScrollUp()
+			}
 			return m, nil
 		case "down", "j":
-			m.eventLog = m.eventLog.ScrollDown()
+			if m.tabBar.Active() == TabZone {
+				m.zonePanel = m.zonePanel.ScrollDown()
+			} else {
+				m.eventLog = m.eventLog.ScrollDown()
+			}
 			return m, nil
 		}
 
@@ -172,6 +208,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statsPanel = m.statsPanel.IncrKills()
 			case "death":
 				m.statsPanel = m.statsPanel.IncrDeaths()
+			case "zone":
+				if data, ok := eventMsg.Data.(*handlers.ZoneEventData); ok && data != nil {
+					info := handlers.ZoneInfo{
+						MapType:      data.MapType,
+						ClusterIndex: data.ClusterIndex,
+						IslandName:   data.IslandName,
+					}
+					m.zonePanel = m.zonePanel.AddTransition(info, eventMsg.Timestamp)
+				}
 			}
 
 			logEvents = append(logEvents, components.Event{
@@ -212,10 +257,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Periodic tick
 	case TickMsg:
-		// Refresh player identification and online status from the backend
+		// Refresh player identification, zone, and online status from the backend
 		if m.svc != nil {
 			m.statusBar = m.statusBar.SetPlayerName(m.svc.LocalPlayerName())
 			m.statusBar = m.statusBar.SetOnline(m.svc.IsOnline())
+
+			zone := m.svc.CurrentZone()
+			m.statusBar = m.statusBar.SetZone(zone.DisplayString())
+			m.zonePanel = m.zonePanel.SetZone(zone).SetNow(time.Now())
 		}
 		// Refresh display periodically
 		cmds = append(cmds, TickCmd())
@@ -237,10 +286,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // updateLayout recalculates component sizes based on window dimensions
 func (m Model) updateLayout() Model {
-	// Reserve space for status bar (4 lines) and help bar (1 line)
+	// Reserve space for status bar (4 lines), tab bar (1 line), and help bar (1 line)
 	statusBarHeight := 4
+	tabBarHeight := 1
 	helpBarHeight := 1
-	mainHeight := m.height - statusBarHeight - helpBarHeight
+	mainHeight := m.height - statusBarHeight - tabBarHeight - helpBarHeight
 
 	if mainHeight < 5 {
 		mainHeight = 5
@@ -260,6 +310,7 @@ func (m Model) updateLayout() Model {
 	m.statusBar = m.statusBar.SetWidth(m.width)
 	m.eventLog = m.eventLog.SetSize(eventLogWidth, mainHeight)
 	m.statsPanel = m.statsPanel.SetSize(statsPanelWidth, mainHeight)
+	m.zonePanel = m.zonePanel.SetSize(m.width, mainHeight)
 
 	return m
 }
@@ -277,12 +328,20 @@ func (m Model) View() tea.View {
 	// Status bar (top)
 	statusBar := m.statusBar.View()
 
-	// Main panel (event log + stats side by side)
-	mainPanel := lipgloss.JoinHorizontal(
-		lipgloss.Top,
-		m.eventLog.View(),
-		m.statsPanel.View(),
-	)
+	// Tab bar
+	tabBar := m.tabBar.View()
+
+	// Main content depends on the active tab
+	var mainPanel string
+	if m.tabBar.Active() == TabZone {
+		mainPanel = m.zonePanel.View()
+	} else {
+		mainPanel = lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			m.eventLog.View(),
+			m.statsPanel.View(),
+		)
+	}
 
 	// Help bar (bottom)
 	helpBar := m.renderHelpBar()
@@ -291,6 +350,7 @@ func (m Model) View() tea.View {
 	content := lipgloss.JoinVertical(
 		lipgloss.Left,
 		statusBar,
+		tabBar,
 		mainPanel,
 		helpBar,
 	)
@@ -311,6 +371,7 @@ func (m Model) renderHelpBar() string {
 
 	help := lipgloss.JoinHorizontal(lipgloss.Left,
 		keyStyle.Render("Q"), textStyle.Render("uit  "),
+		keyStyle.Render("Tab"), textStyle.Render("Switch  "),
 		keyStyle.Render("C"), textStyle.Render("lear  "),
 		keyStyle.Render("R"), textStyle.Render("eset stats  "),
 		keyStyle.Render("F"), textStyle.Render("ull numbers  "),
@@ -322,6 +383,12 @@ func (m Model) renderHelpBar() string {
 		Foreground(lipgloss.Color("214")).
 		Bold(true)
 
+	// Show active tab indicator
+	if m.tabBar.Active() == TabZone {
+		help += "  " + toggleStyle.Render("[ZONE]")
+	} else {
+		help += "  " + toggleStyle.Render("[DASH]")
+	}
 	if m.fullNumbers {
 		help += "  " + toggleStyle.Render("[FULL]")
 	}
