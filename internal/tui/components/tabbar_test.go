@@ -11,8 +11,8 @@ func TestNewTabBarDefaults(t *testing.T) {
 	if tb.active != 0 {
 		t.Errorf("expected active=0 by default, got %d", tb.active)
 	}
-	if len(tb.tabs) != 2 {
-		t.Errorf("expected 2 tabs, got %d", len(tb.tabs))
+	if len(tb.tabs) != 3 {
+		t.Errorf("expected 3 tabs, got %d", len(tb.tabs))
 	}
 }
 
@@ -31,6 +31,11 @@ func TestTabBarNext(t *testing.T) {
 		t.Errorf("expected Active()=1 after Next, got %d", tb.Active())
 	}
 
+	tb = tb.Next()
+	if tb.Active() != 2 {
+		t.Errorf("expected Active()=2 after Next, got %d", tb.Active())
+	}
+
 	// Wrap around.
 	tb = tb.Next()
 	if tb.Active() != 0 {
@@ -43,8 +48,13 @@ func TestTabBarPrev(t *testing.T) {
 
 	// Wrap backward to the last tab.
 	tb = tb.Prev()
+	if tb.Active() != 2 {
+		t.Errorf("expected Active()=2 after backward wrap Prev, got %d", tb.Active())
+	}
+
+	tb = tb.Prev()
 	if tb.Active() != 1 {
-		t.Errorf("expected Active()=1 after backward wrap Prev, got %d", tb.Active())
+		t.Errorf("expected Active()=1 after Prev, got %d", tb.Active())
 	}
 
 	tb = tb.Prev()
@@ -63,8 +73,8 @@ func TestTabBarSetActive(t *testing.T) {
 
 	// Clamping above.
 	tb = tb.SetActive(99)
-	if tb.Active() != 1 {
-		t.Errorf("expected clamped Active()=1, got %d", tb.Active())
+	if tb.Active() != 2 {
+		t.Errorf("expected clamped Active()=2, got %d", tb.Active())
 	}
 
 	// Clamping below.
@@ -84,6 +94,9 @@ func TestTabBarViewContainsAllTabs(t *testing.T) {
 	}
 	if !strings.Contains(view, "Zone") {
 		t.Error("expected 'Zone' in tab bar view")
+	}
+	if !strings.Contains(view, "Dungeons") {
+		t.Error("expected 'Dungeons' in tab bar view")
 	}
 }
 
