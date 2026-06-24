@@ -25,6 +25,7 @@ func main() {
 	listDevices := flag.Bool("list", false, "List available network devices")
 	deviceName := flag.String("device", "", "Specific device to capture on (captures all if not specified)")
 	debug := flag.Bool("debug", false, "Enable debug output")
+	discover := flag.Bool("discover", false, "Enable discovery mode to log all events (dumps JSON to output/ on exit)")
 	itemsPath := flag.String("items", "", "Path to ao-bin-dumps directory for item name resolution")
 	flag.Parse()
 
@@ -46,6 +47,9 @@ func main() {
 	}
 	if *itemsPath != "" {
 		opts = append(opts, backend.WithItemDatabasePath(*itemsPath))
+	}
+	if *discover {
+		opts = append(opts, backend.WithDiscovery(true))
 	}
 
 	svc := backend.New(opts...)
@@ -92,6 +96,19 @@ func main() {
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running TUI: %v\n", err)
 		os.Exit(1)
+	}
+
+	// In discovery mode, persist the captured event map so unmapped events
+	// (e.g. the dungeon-closure notification) can be identified offline.
+	if *discover {
+		if handler := svc.Handler(); handler != nil {
+			dumpPath := fmt.Sprintf("output/discovered-events-%s.json", time.Now().Format("20060102-150405"))
+			if err := handler.SaveDiscoveredEvents(dumpPath); err != nil {
+				fmt.Printf("Error saving discovered events: %v\n", err)
+			} else {
+				fmt.Printf("Discovered events saved to %s\n", dumpPath)
+			}
+		}
 	}
 }
 
