@@ -373,8 +373,8 @@ func TestSetFullNumbersReRender(t *testing.T) {
 	// Toggle to abbreviated
 	e = e.SetFullNumbers(false)
 
-	viewAbbrev := e.View()
-	if !strings.Contains(viewAbbrev, "1.5k") {
+	viewAbb := e.View()
+	if !strings.Contains(viewAbb, "1.5k") {
 		t.Error("expected abbreviated '1.5k' with fullNumbers=false")
 	}
 }
