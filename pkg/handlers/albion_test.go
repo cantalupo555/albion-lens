@@ -1429,3 +1429,215 @@ func TestSessionCountersConcurrent(t *testing.T) {
 		t.Errorf("sessionKills should be >= 0, got %d", k)
 	}
 }
+
+// TestGetFloatPair directly exercises the position-array helper.
+func TestGetFloatPair(t *testing.T) {
+	tests := []struct {
+		name  string
+		val   interface{}
+		expX  float64
+		expY  float64
+		expOK bool
+	}{
+		{"float32", []float32{1.5, 2.5}, 1.5, 2.5, true},
+		{"float64", []float64{3, 4}, 3, 4, true},
+		{"interface numeric", []interface{}{float64(5), int(6)}, 5, 6, true},
+		{"int", []int{7, 8}, 7, 8, true},
+		{"int32", []int32{9, 10}, 9, 10, true},
+		{"int64", []int64{11, 12}, 11, 12, true},
+		{"too short", []float64{1}, 0, 0, false},
+		{"wrong type", "not-an-array", 0, 0, false},
+		{"interface non-numeric", []interface{}{"a", "b"}, 0, 0, false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			params := map[byte]interface{}{1: tc.val}
+			x, y, ok := getFloatPair(params, 1)
+			if ok != tc.expOK {
+				t.Errorf("ok: expected %v, got %v", tc.expOK, ok)
+			}
+			if x != tc.expX {
+				t.Errorf("x: expected %v, got %v", tc.expX, x)
+			}
+			if y != tc.expY {
+				t.Errorf("y: expected %v, got %v", tc.expY, y)
+			}
+		})
+	}
+
+	// Missing key
+	if _, _, ok := getFloatPair(map[byte]interface{}{}, 1); ok {
+		t.Error("expected ok=false for missing key")
+	}
+}
+
+func TestOnResponseOpJoinCreatesDungeonRun(t *testing.T) {
+	h := NewAlbionHandler()
+	t0 := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return t0 }
+
+	// No active run before OpJoin.
+	if h.GetActiveDungeon() != nil {
+		t.Fatal("expected nil active run before OpJoin")
+	}
+
+	// Simulate an OpJoin response with a random dungeon map in param[8].
+	h.OnResponse(events.OperationJoin, 0, "", map[byte]interface{}{
+		byte(253): int16(events.OperationJoin), // param[253] = real op code
+		byte(2):   "TestPlayer",                // param[2] = username
+		byte(8):   "@RANDOMDUNGEON@06a1a448-166d-4022-a4b1-ae3cc7ba1144",
+	})
+
+	// Player name should be set.
+	if h.GetLocalPlayer() != "TestPlayer" {
+		t.Errorf("expected local player 'TestPlayer', got %q", h.GetLocalPlayer())
+	}
+
+	// A dungeon run should be active.
+	active := h.GetActiveDungeon()
+	if active == nil {
+		t.Fatal("expected active dungeon run after OpJoin with @RANDOMDUNGEON@ map")
+	}
+	if active.Status != RunStatusActive {
+		t.Errorf("expected Status=Active, got %v", active.Status)
+	}
+
+	// Zone should reflect Random Dungeon.
+	zone := h.GetCurrentZone()
+	if zone.MapType != MapTypeRandomDungeon {
+		t.Errorf("expected MapType=RandomDungeon, got %v", zone.MapType)
+	}
+}
+
+func TestOnResponseOpJoinExitsDungeon(t *testing.T) {
+	h := NewAlbionHandler()
+	t0 := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return t0 }
+
+	// Enter dungeon via OpJoin.
+	h.OnResponse(events.OperationJoin, 0, "", map[byte]interface{}{
+		byte(253): int16(events.OperationJoin),
+		byte(8):   "@RANDOMDUNGEON@abc123",
+	})
+
+	if h.GetActiveDungeon() == nil {
+		t.Fatal("expected active run after entering dungeon")
+	}
+
+	// Exit to open world via a second OpJoin with a non-dungeon map.
+	t1 := t0.Add(5 * time.Minute)
+	h.nowFunc = func() time.Time { return t1 }
+	h.OnResponse(events.OperationJoin, 0, "", map[byte]interface{}{
+		byte(253): int16(events.OperationJoin),
+		byte(8):   "4000", // open-world cluster (Fort Sterling)
+	})
+
+	// No active run after exit.
+	if h.GetActiveDungeon() != nil {
+		t.Error("expected nil active run after exiting dungeon")
+	}
+
+	// The dungeon run should be Done.
+	runs := h.GetDungeonRuns()
+	if len(runs) != 1 {
+		t.Fatalf("expected 1 run, got %d", len(runs))
+	}
+	if runs[0].Status != RunStatusDone {
+		t.Errorf("expected Done, got %v", runs[0].Status)
+	}
+}
+
+// --- Event-to-classification integration tests ---
+
+// enterDungeonHelper enters a random dungeon via OpJoin and returns the handler.
+func enterDungeonHelper(t *testing.T) *AlbionHandler {
+	t.Helper()
+	h := NewAlbionHandler()
+	t0 := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return t0 }
+	h.OnResponse(events.OperationJoin, 0, "", map[byte]interface{}{
+		byte(253): int16(events.OperationJoin),
+		byte(8):   "@RANDOMDUNGEON@test-guid",
+	})
+	if h.GetActiveDungeon() == nil {
+		t.Fatal("expected active dungeon run after OpJoin")
+	}
+	return h
+}
+
+func TestOnEventNewShrineClassifiesRun(t *testing.T) {
+	h := enterDungeonHelper(t)
+
+	h.OnEvent(0, map[byte]interface{}{
+		byte(252): int16(events.EventNewShrine),
+		byte(3):   "RD_SOLO_KEEPER_SHRINE",
+	})
+
+	active := h.GetActiveDungeon()
+	if active == nil {
+		t.Fatal("expected active run after NewShrine")
+	}
+	if active.Mode != DungeonModeSolo {
+		t.Errorf("expected Mode=Solo from shrine, got %v", active.Mode)
+	}
+	if active.Faction != "Keeper" {
+		t.Errorf("expected Faction=Keeper from shrine, got %q", active.Faction)
+	}
+}
+
+func TestOnEventNewLootChestClassifiesRun(t *testing.T) {
+	h := enterDungeonHelper(t)
+
+	h.OnEvent(0, map[byte]interface{}{
+		byte(252): int16(events.EventNewLootChest),
+		byte(3):   "T4_RD_VETERAN_MORGANA_CHEST",
+	})
+
+	active := h.GetActiveDungeon()
+	if active == nil {
+		t.Fatal("expected active run after NewLootChest")
+	}
+	if active.Mode != DungeonModeStandard {
+		t.Errorf("expected Mode=Standard from chest, got %v", active.Mode)
+	}
+	if active.Faction != "Morgana" {
+		t.Errorf("expected Faction=Morgana from chest, got %q", active.Faction)
+	}
+}
+
+func TestOnEventNewMobClassifiesTier(t *testing.T) {
+	h := enterDungeonHelper(t)
+	h.mobDB = &MobDatabase{
+		mobs: []mobEntry{
+			{UniqueName: "T4_MOB_RD_UNDEAD_SKELLETTON", Tier: 4},
+		},
+		loaded: true,
+	}
+
+	h.OnEvent(0, map[byte]interface{}{
+		byte(252): int16(events.EventNewMob),
+		byte(1):   int32(inGameMobIndexOffset), // server mobIndex = offset → dataIndex 0
+	})
+
+	active := h.GetActiveDungeon()
+	if active == nil {
+		t.Fatal("expected active run after NewMob")
+	}
+	if active.Tier != 3 {
+		t.Errorf("expected Tier=3 (mob tier 4 - 1), got %d", active.Tier)
+	}
+}
+
+func TestOnEventNewShrineNoActiveRun(t *testing.T) {
+	h := NewAlbionHandler()
+
+	// Should not panic when no active run exists.
+	h.OnEvent(0, map[byte]interface{}{
+		byte(252): int16(events.EventNewShrine),
+		byte(3):   "RD_SOLO_KEEPER_SHRINE",
+	})
+
+	if h.GetActiveDungeon() != nil {
+		t.Error("expected nil active run when no dungeon entered")
+	}
+}

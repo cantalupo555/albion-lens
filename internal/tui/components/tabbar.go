@@ -30,10 +30,10 @@ type TabBar struct {
 	active int
 }
 
-// NewTabBar creates a TabBar with the default tabs (Dashboard, Zone).
+// NewTabBar creates a TabBar with the default tabs (Dashboard, Zone, Dungeons).
 func NewTabBar() TabBar {
 	return TabBar{
-		tabs: []string{"Dashboard", "Zone"},
+		tabs: []string{"Dashboard", "Zone", "Dungeons"},
 	}
 }
 

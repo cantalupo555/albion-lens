@@ -7,6 +7,8 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -16,7 +18,7 @@ import (
 )
 
 // EventCallback is called when a game event is processed
-// eventType: "fame", "silver", "loot", "respec", "combat", "info", "death", "kill", "zone"
+// eventType: "fame", "silver", "loot", "respec", "combat", "info", "death", "kill", "zone", "debug"
 // message: formatted message to display
 // data: optional structured data (FameEventData, SilverEventData, RespecEventData, ZoneEventData, etc.)
 type EventCallback func(eventType, message string, data interface{})
@@ -52,6 +54,9 @@ type AlbionHandler struct {
 	// Items database
 	itemDB *items.ItemDatabase
 
+	// Mob database for dungeon tier classification (loaded from mobs.json).
+	mobDB *MobDatabase
+
 	// Discovery mode tracking
 	discoveredEvents map[int16]*DiscoveredEvent
 	discoveryMu      sync.RWMutex
@@ -77,6 +82,13 @@ type AlbionHandler struct {
 	deathDedupWindow time.Duration
 	lastDeathsPurge  time.Time
 	nowFunc          func() time.Time
+
+	// Dungeon run tracking. Single active run detected via OpJoin and
+	// ChangeCluster transitions (MapType == RandomDungeon). Classification
+	// is lazy: mode/faction from shrine/chest events, tier from mob events.
+	dungeonMu   sync.Mutex
+	dungeonRuns []*DungeonRun
+	activeRun   *DungeonRun
 
 	// Event callback for frontend integration (TUI, Wails, etc.)
 	eventCallback EventCallback
@@ -146,29 +158,70 @@ func (h *AlbionHandler) GetCurrentZone() ZoneInfo {
 	return h.currentZone
 }
 
-// handleChangeCluster parses the ChangeCluster response, updates the current
-// zone state, and emits a zone event. Duplicate responses (same map type,
-// cluster index, and island name) are suppressed to avoid log spam.
+// handleChangeCluster parses the ChangeCluster response and forwards it to
+// processZoneTransition. ChangeCluster fires for open-world cluster changes
+// (city, overworld, island). Dungeon entries are primarily detected via OpJoin.
 func (h *AlbionHandler) handleChangeCluster(params map[byte]interface{}) {
-	newZone := parseChangeClusterResponse(params)
+	h.processZoneTransition(parseChangeClusterResponse(params))
+}
 
+// processZoneTransition updates the current zone state, detects dungeon
+// entry/exit, and emits a zone event. Called from both ChangeCluster and Join
+// handlers so that dungeon detection works regardless of which operation the
+// server sends. Duplicate transitions (same map type, cluster index, and
+// island name) are suppressed. Empty fields on the incoming ZoneInfo are
+// merged from the previous zone so that a partial update (e.g. OpJoin, which
+// only carries ClusterIndex and MapType) does not clobber richer data already
+// set by ChangeCluster (IslandName, MainClusterIndex, HasDungeonInfo).
+func (h *AlbionHandler) processZoneTransition(newZone ZoneInfo) {
 	h.zoneMu.RLock()
 	prev := h.currentZone
 	h.zoneMu.RUnlock()
 
-	// Dedup: the server may resend the same ChangeCluster response. Skip if
-	// nothing materially changed.
+	// Merge: preserve non-zero fields from prev when the incoming zone
+	// leaves them empty (OpJoin sends a partial ZoneInfo).
+	if newZone.IslandName == "" {
+		newZone.IslandName = prev.IslandName
+	}
+	if newZone.MainClusterIndex == "" {
+		newZone.MainClusterIndex = prev.MainClusterIndex
+	}
+	if !newZone.HasDungeonInfo {
+		newZone.HasDungeonInfo = prev.HasDungeonInfo
+	}
+
+	// Dedup: the server may resend the same response or deliver the same
+	// transition via both Join and ChangeCluster. Skip if nothing materially
+	// changed. HasDungeonInfo is excluded — it's metadata that may differ
+	// between Join (always false) and ChangeCluster (may be true) for the
+	// same zone, and doesn't warrant a duplicate event.
 	if newZone.MapType == prev.MapType &&
 		newZone.ClusterIndex == prev.ClusterIndex &&
 		newZone.IslandName == prev.IslandName &&
-		newZone.MainClusterIndex == prev.MainClusterIndex &&
-		newZone.HasDungeonInfo == prev.HasDungeonInfo {
+		newZone.MainClusterIndex == prev.MainClusterIndex {
+		// Silently update HasDungeonInfo if the new zone has it but the
+		// stored one doesn't (ChangeCluster arriving after OpJoin).
+		if newZone.HasDungeonInfo && !prev.HasDungeonInfo {
+			h.zoneMu.Lock()
+			h.currentZone.HasDungeonInfo = true
+			h.zoneMu.Unlock()
+		}
 		return
 	}
 
 	h.zoneMu.Lock()
 	h.currentZone = newZone
 	h.zoneMu.Unlock()
+
+	// Detect random dungeon entry/exit for run tracking. Guard against
+	// double-entry when both Join and ChangeCluster fire for the same
+	// dungeon transition (prev and new both RandomDungeon → skip).
+	now := h.nowFunc()
+	if newZone.MapType == MapTypeRandomDungeon && prev.MapType != MapTypeRandomDungeon {
+		h.EnterDungeon(now)
+	} else if newZone.MapType != MapTypeRandomDungeon && prev.MapType == MapTypeRandomDungeon {
+		h.ExitDungeon(now)
+	}
 
 	h.notifyEvent("zone", "", &ZoneEventData{
 		MapType:      newZone.MapType,
@@ -269,6 +322,17 @@ func (h *AlbionHandler) LoadItemDatabase(path string) error {
 	return h.itemDB.LoadFromPath(path)
 }
 
+// LoadMobDatabase loads the mob database from ao-bin-dumps for dungeon tier
+// classification. Errors are non-fatal (tier classification is best-effort).
+func (h *AlbionHandler) LoadMobDatabase(path string) error {
+	db, err := LoadMobDatabase(path)
+	if err != nil {
+		return err
+	}
+	h.mobDB = db
+	return nil
+}
+
 // resolveOperationCode extracts the actual operation code from param[253].
 // Albion embeds the real code in the parameter dictionary, which can differ
 // from the Photon header byte. Mirrors the reference AlbionParser which
@@ -310,6 +374,31 @@ func (h *AlbionHandler) OnResponse(operationCode byte, returnCode int16, debugMe
 			h.SetLocalPlayer(name)
 		} else {
 			h.debugNotify("OpJoin response had no player name", nil)
+		}
+
+		// The Join response also carries the map identity in param[8]
+		// (MapIndex). This is the primary signal for dungeon entry/exit —
+		// the reference project (JoinResponseHandler) calls AddDungeon from
+		// here, not from ChangeCluster. param[65]=SourceClusterIndex,
+		// param[64]=exit position.
+		if mapIndex := getString(parameters, 8); mapIndex != "" {
+			h.processZoneTransition(ZoneInfo{
+				ClusterIndex: mapIndex,
+				MapType:      ParseMapType(mapIndex),
+			})
+		}
+
+		// Debug: surface the full OpJoin map identity for live confirmation.
+		if h.debug {
+			sourceCluster := getString(parameters, 65)
+			posX, posY, hasPos := getFloatPair(parameters, 64)
+			if sourceCluster != "" || hasPos {
+				pos := "?"
+				if hasPos {
+					pos = fmt.Sprintf("(%.0f,%.0f)", posX, posY)
+				}
+				h.debugNotify(fmt.Sprintf("OpJoin source=%q pos=%s", sourceCluster, pos), nil)
+			}
 		}
 
 	case events.OperationChangeCluster:
@@ -371,10 +460,31 @@ func (h *AlbionHandler) OnEvent(eventCode byte, parameters map[byte]interface{})
 		h.handleUpdateReSpecPoints(parameters)
 		handled = true
 
+	case events.EventNewShrine:
+		h.handleNewShrine(parameters)
+		handled = true
+
+	case events.EventNewLootChest:
+		h.handleNewLootChest(parameters)
+		handled = true
+
+	case events.EventNewMob:
+		h.handleNewMob(parameters)
+		handled = true
+
+	case events.EventSimpleFeedback:
+		// Debug-only: capture params to confirm whether this is the dungeon
+		// "closed" notification. The reference defines it but does not handle it.
+		if h.debug {
+			h.debugNotify(fmt.Sprintf("SimpleFeedback %s", dumpParams(parameters)), nil)
+		}
+		handled = true
+
 	default:
 		if h.debug {
 			// Pass "debug" type and the raw event code as data.
-			// The TUI will handle visual formatting.
+			// The TUI applies interactive filtering (high-frequency events are
+			// hidden by default but toggleable); see internal/tui debug filter.
 			h.notifyEvent("debug", "", actualEventCode)
 		}
 	}
@@ -790,6 +900,59 @@ func (h *AlbionHandler) handleUpdateReSpecPoints(params map[byte]interface{}) {
 	})
 }
 
+// classifyRunFromUniqueName extracts mode and faction from a shrine/chest
+// uniqueName and updates the active run lazily. Shared by shrine and chest
+// handlers since both follow the same classification path.
+func (h *AlbionHandler) classifyRunFromUniqueName(uniqueName string) {
+	if uniqueName == "" {
+		return
+	}
+	mode := ClassifyDungeonMode(uniqueName)
+	faction := ClassifyDungeonFaction(uniqueName)
+	if mode != DungeonModeUnknown {
+		h.UpdateActiveRunMode(mode)
+	}
+	if faction != "" {
+		h.UpdateActiveRunFaction(faction)
+	}
+}
+
+// handleNewShrine handles EventNewShrine (code 395). The shrine uniqueName
+// (param[3]) is used for lazy dungeon mode classification.
+func (h *AlbionHandler) handleNewShrine(params map[byte]interface{}) {
+	uniqueName := getString(params, 3)
+	if h.debug {
+		h.debugNotify(fmt.Sprintf("NewShrine uniqueName=%q", uniqueName), nil)
+	}
+	h.classifyRunFromUniqueName(uniqueName)
+}
+
+// handleNewLootChest handles EventNewLootChest (code 391). The chest uniqueName
+// (param[3]) is used for lazy dungeon mode + faction classification.
+func (h *AlbionHandler) handleNewLootChest(params map[byte]interface{}) {
+	uniqueName := getString(params, 3)
+	if h.debug {
+		h.debugNotify(fmt.Sprintf("NewLootChest uniqueName=%q", uniqueName), nil)
+	}
+	h.classifyRunFromUniqueName(uniqueName)
+}
+
+// handleNewMob handles EventNewMob (code 123). The mob index (param[1]) is used
+// for lazy dungeon tier classification via the mob database.
+func (h *AlbionHandler) handleNewMob(params map[byte]interface{}) {
+	mobIndex := int(getInt32(params, 1))
+	if mobIndex == 0 {
+		return
+	}
+	tier := h.mobDB.GetRandomDungeonMobTier(mobIndex)
+	if h.debug {
+		h.debugNotify(fmt.Sprintf("NewMob index=%d tier=%d", mobIndex, tier), nil)
+	}
+	if tier >= 0 {
+		h.UpdateActiveRunTier(tier)
+	}
+}
+
 // Helper functions to extract typed values from parameters
 func getInt64(params map[byte]interface{}, key byte) int64 {
 	if val, ok := params[key]; ok {
@@ -839,4 +1002,89 @@ func getBool(params map[byte]interface{}, key byte) bool {
 		}
 	}
 	return false
+}
+
+// getFloatPair extracts a 2-element numeric array (X, Y) from params[key].
+// Handles the array encodings the photon decoder may produce for a world
+// position: []interface{}, []float32, []float64, []int, []int32, []int64.
+// Returns ok=false when the key is missing, not an array, or has fewer than 2
+// elements. Mirrors the reference ParseWorldPosition acceptance policy.
+func getFloatPair(params map[byte]interface{}, key byte) (x, y float64, ok bool) {
+	val, found := params[key]
+	if !found {
+		return 0, 0, false
+	}
+
+	switch arr := val.(type) {
+	case []interface{}:
+		if len(arr) < 2 {
+			return 0, 0, false
+		}
+		x, okX := toFloat(arr[0])
+		y, okY := toFloat(arr[1])
+		return x, y, okX && okY
+	case []float32:
+		if len(arr) < 2 {
+			return 0, 0, false
+		}
+		return float64(arr[0]), float64(arr[1]), true
+	case []float64:
+		if len(arr) < 2 {
+			return 0, 0, false
+		}
+		return arr[0], arr[1], true
+	case []int:
+		if len(arr) < 2 {
+			return 0, 0, false
+		}
+		return float64(arr[0]), float64(arr[1]), true
+	case []int32:
+		if len(arr) < 2 {
+			return 0, 0, false
+		}
+		return float64(arr[0]), float64(arr[1]), true
+	case []int64:
+		if len(arr) < 2 {
+			return 0, 0, false
+		}
+		return float64(arr[0]), float64(arr[1]), true
+	}
+	return 0, 0, false
+}
+
+// toFloat coerces a numeric interface{} value to float64.
+func toFloat(v interface{}) (float64, bool) {
+	switch n := v.(type) {
+	case float32:
+		return float64(n), true
+	case float64:
+		return n, true
+	case int:
+		return float64(n), true
+	case int32:
+		return float64(n), true
+	case int64:
+		return float64(n), true
+	}
+	return 0, false
+}
+
+// dumpParams renders a parameter map as a compact, key-sorted string for debug
+// logging. Byte slices and large arrays are truncated to keep output readable.
+func dumpParams(params map[byte]interface{}) string {
+	keys := make([]int, 0, len(params))
+	for k := range params {
+		keys = append(keys, int(k))
+	}
+	sort.Ints(keys)
+	parts := make([]string, 0, len(keys))
+	for _, k := range keys {
+		v := params[byte(k)]
+		s := fmt.Sprintf("%v", v)
+		if len(s) > 40 {
+			s = s[:37] + "..."
+		}
+		parts = append(parts, fmt.Sprintf("[%d]=%s", k, s))
+	}
+	return "{" + strings.Join(parts, " ") + "}"
 }

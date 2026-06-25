@@ -122,6 +122,9 @@ func (s *Service) Start() error {
 	// Load item database (errors are non-fatal)
 	_ = s.loadItemDatabase()
 
+	// Load mob database for dungeon tier classification (errors are non-fatal)
+	_ = s.loadMobDatabase()
+
 	// Create parser
 	s.parser = photon.NewParser(s.handler)
 	s.parser.Stats.BufferCapacity = cap(s.eventsChan) // Set once at startup
@@ -234,22 +237,36 @@ func (s *Service) statsUpdater() {
 	}
 }
 
+// aoBinDumpsPaths returns the common fallback paths for the ao-bin-dumps
+// directory, used when no explicit --items path is provided.
+func aoBinDumpsPaths() []string {
+	return []string{
+		"../ao-bin-dumps",
+		"../../ao-bin-dumps",
+		filepath.Join(os.Getenv("HOME"), "Documents/albion/ao-bin-dumps"),
+	}
+}
+
 // loadItemDatabase attempts to load the item database.
 func (s *Service) loadItemDatabase() error {
 	if s.itemDBPath != "" {
 		return s.handler.LoadItemDatabase(s.itemDBPath)
 	}
 
-	// Try auto-detection
-	commonPaths := []string{
-		"../ao-bin-dumps",
-		"../../ao-bin-dumps",
-		filepath.Join(os.Getenv("HOME"), "Documents/albion/ao-bin-dumps"),
-	}
-
-	for _, path := range commonPaths {
+	for _, path := range aoBinDumpsPaths() {
 		if _, err := os.Stat(filepath.Join(path, "items.json")); err == nil {
 			return s.handler.LoadItemDatabase(path)
+		}
+	}
+
+	return nil
+}
+
+// loadMobDatabase attempts to load the mob database for dungeon tier classification.
+func (s *Service) loadMobDatabase() error {
+	for _, path := range aoBinDumpsPaths() {
+		if _, err := os.Stat(filepath.Join(path, "mobs.json")); err == nil {
+			return s.handler.LoadMobDatabase(path)
 		}
 	}
 

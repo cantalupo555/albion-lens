@@ -7,6 +7,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/cantalupo555/albion-lens/pkg/backend"
+	"github.com/cantalupo555/albion-lens/pkg/events"
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
@@ -104,6 +105,12 @@ func TestUpdateKeyTabNext(t *testing.T) {
 	if m.tabBar.Active() != TabZone {
 		t.Errorf("expected Zone active after Tab, got %d", m.tabBar.Active())
 	}
+
+	m = updateModel(m, tea.KeyPressMsg{Code: tea.KeyTab})
+
+	if m.tabBar.Active() != TabDungeons {
+		t.Errorf("expected Dungeons active after second Tab, got %d", m.tabBar.Active())
+	}
 }
 
 func TestUpdateKeyTabPrev(t *testing.T) {
@@ -111,8 +118,8 @@ func TestUpdateKeyTabPrev(t *testing.T) {
 
 	m = updateModel(m, tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift})
 
-	if m.tabBar.Active() != TabZone {
-		t.Errorf("expected Zone active after Shift+Tab, got %d", m.tabBar.Active())
+	if m.tabBar.Active() != TabDungeons {
+		t.Errorf("expected Dungeons active after Shift+Tab, got %d", m.tabBar.Active())
 	}
 }
 
@@ -123,6 +130,12 @@ func TestUpdateKeyNumberSwitch(t *testing.T) {
 	m = updateModel(m, tea.KeyPressMsg{Code: '2'})
 	if m.tabBar.Active() != TabZone {
 		t.Errorf("expected Zone active after '2', got %d", m.tabBar.Active())
+	}
+
+	// Press '3' → Dungeons tab.
+	m = updateModel(m, tea.KeyPressMsg{Code: '3'})
+	if m.tabBar.Active() != TabDungeons {
+		t.Errorf("expected Dungeons active after '3', got %d", m.tabBar.Active())
 	}
 
 	// Press '1' → Dashboard tab.
@@ -273,6 +286,163 @@ func TestUpdateKeyFullNumbersToggle(t *testing.T) {
 	}
 }
 
+// ============================================
+// Debug event filter tests
+// ============================================
+
+func TestDebugFilterHidesNoisyByDefault(t *testing.T) {
+	m := readyModel()
+	if !m.debugHidden[events.EventMove] {
+		t.Error("expected EventMove hidden by default")
+	}
+	if !m.debugHidden[events.EventLeave] {
+		t.Error("expected EventLeave hidden by default")
+	}
+}
+
+func TestDebugFilterCountsAndSkipsHidden(t *testing.T) {
+	m := readyModel()
+	// Move is hidden by default; SimpleFeedback is not.
+	m = updateModel(m, BulkEventMsg{
+		{Type: "debug", Timestamp: time.Now(), Data: events.EventMove},
+		{Type: "debug", Timestamp: time.Now(), Data: events.EventMove},
+		{Type: "debug", Timestamp: time.Now(), Data: events.EventSimpleFeedback},
+	})
+
+	if m.debugCounts[events.EventMove] != 2 {
+		t.Errorf("expected Move counted 2, got %d", m.debugCounts[events.EventMove])
+	}
+	if m.debugCounts[events.EventSimpleFeedback] != 1 {
+		t.Errorf("expected SimpleFeedback counted 1, got %d", m.debugCounts[events.EventSimpleFeedback])
+	}
+	// The hidden Move events must not appear in the rendered log view.
+	view := m.View().Content
+	if strings.Contains(view, "Move") {
+		t.Error("hidden Move event leaked into the view")
+	}
+	if !strings.Contains(view, "SimpleFeedback") {
+		t.Error("expected SimpleFeedback to be visible in the view")
+	}
+}
+
+func TestDebugFilterToggleRevealsHidden(t *testing.T) {
+	m := readyModel()
+	m = updateModel(m, BulkEventMsg{
+		{Type: "debug", Timestamp: time.Now(), Data: events.EventMove},
+	})
+	// Open filter, move cursor onto Move (first sorted code), toggle it visible.
+	m = updateModel(m, tea.KeyPressMsg{Code: '/'})
+	m = updateModel(m, tea.KeyPressMsg{Code: tea.KeySpace}) // toggle cursor row
+
+	if m.debugHidden[events.EventMove] {
+		t.Error("expected Move to be revealed after toggling")
+	}
+}
+
+func TestDebugFilterKeyOpensOverlay(t *testing.T) {
+	m := readyModel()
+	if m.filterOpen {
+		t.Error("expected filter closed initially")
+	}
+	m = updateModel(m, tea.KeyPressMsg{Code: '/'})
+	if !m.filterOpen {
+		t.Error("expected filter open after pressing '/'")
+	}
+	// The overlay should render its title.
+	if !strings.Contains(m.View().Content, "Debug Event Filter") {
+		t.Error("expected filter overlay title in view")
+	}
+	// Closing restores the normal view.
+	m = updateModel(m, tea.KeyPressMsg{Code: '/'})
+	if m.filterOpen {
+		t.Error("expected filter closed after pressing '/' again")
+	}
+}
+
+func TestScrollWindow(t *testing.T) {
+	tests := []struct {
+		name     string
+		cursor   int
+		n        int
+		maxItems int
+		wantS    int
+		wantE    int
+	}{
+		{"fits entirely", 2, 5, 10, 0, 5},
+		{"cursor near top", 0, 20, 5, 0, 5},
+		{"cursor centered", 10, 20, 5, 8, 13},
+		{"cursor near bottom", 19, 20, 5, 15, 20},
+		{"exact fit", 4, 5, 5, 0, 5},
+		{"single item window", 3, 10, 1, 3, 4},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, e := scrollWindow(tt.cursor, tt.n, tt.maxItems)
+			if s != tt.wantS || e != tt.wantE {
+				t.Errorf("scrollWindow(%d,%d,%d) = [%d,%d), want [%d,%d)",
+					tt.cursor, tt.n, tt.maxItems, s, e, tt.wantS, tt.wantE)
+			}
+			// Cursor must always be within [start, end).
+			if tt.cursor < s || tt.cursor >= e {
+				t.Errorf("cursor %d outside window [%d,%d)", tt.cursor, s, e)
+			}
+			// Window must not exceed bounds.
+			if s < 0 || e > tt.n {
+				t.Errorf("window [%d,%d) out of bounds [0,%d)", s, e, tt.n)
+			}
+		})
+	}
+}
+
+// ============================================
+// Overlay tests
+// ============================================
+
+func TestOverlayPreservesBackground(t *testing.T) {
+	// 5-line background, 1-line modal.
+	bg := "aaaa\nbbbb\ncccc\ndddd\neeee"
+	modal := "MOD"
+	result := overlayText(bg, modal, 10, 5)
+
+	lines := strings.Split(result, "\n")
+	// Lines outside the modal row must be intact.
+	if lines[0] != "aaaa" {
+		t.Errorf("line 0 changed: %q", lines[0])
+	}
+	if lines[4] != "eeee" {
+		t.Errorf("line 4 changed: %q", lines[4])
+	}
+	// The modal line must contain "MOD".
+	merged := strings.Join(lines, "\n")
+	if !strings.Contains(merged, "MOD") {
+		t.Error("expected MOD in overlay result")
+	}
+	// Background content around the modal must still be visible.
+	if !strings.Contains(merged, "bbb") {
+		t.Error("expected background 'bbb' preserved around modal")
+	}
+}
+
+func TestDisplayOffsetToByte(t *testing.T) {
+	// Plain ASCII: byte offset == display offset.
+	if got := displayOffsetToByte("abcdef", 3); got != 3 {
+		t.Errorf("plain: got %d, want 3", got)
+	}
+	// With ANSI prefix: escape codes are zero-width.
+	s := "\x1b[31mABC\x1b[0m"
+	if got := displayOffsetToByte(s, 2); got != len("\x1b[31mAB") {
+		t.Errorf("ansi: got %d, want %d", got, len("\x1b[31mAB"))
+	}
+	// Target beyond end: returns full length.
+	if got := displayOffsetToByte("ab", 10); got != 2 {
+		t.Errorf("overflow: got %d, want 2", got)
+	}
+	// Zero target: returns 0.
+	if got := displayOffsetToByte("abc", 0); got != 0 {
+		t.Errorf("zero: got %d, want 0", got)
+	}
+}
+
 func TestUpdateKeyClear(t *testing.T) {
 	m := readyModel()
 
@@ -399,6 +569,30 @@ func TestUpdateBulkEventKillDeath(t *testing.T) {
 	}
 	if !strings.Contains(statsView, "Loot") {
 		t.Error("expected 'Loot' in stats panel")
+	}
+}
+
+func TestUpdateBulkEventDungeonEnter(t *testing.T) {
+	m := readyModel()
+
+	bulkMsg := BulkEventMsg{
+		{
+			Type: "zone",
+			Data: &handlers.ZoneEventData{
+				MapType:  handlers.MapTypeRandomDungeon,
+				Display:  "Random Dungeon",
+				Previous: handlers.MapTypeUnknown,
+			},
+			Timestamp: time.Now(),
+		},
+	}
+
+	m = updateModel(m, bulkMsg)
+
+	// Zone events are passed to the zone panel; the transition should appear.
+	zoneView := m.zonePanel.View()
+	if !strings.Contains(zoneView, "Random Dungeon") {
+		t.Error("expected 'Random Dungeon' in zone panel after zone event")
 	}
 }
 
