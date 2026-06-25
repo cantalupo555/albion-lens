@@ -13,15 +13,15 @@ import (
 // DungeonsPanel displays the active dungeon run, a 90s close countdown, and a
 // scrollable table of completed runs. It follows the immutable builder pattern.
 type DungeonsPanel struct {
-	viewport    viewport.Model
-	runs        []*handlers.DungeonRun
-	active      *handlers.DungeonRun
-	runCount    int // last seen run count, for auto-scroll detection
-	nowFunc     func() time.Time
-	width       int
-	height      int
-	ready       bool
-	fullNumbers bool
+	viewport         viewport.Model
+	runs             []*handlers.DungeonRun
+	active           *handlers.DungeonRun
+	lastRunEnteredAt time.Time // newest run's EnteredAt, for auto-scroll detection
+	nowFunc          func() time.Time
+	width            int
+	height           int
+	ready            bool
+	fullNumbers      bool
 }
 
 // NewDungeonsPanel creates a DungeonsPanel with sensible defaults.
@@ -77,20 +77,27 @@ func (d DungeonsPanel) SetNow(t time.Time) DungeonsPanel {
 // SetRuns updates the run data displayed by the panel. The viewport
 // auto-scrolls to the bottom only when new runs have been appended since the
 // last call, so manual scroll position is preserved during periodic ticks.
+// Auto-scroll detection uses the newest run's EnteredAt timestamp, which keeps
+// working even after the 500-run cap is reached (oldest trimmed, slice length
+// stays constant but the newest run changes).
 func (d DungeonsPanel) SetRuns(runs []*handlers.DungeonRun, active *handlers.DungeonRun) DungeonsPanel {
-	newRuns := len(runs)
 	d.runs = runs
 	d.active = active
 
+	var newestEnteredAt time.Time
+	if len(runs) > 0 {
+		newestEnteredAt = runs[len(runs)-1].EnteredAt
+	}
+
 	if !d.ready {
-		d.runCount = newRuns
+		d.lastRunEnteredAt = newestEnteredAt
 		return d
 	}
 	d.viewport.SetContent(d.renderRunTable())
-	if newRuns != d.runCount {
+	if !newestEnteredAt.Equal(d.lastRunEnteredAt) {
 		d.viewport.GotoBottom()
 	}
-	d.runCount = newRuns
+	d.lastRunEnteredAt = newestEnteredAt
 	return d
 }
 

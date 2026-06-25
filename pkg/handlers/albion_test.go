@@ -1546,3 +1546,98 @@ func TestOnResponseOpJoinExitsDungeon(t *testing.T) {
 		t.Errorf("expected Done, got %v", runs[0].Status)
 	}
 }
+
+// --- Event-to-classification integration tests ---
+
+// enterDungeonHelper enters a random dungeon via OpJoin and returns the handler.
+func enterDungeonHelper(t *testing.T) *AlbionHandler {
+	t.Helper()
+	h := NewAlbionHandler()
+	t0 := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return t0 }
+	h.OnResponse(events.OperationJoin, 0, "", map[byte]interface{}{
+		byte(253): int16(events.OperationJoin),
+		byte(8):   "@RANDOMDUNGEON@test-guid",
+	})
+	if h.GetActiveDungeon() == nil {
+		t.Fatal("expected active dungeon run after OpJoin")
+	}
+	return h
+}
+
+func TestOnEventNewShrineClassifiesRun(t *testing.T) {
+	h := enterDungeonHelper(t)
+
+	h.OnEvent(0, map[byte]interface{}{
+		byte(252): int16(events.EventNewShrine),
+		byte(3):   "RD_SOLO_KEEPER_SHRINE",
+	})
+
+	active := h.GetActiveDungeon()
+	if active == nil {
+		t.Fatal("expected active run after NewShrine")
+	}
+	if active.Mode != DungeonModeSolo {
+		t.Errorf("expected Mode=Solo from shrine, got %v", active.Mode)
+	}
+	if active.Faction != "Keeper" {
+		t.Errorf("expected Faction=Keeper from shrine, got %q", active.Faction)
+	}
+}
+
+func TestOnEventNewLootChestClassifiesRun(t *testing.T) {
+	h := enterDungeonHelper(t)
+
+	h.OnEvent(0, map[byte]interface{}{
+		byte(252): int16(events.EventNewLootChest),
+		byte(3):   "T4_RD_VETERAN_MORGANA_CHEST",
+	})
+
+	active := h.GetActiveDungeon()
+	if active == nil {
+		t.Fatal("expected active run after NewLootChest")
+	}
+	if active.Mode != DungeonModeStandard {
+		t.Errorf("expected Mode=Standard from chest, got %v", active.Mode)
+	}
+	if active.Faction != "Morgana" {
+		t.Errorf("expected Faction=Morgana from chest, got %q", active.Faction)
+	}
+}
+
+func TestOnEventNewMobClassifiesTier(t *testing.T) {
+	h := enterDungeonHelper(t)
+	h.mobDB = &MobDatabase{
+		mobs: []mobEntry{
+			{UniqueName: "T4_MOB_RD_UNDEAD_SKELLETTON", Tier: 4},
+		},
+		loaded: true,
+	}
+
+	h.OnEvent(0, map[byte]interface{}{
+		byte(252): int16(events.EventNewMob),
+		byte(1):   int32(inGameMobIndexOffset), // server mobIndex = offset → dataIndex 0
+	})
+
+	active := h.GetActiveDungeon()
+	if active == nil {
+		t.Fatal("expected active run after NewMob")
+	}
+	if active.Tier != 3 {
+		t.Errorf("expected Tier=3 (mob tier 4 - 1), got %d", active.Tier)
+	}
+}
+
+func TestOnEventNewShrineNoActiveRun(t *testing.T) {
+	h := NewAlbionHandler()
+
+	// Should not panic when no active run exists.
+	h.OnEvent(0, map[byte]interface{}{
+		byte(252): int16(events.EventNewShrine),
+		byte(3):   "RD_SOLO_KEEPER_SHRINE",
+	})
+
+	if h.GetActiveDungeon() != nil {
+		t.Error("expected nil active run when no dungeon entered")
+	}
+}

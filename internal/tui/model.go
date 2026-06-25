@@ -612,7 +612,9 @@ func overlayText(background, modal string, areaW, areaH int) string {
 
 // displayOffsetToByte returns the byte index in s corresponding to the given
 // display-width position, skipping ANSI escape sequences (which have zero
-// display width). Each printable rune is counted as display width 1.
+// display width). Each rune's actual display width is measured via
+// lipgloss.Width to correctly handle CJK (width 2), emoji (width 2), and
+// combining characters (width 0).
 func displayOffsetToByte(s string, targetWidth int) int {
 	if targetWidth <= 0 {
 		return 0
@@ -636,9 +638,9 @@ func displayOffsetToByte(s string, targetWidth int) int {
 		if width >= targetWidth {
 			return i
 		}
-		// Advance one UTF-8 rune (assume display width 1 per rune).
-		_, size := utf8.DecodeRuneInString(s[i:])
-		width++
+		// Advance one UTF-8 rune, using its actual display width.
+		r, size := utf8.DecodeRuneInString(s[i:])
+		width += lipgloss.Width(string(r))
 		i += size
 	}
 	return i
