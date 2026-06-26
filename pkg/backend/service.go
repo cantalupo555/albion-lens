@@ -109,14 +109,7 @@ func (s *Service) Start() error {
 			s.parser.Stats.UpdateBufferPeak(len(s.eventsChan))
 		}
 
-		select {
-		case s.eventsChan <- event:
-		default:
-			// Channel full, drop event
-			if s.parser != nil && s.parser.Stats != nil {
-				s.parser.Stats.IncrEventsDropped()
-			}
-		}
+		s.emitEvent(event)
 	})
 
 	// Load item database (errors are non-fatal)
@@ -148,18 +141,23 @@ func (s *Service) Start() error {
 		if online {
 			msg = "Albion Online detected! Capturing packets..."
 		}
-		select {
-		case s.eventsChan <- GameEvent{
+		s.emitEvent(GameEvent{
 			Type:      EventTypeInfo,
 			Message:   msg,
 			Timestamp: time.Now(),
-		}:
-		default:
-			// Info event dropped
-			if s.parser != nil && s.parser.Stats != nil {
-				s.parser.Stats.IncrEventsDropped()
-			}
-		}
+		})
+	}
+
+	// Set device error callback: surfaces per-device open failures (partial
+	// failures during Start) as warning events so the user knows some capture
+	// interfaces were skipped. Fatal "no device opened" errors are returned
+	// from Start() instead and handled by the caller.
+	s.capture.DeviceErrorCallback = func(deviceName string, err error) {
+		s.emitEvent(GameEvent{
+			Type:      EventTypeWarning,
+			Message:   fmt.Sprintf("Could not capture on %s: %v", deviceName, err),
+			Timestamp: time.Now(),
+		})
 	}
 
 	// Start stats updater
@@ -210,6 +208,20 @@ func (s *Service) Stop() {
 	close(s.eventsChan)
 	close(s.statsChan)
 	close(s.onlineStatusChan)
+}
+
+// emitEvent sends a game event to the events channel without blocking. If the
+// channel is full the event is dropped and the parser's dropped-events counter
+// is incremented (when available). Centralized so all event sources route
+// through a single place.
+func (s *Service) emitEvent(event GameEvent) {
+	select {
+	case s.eventsChan <- event:
+	default:
+		if s.parser != nil && s.parser.Stats != nil {
+			s.parser.Stats.IncrEventsDropped()
+		}
+	}
 }
 
 // statsUpdater periodically sends stats to the channel.

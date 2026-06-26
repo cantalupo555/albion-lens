@@ -16,6 +16,7 @@ type StatusBar struct {
 	packetsPerSec  float64
 	eventsDecoded  uint64
 	eventsDropped  uint64
+	warningCount   uint64
 	bufferUsage    int
 	bufferCapacity int
 	uptime         string
@@ -52,6 +53,14 @@ func (s StatusBar) SetPlayerName(name string) StatusBar {
 // omitted from the status bar (before the first ChangeCluster is captured).
 func (s StatusBar) SetZone(zone string) StatusBar {
 	s.currentZone = zone
+	return s
+}
+
+// SetWarningCount updates the capture-device warning counter. When greater
+// than zero, the status bar shows a "⚠ Warnings: N" badge so the user knows
+// some capture interfaces were skipped at startup.
+func (s StatusBar) SetWarningCount(n uint64) StatusBar {
+	s.warningCount = n
 	return s
 }
 
@@ -145,6 +154,17 @@ func (s StatusBar) View() string {
 			eventsDisplay = fmt.Sprintf("Events: %d  %s",
 				s.eventsDecoded,
 				dropStyle.Render(fmt.Sprintf("⚠ Dropped: %d", s.eventsDropped)))
+		}
+
+		// Capture-device warnings (e.g. interfaces that failed to open) are
+		// shown in amber so they are visually distinct from event drops.
+		if s.warningCount > 0 {
+			warnStyle := lipgloss.NewStyle().
+				Foreground(lipgloss.Color("214")). // Yellow
+				Bold(true)
+			eventsDisplay = fmt.Sprintf("%s  %s",
+				eventsDisplay,
+				warnStyle.Render(fmt.Sprintf("⚠ Warnings: %d", s.warningCount)))
 		}
 
 		stats = statsStyle.Render(fmt.Sprintf(

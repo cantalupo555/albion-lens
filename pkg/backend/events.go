@@ -8,14 +8,15 @@ import "time"
 type EventType string
 
 const (
-	EventTypeFame   EventType = "fame"
-	EventTypeSilver EventType = "silver"
-	EventTypeLoot   EventType = "loot"
-	EventTypeKill   EventType = "kill"
-	EventTypeDeath  EventType = "death"
-	EventTypeRespec EventType = "respec"
-	EventTypeInfo   EventType = "info"
-	EventTypeZone   EventType = "zone"
+	EventTypeFame    EventType = "fame"
+	EventTypeSilver  EventType = "silver"
+	EventTypeLoot    EventType = "loot"
+	EventTypeKill    EventType = "kill"
+	EventTypeDeath   EventType = "death"
+	EventTypeRespec  EventType = "respec"
+	EventTypeInfo    EventType = "info"
+	EventTypeWarning EventType = "warning"
+	EventTypeZone    EventType = "zone"
 )
 
 // GameEvent represents a game event for display in frontends

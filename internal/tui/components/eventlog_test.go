@@ -378,3 +378,31 @@ func TestSetFullNumbersReRender(t *testing.T) {
 		t.Error("expected abbreviated '1.5k' with fullNumbers=false")
 	}
 }
+
+// TestAddEventsWarningRendered verifies that warning events are rendered in
+// the log with their message text and the amber+bold style defined for the
+// "warning" case in renderSingleEvent (Foreground 214 + Bold).
+func TestAddEventsWarningRendered(t *testing.T) {
+	e := NewEventLog()
+	e = e.SetSize(80, 20)
+
+	e = e.AddEvents([]Event{
+		{
+			Type:      "warning",
+			Message:   "Could not capture on eth0: permission denied",
+			Timestamp: time.Now(),
+		},
+	})
+
+	view := e.View()
+	if !strings.Contains(view, "Could not capture on eth0") {
+		t.Error("expected warning message text in view")
+	}
+	// lipgloss renders Foreground(214) + Bold() as the ANSI sequence below.
+	// Asserting it pins the visual style so a regression (e.g. dropping the
+	// case back to the white default) is caught automatically.
+	const amberBoldAnsi = "\x1b[1;38;5;214m"
+	if !strings.Contains(view, amberBoldAnsi) {
+		t.Errorf("expected warning text to be rendered with amber+bold ANSI %q, got view without it", amberBoldAnsi)
+	}
+}

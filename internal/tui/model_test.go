@@ -759,3 +759,38 @@ func TestViewHelpBarTabIndicator(t *testing.T) {
 		t.Error("expected [ZONE] indicator on zone tab")
 	}
 }
+
+// ============================================
+// BulkEventMsg warning count tests
+// ============================================
+
+// TestBulkEventWarningCountIncrement verifies that warning events emitted by
+// the backend (e.g. when a capture device fails to open) increment the model's
+// warning counter, which is then forwarded to the status bar.
+func TestBulkEventWarningCountIncrement(t *testing.T) {
+	m := readyModel()
+
+	if m.warningCount != 0 {
+		t.Fatalf("expected initial warningCount=0, got %d", m.warningCount)
+	}
+
+	bulkMsg := BulkEventMsg{
+		{Type: "warning", Message: "Could not capture on eth0", Timestamp: time.Now()},
+		{Type: "warning", Message: "Could not capture on wlan0", Timestamp: time.Now()},
+		{Type: "fame", Message: "ignored", Timestamp: time.Now()},
+	}
+
+	m = updateModel(m, bulkMsg)
+
+	if m.warningCount != 2 {
+		t.Errorf("expected warningCount=2 after batch with 2 warnings, got %d", m.warningCount)
+	}
+
+	// Forwarding to status bar is verified indirectly: setting the model
+	// online and rendering the dashboard view must surface the warning badge.
+	m = updateModel(m, OnlineMsg{Online: true})
+	dashView := m.View().Content
+	if !strings.Contains(dashView, "Warnings") {
+		t.Error("expected 'Warnings' badge in dashboard view after forwarding count to status bar")
+	}
+}

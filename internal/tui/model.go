@@ -49,6 +49,10 @@ type Model struct {
 	debugHidden  map[events.EventCode]bool // codes currently suppressed from the log
 	filterOpen   bool
 	filterCursor int
+
+	// Capture-device warnings accumulated from warning events (e.g. interfaces
+	// that failed to open at startup). Surfaced as a counter in the status bar.
+	warningCount uint64
 }
 
 // Tab indices for navigation. Kept as constants so the help bar and key
@@ -290,6 +294,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
+			// Capture-device warnings are accumulated into a counter that the
+			// status bar renders next to the events drop indicator.
+			if eventMsg.Type == "warning" {
+				m.warningCount++
+			}
+
 			logEvents = append(logEvents, components.Event{
 				Type:      eventMsg.Type,
 				Message:   displayMsg,
@@ -300,6 +310,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Add all events to log at once (efficient batch render)
 		m.eventLog = m.eventLog.AddEvents(logEvents)
+
+		// Keep the status bar warning counter in sync after each batch.
+		m.statusBar = m.statusBar.SetWarningCount(m.warningCount)
 
 		// Continue listening for events
 		if m.bulkEventChan != nil {

@@ -181,6 +181,8 @@ func (e EventLog) renderSingleEvent(event Event) string {
 		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
 	case "debug":
 		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	case "warning":
+		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214")).Bold(true)
 	default:
 		msgStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("255"))
 	}

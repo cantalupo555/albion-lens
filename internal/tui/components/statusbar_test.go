@@ -250,3 +250,65 @@ func TestStatusBarViewNoZoneWhenOffline(t *testing.T) {
 		t.Error("expected no zone indicator when offline")
 	}
 }
+
+// ============================================
+// SetWarningCount tests
+// ============================================
+
+func TestStatusBarSetWarningCount(t *testing.T) {
+	s := NewStatusBar()
+	s = s.SetWarningCount(3)
+
+	if s.warningCount != 3 {
+		t.Errorf("expected warningCount=3, got %d", s.warningCount)
+	}
+}
+
+func TestStatusBarViewWarningShownWhenCount(t *testing.T) {
+	s := NewStatusBar()
+	s = s.SetWidth(120)
+	s = s.SetOnline(true)
+	s = s.SetWarningCount(2)
+
+	output := s.View()
+
+	if !strings.Contains(output, "Warnings") {
+		t.Error("expected 'Warnings' badge in view when warningCount > 0")
+	}
+	if !strings.Contains(output, "2") {
+		t.Error("expected warning count '2' in view")
+	}
+}
+
+func TestStatusBarViewNoWarningWhenZero(t *testing.T) {
+	s := NewStatusBar()
+	s = s.SetWidth(120)
+	s = s.SetOnline(true)
+	// warningCount defaults to 0
+
+	output := s.View()
+
+	if strings.Contains(output, "Warnings") {
+		t.Error("expected no 'Warnings' badge when warningCount = 0")
+	}
+}
+
+// TestStatusBarViewHidesWarningWhenOffline pins the intended boundary: the
+// warning badge lives in the online-only stats line. When offline, the status
+// bar shows the waiting message instead, so the warning counter must not leak
+// through. (Warnings are still visible in the event log regardless of status.)
+func TestStatusBarViewHidesWarningWhenOffline(t *testing.T) {
+	s := NewStatusBar()
+	s = s.SetWidth(120)
+	s = s.SetOnline(false)
+	s = s.SetWarningCount(5)
+
+	output := s.View()
+
+	if strings.Contains(output, "Warnings") {
+		t.Error("expected warning badge to be hidden when offline")
+	}
+	if !strings.Contains(output, "Waiting for Albion Online traffic...") {
+		t.Error("expected offline waiting message in view")
+	}
+}
