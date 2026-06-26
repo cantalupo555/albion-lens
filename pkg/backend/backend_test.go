@@ -3,6 +3,8 @@ package backend
 import (
 	"testing"
 	"time"
+
+	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
 
 // ============================================
@@ -194,6 +196,7 @@ func TestEventTypeConstants(t *testing.T) {
 		{EventTypeDeath, "death"},
 		{EventTypeRespec, "respec"},
 		{EventTypeInfo, "info"},
+		{EventTypeWarning, "warning"},
 		{EventTypeZone, "zone"},
 	}
 
@@ -433,4 +436,87 @@ func TestDefaultBufferSizeConstants(t *testing.T) {
 	if defaultStatsBufferSize != 10 {
 		t.Errorf("defaultStatsBufferSize: expected 10, got %d", defaultStatsBufferSize)
 	}
+}
+
+// ============================================
+// emitEvent helper tests
+// ============================================
+
+// newServiceWithParser builds a minimal Service suitable for exercising the
+// emitEvent helper without invoking the full Start() path. The events channel
+// is set to the requested buffer size and a real parser/stats instance is
+// attached so the dropped-events counter is exercised.
+func newServiceWithParser(t *testing.T, eventBuffer int) *Service {
+	t.Helper()
+	s := New(WithEventBufferSize(eventBuffer))
+	// Attach a parser so emitEvent can increment EventsDropped on the drop
+	// branch. We use the real photon.NewParser with a nil handler because we
+	// never feed it packets — only Stats is accessed.
+	s.parser = photon.NewParser(nil)
+	if s.parser == nil || s.parser.Stats == nil {
+		t.Fatalf("failed to construct parser with stats")
+	}
+	return s
+}
+
+// TestEmitEvent_SendsWhenSpaceAvailable verifies the happy path: with an empty
+// channel the event lands in eventsChan and nothing is dropped.
+func TestEmitEvent_SendsWhenSpaceAvailable(t *testing.T) {
+	s := newServiceWithParser(t, 2)
+
+	s.emitEvent(GameEvent{Type: EventTypeInfo, Message: "hello", Timestamp: time.Now()})
+
+	select {
+	case got := <-s.eventsChan:
+		if got.Message != "hello" {
+			t.Errorf("expected message 'hello', got %q", got.Message)
+		}
+	default:
+		t.Error("expected event to be delivered, but channel is empty")
+	}
+	if dropped := s.parser.Stats.GetEventsDropped(); dropped != 0 {
+		t.Errorf("expected 0 dropped events, got %d", dropped)
+	}
+}
+
+// TestEmitEvent_DropsWhenChannelFull exercises the default branch: when the
+// channel buffer is full the event is dropped and EventsDropped is incremented.
+func TestEmitEvent_DropsWhenChannelFull(t *testing.T) {
+	s := newServiceWithParser(t, 1)
+
+	// Fill the single-slot buffer.
+	s.emitEvent(GameEvent{Type: EventTypeInfo, Message: "first", Timestamp: time.Now()})
+	// Second emit must hit the default branch (channel full).
+	s.emitEvent(GameEvent{Type: EventTypeInfo, Message: "second", Timestamp: time.Now()})
+
+	if dropped := s.parser.Stats.GetEventsDropped(); dropped != 1 {
+		t.Errorf("expected 1 dropped event, got %d", dropped)
+	}
+
+	// Only the first event should be in the channel.
+	got := <-s.eventsChan
+	if got.Message != "first" {
+		t.Errorf("expected only 'first' to be buffered, got %q", got.Message)
+	}
+	select {
+	case extra := <-s.eventsChan:
+		t.Errorf("expected channel to be empty after one receive, got %q", extra.Message)
+	default:
+		// expected
+	}
+}
+
+// TestEmitEvent_NilParserDoesNotPanic verifies the helper tolerates a missing
+// parser/stats (e.g. when called during teardown races).
+func TestEmitEvent_NilParserDoesNotPanic(t *testing.T) {
+	s := New(WithEventBufferSize(1))
+	// s.parser is nil by default on a freshly constructed Service.
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("emitEvent panicked with nil parser: %v", r)
+		}
+	}()
+	// Fill buffer then overflow to exercise the nil-stats branch of the default.
+	s.emitEvent(GameEvent{Type: EventTypeInfo, Message: "first", Timestamp: time.Now()})
+	s.emitEvent(GameEvent{Type: EventTypeInfo, Message: "dropped", Timestamp: time.Now()})
 }
