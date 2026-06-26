@@ -1,5 +1,5 @@
 // Package capture handles network packet capture using gopacket/pcap.
-// It filters for Albion Online traffic on UDP ports 5055, 5056, and TCP port 4535.
+// It filters for Albion Online traffic on UDP ports 5055, 5056, and 5058.
 package capture
 
 import (
@@ -17,12 +17,12 @@ import (
 
 const (
 	// Albion Online uses these ports for game traffic
-	PortMaster = 5055 // Master/Login Server (UDP)
-	PortGame   = 5056 // Game Server (UDP)
-	PortChat   = 4535 // Chat Server (TCP)
+	PortMaster    = 5055 // Master/Login Server (UDP)
+	PortGame      = 5056 // Game Server (UDP)
+	PortPhotonAlt = 5058 // Alternative Photon Server (UDP)
 
 	// BPF filter for Albion Online traffic
-	BPFFilter = "udp and (port 5055 or port 5056)"
+	BPFFilter = "udp and (port 5055 or port 5056 or port 5058)"
 
 	// Capture settings
 	// Large enough to capture full UDP datagrams regardless of MTU/VPN/tunneling.
@@ -43,6 +43,11 @@ type deviceOpener func(device string, snapshotLen int32, promisc bool, timeout t
 type Capture struct {
 	handles []*pcap.Handle
 	handler PacketHandler
+
+	// bpfFilter is the BPF expression applied to each opened device.
+	// Defaults to BPFFilter; overridable via NewCaptureWithFilter so that
+	// the backend can forward WithBPFFilter() options down to the capture.
+	bpfFilter string
 
 	// opener is used by openDevice. Defaults to pcap.OpenLive; injectable for tests.
 	opener deviceOpener
@@ -67,9 +72,10 @@ type Capture struct {
 // NewCapture creates a new network capture instance
 func NewCapture(handler PacketHandler) *Capture {
 	return &Capture{
-		handler: handler,
-		handles: make([]*pcap.Handle, 0),
-		opener:  pcap.OpenLive,
+		handler:   handler,
+		handles:   make([]*pcap.Handle, 0),
+		opener:    pcap.OpenLive,
+		bpfFilter: BPFFilter,
 	}
 }
 
@@ -79,6 +85,18 @@ func NewCaptureWithOpener(handler PacketHandler, opener deviceOpener) *Capture {
 	c := NewCapture(handler)
 	if opener != nil {
 		c.opener = opener
+	}
+	return c
+}
+
+// NewCaptureWithFilter creates a capture instance with a custom BPF filter
+// expression. Intended for callers (e.g. the backend Service) that need to
+// override the default Albion port set. If filter is empty, the default
+// BPFFilter is used, preserving backward compatibility.
+func NewCaptureWithFilter(handler PacketHandler, filter string) *Capture {
+	c := NewCapture(handler)
+	if filter != "" {
+		c.bpfFilter = filter
 	}
 	return c
 }
@@ -215,7 +233,7 @@ func (s *Capture) openDevice(deviceName string) (*pcap.Handle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
 	}
-	if err := handle.SetBPFFilter(BPFFilter); err != nil {
+	if err := handle.SetBPFFilter(s.bpfFilter); err != nil {
 		handle.Close()
 		return nil, fmt.Errorf("bpf filter: %w", err)
 	}
@@ -354,4 +372,9 @@ func (s *Capture) IsOnline() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.isOnline
+}
+
+// BPFFilter returns the BPF expression currently applied when opening devices.
+func (s *Capture) BPFFilter() string {
+	return s.bpfFilter
 }

@@ -24,6 +24,39 @@ func noopHandler(_ []byte, _, _ net.IP, _, _ uint16) {}
 // selectDevices tests (pure function, no pcap required)
 // ============================================
 
+// TestBPFFilter_IncludesAllPhotonUdpPorts guarantees the default filter
+// captures every Photon UDP port used by Albion Online and never regresses
+// to the legacy state (missing 5058, or mentioning the non-existent 4535).
+func TestBPFFilter_IncludesAllPhotonUdpPorts(t *testing.T) {
+	for _, port := range []string{"5055", "5056", "5058"} {
+		if !strings.Contains(BPFFilter, port) {
+			t.Errorf("BPFFilter must include port %s, got: %s", port, BPFFilter)
+		}
+	}
+	// TCP 4535 was a documentation artifact; it must never come back.
+	if strings.Contains(BPFFilter, "4535") {
+		t.Errorf("BPFFilter must not include legacy TCP port 4535, got: %s", BPFFilter)
+	}
+	// Filter must remain UDP-only — TCP parsing is not implemented.
+	if !strings.HasPrefix(BPFFilter, "udp") {
+		t.Errorf("BPFFilter must be UDP-only, got: %s", BPFFilter)
+	}
+}
+
+// TestPortConstants_NoLegacyPortChat documents the removal of the PortChat
+// constant (which referenced a non-existent Albion service port) and guards
+// against accidental reintroduction.
+func TestPortConstants_NoLegacyPortChat(t *testing.T) {
+	for _, p := range []int{PortMaster, PortGame, PortPhotonAlt} {
+		if p == 4535 {
+			t.Error("no Photon port constant should equal the legacy 4535 value")
+		}
+	}
+	if PortPhotonAlt != 5058 {
+		t.Errorf("PortPhotonAlt must be 5058, got %d", PortPhotonAlt)
+	}
+}
+
 func TestSelectDevices_EmptyInput(t *testing.T) {
 	got := selectDevices(nil)
 	if len(got) != 0 {
@@ -274,6 +307,34 @@ func TestNewCaptureWithOpener_UsesInjectedOpener(t *testing.T) {
 	}
 }
 
+// TestNewCapture_DefaultFilterMatchesConstant verifies that a capture created
+// via NewCapture uses the package-level BPFFilter as its default.
+func TestNewCapture_DefaultFilterMatchesConstant(t *testing.T) {
+	c := NewCapture(noopHandler)
+	if c.BPFFilter() != BPFFilter {
+		t.Errorf("default bpfFilter = %q, want %q", c.BPFFilter(), BPFFilter)
+	}
+}
+
+// TestNewCaptureWithFilter_OverridesDefault verifies that a non-empty custom
+// filter reaches the Capture instance and is exposed via BPFFilter().
+func TestNewCaptureWithFilter_OverridesDefault(t *testing.T) {
+	const custom = "udp port 9999"
+	c := NewCaptureWithFilter(noopHandler, custom)
+	if c.BPFFilter() != custom {
+		t.Errorf("bpfFilter = %q, want %q", c.BPFFilter(), custom)
+	}
+}
+
+// TestNewCaptureWithFilter_EmptyFallsBackToDefault verifies that an empty
+// filter string preserves backward compatibility by falling back to BPFFilter.
+func TestNewCaptureWithFilter_EmptyFallsBackToDefault(t *testing.T) {
+	c := NewCaptureWithFilter(noopHandler, "")
+	if c.BPFFilter() != BPFFilter {
+		t.Errorf("empty filter should fall back to BPFFilter; got %q", c.BPFFilter())
+	}
+}
+
 // TestStartOnDevice_OpenerSucceeds_ReturnsNil exercises the happy path with a
 // real device: StartOnDevice must return nil and leave the Capture in the
 // running state. Uses the loopback interface ("lo" on Linux) which is usually
@@ -302,5 +363,38 @@ func TestStartOnDevice_OpenerSucceeds_ReturnsNil(t *testing.T) {
 	c.Stop()
 	if c.running.Load() {
 		t.Error("expected running=false after Stop()")
+	}
+}
+
+// TestStartOnDevice_InvalidCustomFilter_Fails verifies that openDevice
+// actually consumes s.bpfFilter (the per-instance field) rather than the
+// package-level BPFFilter constant. It does so by installing an invalid BPF
+// expression via NewCaptureWithFilter: if openDevice still used the hardcoded
+// constant, the valid default filter would compile and the device would open
+// successfully — making this test fail. Conversely, when s.bpfFilter is
+// honored, SetBPFFilter rejects the invalid expression and StartOnDevice
+// returns an error wrapped with "bpf filter".
+//
+// Skipped when the loopback device cannot be opened (e.g. CI without pcap
+// privileges), matching the pattern in TestStartOnDevice_OpenerSucceeds_ReturnsNil.
+func TestStartOnDevice_InvalidCustomFilter_Fails(t *testing.T) {
+	const loopback = "lo"
+	probe, err := pcap.OpenLive(loopback, SnapshotLen, Promiscuous, Timeout)
+	if err != nil {
+		t.Skipf("cannot open loopback device %q without privileges: %v", loopback, err)
+	}
+	probe.Close()
+
+	c := NewCaptureWithFilter(noopHandler, "this is not a valid bpf expression !!!")
+	err = c.StartOnDevice(loopback)
+	if err == nil {
+		c.Stop()
+		t.Fatal("expected StartOnDevice to fail for an invalid custom BPF filter, got nil")
+	}
+	if !strings.Contains(err.Error(), "bpf filter") {
+		t.Errorf("expected error to mention 'bpf filter', got: %v", err)
+	}
+	if c.running.Load() {
+		t.Error("expected running=false after StartOnDevice failure")
 	}
 }
