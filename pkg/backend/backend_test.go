@@ -113,6 +113,26 @@ func TestWithBPFFilter(t *testing.T) {
 	}
 }
 
+// TestWithBPFFilter_EmptyString documents the backward-compatibility
+// contract: passing an empty filter is equivalent to omitting the option,
+// because capture.NewCaptureWithFilter falls back to the default BPFFilter
+// when handed an empty string. The backend must store exactly what it
+// received so the fallback can happen at the capture layer.
+func TestWithBPFFilter_EmptyString(t *testing.T) {
+	s := New(WithBPFFilter(""))
+
+	if s.bpfFilter != "" {
+		t.Errorf("empty filter should be stored as empty string, got '%s'", s.bpfFilter)
+	}
+
+	// Omitting the option must produce the same stored state so that
+	// capture.NewCaptureWithFilter behaves identically in both cases.
+	without := New()
+	if without.bpfFilter != s.bpfFilter {
+		t.Errorf("WithBPFFilter(\"\") = %q, omitting = %q; must match", s.bpfFilter, without.bpfFilter)
+	}
+}
+
 // TestWithEventBufferSize tests event buffer size option
 func TestWithEventBufferSize(t *testing.T) {
 	s := New(WithEventBufferSize(500))
