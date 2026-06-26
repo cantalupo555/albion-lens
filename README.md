@@ -11,7 +11,7 @@ Cross-platform network analyzer for Albion Online written in Go.
 
 ## Features
 
-- UDP packet capture for Albion Online (ports 5055/5056)
+- UDP packet capture for Albion Online (ports 5055/5056/5058)
 - Photon Engine protocol parser
 - Protocol18 decoding
 - Fame (XP) tracking with session counting
