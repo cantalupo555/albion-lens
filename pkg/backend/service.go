@@ -123,10 +123,13 @@ func (s *Service) Start() error {
 	s.parser.Stats.BufferCapacity = cap(s.eventsChan) // Set once at startup
 	// Note: Parser debug is not enabled because it uses fmt.Printf which interferes with TUI
 
-	// Create capture
-	s.capture = capture.NewCapture(func(payload []byte, srcIP, dstIP net.IP, srcPort, dstPort uint16) {
+	// Create capture. NewCaptureWithFilter falls back to the default Albion
+	// port set when s.bpfFilter is empty, so WithBPFFilter("") and omitting
+	// the option behave identically.
+	packetHandler := func(payload []byte, srcIP, dstIP net.IP, srcPort, dstPort uint16) {
 		_ = s.parser.ParsePacket(payload)
-	})
+	}
+	s.capture = capture.NewCaptureWithFilter(packetHandler, s.bpfFilter)
 
 	// Set online/offline callback
 	s.capture.OnlineCallback = func(online bool) {
