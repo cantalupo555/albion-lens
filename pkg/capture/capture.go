@@ -3,6 +3,7 @@
 package capture
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -34,10 +35,17 @@ const (
 // PacketHandler is a callback function for received packets
 type PacketHandler func(payload []byte, srcIP, dstIP net.IP, srcPort, dstPort uint16)
 
+// deviceOpener abstracts pcap.OpenLive so capture startup logic can be tested
+// without requiring raw-socket privileges or a real network device.
+type deviceOpener func(device string, snapshotLen int32, promisc bool, timeout time.Duration) (*pcap.Handle, error)
+
 // Capture handles Albion Online network traffic capture
 type Capture struct {
 	handles []*pcap.Handle
 	handler PacketHandler
+
+	// opener is used by openDevice. Defaults to pcap.OpenLive; injectable for tests.
+	opener deviceOpener
 
 	// Hot path: checked on every packet
 	running atomic.Bool
@@ -49,10 +57,11 @@ type Capture struct {
 	wg sync.WaitGroup
 
 	// Status tracking (updated per-packet, protected by mutex)
-	mu             sync.Mutex
-	lastPacketTime time.Time
-	isOnline       bool
-	OnlineCallback func(online bool)
+	mu                  sync.Mutex
+	lastPacketTime      time.Time
+	isOnline            bool
+	OnlineCallback      func(online bool)
+	DeviceErrorCallback func(deviceName string, err error)
 }
 
 // NewCapture creates a new network capture instance
@@ -60,7 +69,18 @@ func NewCapture(handler PacketHandler) *Capture {
 	return &Capture{
 		handler: handler,
 		handles: make([]*pcap.Handle, 0),
+		opener:  pcap.OpenLive,
 	}
+}
+
+// NewCaptureWithOpener creates a capture instance with a custom device opener.
+// Intended for tests that need to simulate open failures without a real device.
+func NewCaptureWithOpener(handler PacketHandler, opener deviceOpener) *Capture {
+	c := NewCapture(handler)
+	if opener != nil {
+		c.opener = opener
+	}
+	return c
 }
 
 // ListDevices returns all available network devices
@@ -90,7 +110,18 @@ func PrintDevices() error {
 	return nil
 }
 
-// Start begins capturing packets on all available interfaces
+// Start begins capturing packets on all available interfaces.
+//
+// Devices are opened synchronously so that an honest error can be returned
+// when none of them can be captured (e.g. missing privileges). Each device
+// that fails to open is reported via DeviceErrorCallback (when set); only the
+// "all failed" case returns an error, since partial failures still leave the
+// capture functional.
+//
+// The returned error aggregates every per-device failure so callers can
+// surface the full diagnostic context (which device failed and why) even
+// when the TUI — the usual consumer of DeviceErrorCallback — has not started
+// yet (e.g. when main.go exits immediately on Start error).
 func (s *Capture) Start() error {
 	devices, err := ListDevices()
 	if err != nil {
@@ -99,64 +130,124 @@ func (s *Capture) Start() error {
 
 	s.running.Store(true)
 
-	// Start capturing on all devices with IPv4 addresses
-	for _, device := range devices {
-		for _, addr := range device.Addresses {
-			if addr.IP.To4() != nil {
-				s.wg.Add(1)
-				go s.captureOnDevice(device.Name, addr.IP.String())
+	// Deduplicate by device name. The previous implementation spawned one
+	// goroutine per IPv4 address, opening the same device multiple times when
+	// it had several IPv4 addresses (causing duplicate packets or EBUSY).
+	deviceNames := selectDevices(devices)
+
+	// Collect per-device errors so the fatal "all failed" return value can
+	// carry the full diagnostic context, not just a generic hint. The callback
+	// still fires for each failure so partial-success callers stay informed.
+	var openErrors []error
+	for _, name := range deviceNames {
+		handle, err := s.openDevice(name)
+		if err != nil {
+			openErrors = append(openErrors, fmt.Errorf("%s: %w", name, err))
+			if s.DeviceErrorCallback != nil {
+				s.DeviceErrorCallback(name, err)
 			}
+			continue
 		}
+		s.launchDevice(handle)
 	}
 
-	// Start online status checker
+	if len(s.handles) == 0 {
+		s.running.Store(false)
+		return fmt.Errorf("failed to open any capture device: tried %d device(s), all failed (errors: %w). Common cause: insufficient permissions — try running with sudo",
+			len(deviceNames), errors.Join(openErrors...))
+	}
+
+	// Start online status checker only when at least one device is capturing.
 	s.wg.Add(1)
 	go s.checkOnlineStatus()
 
 	return nil
 }
 
-// StartOnDevice begins capturing packets on a specific device
+// StartOnDevice begins capturing packets on a specific device.
+//
+// The device is opened synchronously so callers learn immediately whether
+// capture actually started.
 func (s *Capture) StartOnDevice(deviceName string) error {
 	s.running.Store(true)
 
-	s.wg.Add(1)
-	go s.captureOnDevice(deviceName, "")
+	handle, err := s.openDevice(deviceName)
+	if err != nil {
+		s.running.Store(false)
+		if s.DeviceErrorCallback != nil {
+			s.DeviceErrorCallback(deviceName, err)
+		}
+		return fmt.Errorf("failed to open device %q: %w", deviceName, err)
+	}
 
-	// Start online status checker
+	s.launchDevice(handle)
+
 	s.wg.Add(1)
 	go s.checkOnlineStatus()
 
 	return nil
 }
 
-// captureOnDevice captures packets on a specific network device
-func (s *Capture) captureOnDevice(deviceName, ipAddr string) {
-	defer s.wg.Done()
-
-	handle, err := pcap.OpenLive(deviceName, SnapshotLen, Promiscuous, Timeout)
-	if err != nil {
-		return
+// selectDevices returns the unique device names that have at least one IPv4
+// address. It is a pure function so it can be unit-tested without pcap.
+func selectDevices(devices []pcap.Interface) []string {
+	seen := make(map[string]bool, len(devices))
+	names := make([]string, 0, len(devices))
+	for _, device := range devices {
+		if seen[device.Name] {
+			continue
+		}
+		for _, addr := range device.Addresses {
+			if addr.IP.To4() != nil {
+				names = append(names, device.Name)
+				seen[device.Name] = true
+				break
+			}
+		}
 	}
+	return names
+}
 
-	// Set BPF filter
+// openDevice opens a pcap handle on deviceName and applies the BPF filter.
+// Returns an error describing which step failed so callers can report it.
+func (s *Capture) openDevice(deviceName string) (*pcap.Handle, error) {
+	handle, err := s.opener(deviceName, SnapshotLen, Promiscuous, Timeout)
+	if err != nil {
+		return nil, fmt.Errorf("open: %w", err)
+	}
 	if err := handle.SetBPFFilter(BPFFilter); err != nil {
 		handle.Close()
-		return
+		return nil, fmt.Errorf("bpf filter: %w", err)
 	}
+	return handle, nil
+}
 
+// launchDevice registers an already-opened handle and starts its packet-read
+// goroutine. Centralized so the handle/WaitGroup/goroutine sequence stays in
+// sync between Start and StartOnDevice.
+func (s *Capture) launchDevice(handle *pcap.Handle) {
 	s.handlesMu.Lock()
 	s.handles = append(s.handles, handle)
 	s.handlesMu.Unlock()
 
-	// Use NextPacket() loop instead of Packets() channel.
-	// This avoids the 1000-packet channel buffer and background goroutine
-	// that leaks on shutdown when the channel is full.
+	s.wg.Add(1)
+	go s.readPackets(handle)
+}
+
+// readPackets runs the packet read loop on handle until s.running becomes false.
+// Uses NextPacket() instead of Packets() channel to avoid the 1000-packet
+// channel buffer and background goroutine that leaks on shutdown when full.
+//
+// The caller must balance the WaitGroup: wg.Add(1) before launching the
+// goroutine, this function calls wg.Done() on return.
+func (s *Capture) readPackets(handle *pcap.Handle) {
+	defer s.wg.Done()
+
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 
 	for {
 		if !s.running.Load() {
-			break
+			return
 		}
 
 		packet, err := packetSource.NextPacket()
