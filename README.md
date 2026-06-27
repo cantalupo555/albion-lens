@@ -75,7 +75,7 @@ sudo ./albion-lens
 
 ### Option 2: Build from Source
 
-Requires **Go 1.26+** and **libpcap-dev** installed.
+Requires **Go 1.26+** and platform-specific pcap dependencies (Linux, Windows, macOS).
 
 ```bash
 # Clone the repository
@@ -85,12 +85,14 @@ cd albion-lens
 # Download dependencies
 go mod download
 
-# Build
+# Build (Linux/macOS example)
 go build -o bin/albion-lens ./cmd/tui
 
-# Run (requires sudo for packet capture)
+# Run (requires sudo/root for packet capture)
 sudo ./bin/albion-lens
 ```
+
+Windows requires the WinPcap SDK (WpdPack) and CGO flags; macOS needs the Xcode Command Line Tools. See **[BUILD.md](BUILD.md)** for full per-platform instructions, runtime requirements, and troubleshooting.
 
 
 ## Usage
