@@ -150,3 +150,144 @@ func TestFragmentTTLConstants(t *testing.T) {
 		t.Errorf("expected FragmentCleanupInterval to be 10s, got %v", FragmentCleanupInterval)
 	}
 }
+
+// photonHeader builds a 12-byte Photon header for tests.
+// Layout: peerId[0:2] | flags | commandCount | timestamp[4] | challenge[4]
+func photonHeader(flags byte, commandCount byte) []byte {
+	h := make([]byte, PhotonHeaderLength)
+	h[2] = flags
+	h[3] = commandCount
+	return h
+}
+
+// commandHeader builds a 12-byte Photon command header for tests.
+// commandLength is the total length INCLUDING the 12-byte header itself,
+// matching the parser's interpretation (dataLength = commandLength - CommandHeaderLength).
+func commandHeader(commandType byte, commandLength uint32) []byte {
+	h := make([]byte, CommandHeaderLength)
+	h[0] = commandType
+	h[4] = byte(commandLength >> 24)
+	h[5] = byte(commandLength >> 16)
+	h[6] = byte(commandLength >> 8)
+	h[7] = byte(commandLength)
+	return h
+}
+
+// TestParsePacket_CommandHeaderTruncated verifies that a packet with a valid
+// Photon header but no command bytes (commandCount > 0 but buffer empty) is
+// counted as malformed, not processed.
+func TestParsePacket_CommandHeaderTruncated(t *testing.T) {
+	handler := &mockHandler{}
+	parser := NewParser(handler)
+	defer parser.Close()
+
+	// 12-byte header claims 1 command, but no command bytes follow.
+	payload := photonHeader(0, 1)
+
+	if err := parser.ParsePacket(payload); err != nil {
+		t.Fatalf("ParsePacket returned error: %v", err)
+	}
+
+	if got := parser.Stats.GetPacketsMalformed(); got != 1 {
+		t.Errorf("PacketsMalformed = %d, want 1", got)
+	}
+	if got := parser.Stats.GetPacketsProcessed(); got != 0 {
+		t.Errorf("PacketsProcessed = %d, want 0", got)
+	}
+}
+
+// TestParsePacket_CommandDataTruncated verifies that a packet whose command
+// header advertises more data bytes than actually present is counted as
+// malformed.
+func TestParsePacket_CommandDataTruncated(t *testing.T) {
+	handler := &mockHandler{}
+	parser := NewParser(handler)
+	defer parser.Close()
+
+	// Header (commandCount=1) + command header claiming commandLength=100
+	// (dataLength=88) but no data bytes follow.
+	payload := append(photonHeader(0, 1), commandHeader(0, 100)...)
+
+	if err := parser.ParsePacket(payload); err != nil {
+		t.Fatalf("ParsePacket returned error: %v", err)
+	}
+
+	if got := parser.Stats.GetPacketsMalformed(); got != 1 {
+		t.Errorf("PacketsMalformed = %d, want 1", got)
+	}
+	if got := parser.Stats.GetPacketsProcessed(); got != 0 {
+		t.Errorf("PacketsProcessed = %d, want 0", got)
+	}
+}
+
+// TestParsePacket_NoCommands_Processed verifies that a packet with commandCount=0
+// (ack-only) is counted as processed, not malformed.
+func TestParsePacket_NoCommands_Processed(t *testing.T) {
+	handler := &mockHandler{}
+	parser := NewParser(handler)
+	defer parser.Close()
+
+	payload := photonHeader(0, 0)
+
+	if err := parser.ParsePacket(payload); err != nil {
+		t.Fatalf("ParsePacket returned error: %v", err)
+	}
+
+	if got := parser.Stats.GetPacketsProcessed(); got != 1 {
+		t.Errorf("PacketsProcessed = %d, want 1", got)
+	}
+	if got := parser.Stats.GetPacketsMalformed(); got != 0 {
+		t.Errorf("PacketsMalformed = %d, want 0", got)
+	}
+}
+
+// TestParsePacket_ValidUnknownCommand_Processed verifies that a well-formed
+// packet with an unknown command type (hits the default branch) is counted
+// as processed. commandLength=12 means dataLength=0, so no payload bytes
+// are expected.
+func TestParsePacket_ValidUnknownCommand_Processed(t *testing.T) {
+	handler := &mockHandler{}
+	parser := NewParser(handler)
+	defer parser.Close()
+
+	// Header (commandCount=1) + command header with commandType=99 (unknown,
+	// hits default branch) and commandLength=12 (dataLength=0).
+	payload := append(photonHeader(0, 1), commandHeader(99, uint32(CommandHeaderLength))...)
+
+	if err := parser.ParsePacket(payload); err != nil {
+		t.Fatalf("ParsePacket returned error: %v", err)
+	}
+
+	if got := parser.Stats.GetPacketsProcessed(); got != 1 {
+		t.Errorf("PacketsProcessed = %d, want 1", got)
+	}
+	if got := parser.Stats.GetPacketsMalformed(); got != 0 {
+		t.Errorf("PacketsMalformed = %d, want 0", got)
+	}
+}
+
+// TestParsePacket_Disconnect_Processed verifies that a well-formed packet
+// carrying a Disconnect command is counted as processed. This guards the
+// IncrPacketsProcessed() call before the early return in the Disconnect
+// case (parser.go:220): if that line is accidentally removed, the processed
+// counter would silently under-count disconnect packets.
+func TestParsePacket_Disconnect_Processed(t *testing.T) {
+	handler := &mockHandler{}
+	parser := NewParser(handler)
+	defer parser.Close()
+
+	// Header (commandCount=1) + command header with commandType=Disconnect
+	// and commandLength=12 (dataLength=0).
+	payload := append(photonHeader(0, 1), commandHeader(CommandTypeDisconnect, uint32(CommandHeaderLength))...)
+
+	if err := parser.ParsePacket(payload); err != nil {
+		t.Fatalf("ParsePacket returned error: %v", err)
+	}
+
+	if got := parser.Stats.GetPacketsProcessed(); got != 1 {
+		t.Errorf("PacketsProcessed = %d, want 1 (Disconnect must be counted as processed)", got)
+	}
+	if got := parser.Stats.GetPacketsMalformed(); got != 0 {
+		t.Errorf("PacketsMalformed = %d, want 0", got)
+	}
+}
