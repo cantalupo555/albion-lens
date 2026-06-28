@@ -170,9 +170,25 @@ func (p *Parser) ParsePacket(payload []byte) error {
 		}
 	}
 
-	// Process each command
-	for i := 0; i < int(commandCount) && !r.IsEmpty(); i++ {
+	// malformed tracks whether the command stream was truncated. A packet
+	// with a valid Photon header but missing/incomplete commands is still
+	// malformed: the counter choice must reflect that for accurate telemetry.
+	// Any future break-point added to the command loop MUST set this flag.
+	malformed := false
+
+	// Process each command.
+	// Note: !r.IsEmpty() is intentionally NOT in the loop condition. When
+	// remaining bytes run out before commandCount is reached, the inner
+	// `Remaining() < CommandHeaderLength` check catches it and sets the
+	// malformed flag, so a truncated command stream is reported accurately
+	// instead of silently counted as processed.
+	for i := 0; i < int(commandCount); i++ {
 		if r.Remaining() < CommandHeaderLength {
+			malformed = true
+			if p.debug {
+				fmt.Printf("  [Photon] Command header truncated: remaining=%d, need=%d\n",
+					r.Remaining(), CommandHeaderLength)
+			}
 			break
 		}
 
@@ -187,8 +203,9 @@ func (p *Parser) ParsePacket(payload []byte) error {
 		dataLength := int(commandLength) - CommandHeaderLength
 
 		if r.Remaining() < dataLength {
+			malformed = true
 			if p.debug {
-				fmt.Printf("  [Photon] Command length exceeds packet: remaining=%d, need=%d\n", r.Remaining(), dataLength)
+				fmt.Printf("  [Photon] Command data truncated: remaining=%d, need=%d\n", r.Remaining(), dataLength)
 			}
 			break
 		}
@@ -198,6 +215,9 @@ func (p *Parser) ParsePacket(payload []byte) error {
 			if p.debug {
 				fmt.Println("  [Photon] Disconnect command")
 			}
+			// Disconnect is an intentional successful termination: count
+			// it as processed before returning.
+			p.Stats.IncrPacketsProcessed()
 			return nil
 
 		case CommandTypeSendUnreliable:
@@ -220,7 +240,11 @@ func (p *Parser) ParsePacket(payload []byte) error {
 		}
 	}
 
-	p.Stats.IncrPacketsProcessed()
+	if malformed {
+		p.Stats.IncrPacketsMalformed()
+	} else {
+		p.Stats.IncrPacketsProcessed()
+	}
 
 	return nil
 }
