@@ -37,6 +37,7 @@ type Service struct {
 	parser   *photon.Parser
 	capture  *capture.Capture
 	stopChan chan struct{}
+	wg       sync.WaitGroup // Tracks statsUpdater goroutine
 
 	// Public channels (read-only for frontends)
 	Events       <-chan GameEvent
@@ -164,6 +165,7 @@ func (s *Service) Start() error {
 	}
 
 	// Start stats updater
+	s.wg.Add(1)
 	go s.statsUpdater()
 
 	// Start capture
@@ -184,7 +186,9 @@ func (s *Service) Start() error {
 	return nil
 }
 
-// Stop stops the service and cleans up resources.
+// Stop stops the service and cleans up resources. It blocks until the
+// statsUpdater goroutine has fully exited, then closes all public channels.
+// Safe to call multiple times (subsequent calls are no-ops).
 func (s *Service) Stop() {
 	s.mu.Lock()
 	if !s.running {
@@ -206,6 +210,10 @@ func (s *Service) Stop() {
 	if s.parser != nil {
 		s.parser.Close()
 	}
+
+	// Wait for statsUpdater to exit before closing channels,
+	// preventing send-on-closed-channel panics during shutdown.
+	s.wg.Wait()
 
 	// Close channels
 	close(s.eventsChan)
@@ -229,6 +237,8 @@ func (s *Service) emitEvent(event GameEvent) {
 
 // statsUpdater periodically sends stats to the channel.
 func (s *Service) statsUpdater() {
+	defer s.wg.Done()
+
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 

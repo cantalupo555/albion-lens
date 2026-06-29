@@ -46,6 +46,8 @@ type Parser struct {
 	fragmentsMu      sync.RWMutex // Protects pendingFragments
 	debug            bool
 	stopCleanup      chan struct{} // Signal to stop cleanup goroutine
+	closeOnce        sync.Once     // Ensures Close is idempotent
+	wg               sync.WaitGroup // Tracks cleanupLoop goroutine
 	Stats            *Stats        // Parser statistics
 }
 
@@ -68,6 +70,7 @@ func NewParser(handler PhotonHandler) *Parser {
 	}
 
 	// Start background cleanup goroutine
+	p.wg.Add(1)
 	go p.cleanupLoop()
 
 	return p
@@ -79,13 +82,18 @@ func (p *Parser) SetDebug(debug bool) {
 }
 
 // Close stops the cleanup goroutine and releases resources.
-// Should be called when the parser is no longer needed.
+// Safe to call multiple times. Blocks until the cleanup goroutine has exited.
 func (p *Parser) Close() {
-	close(p.stopCleanup)
+	p.closeOnce.Do(func() {
+		close(p.stopCleanup)
+		p.wg.Wait()
+	})
 }
 
 // cleanupLoop periodically removes expired fragments
 func (p *Parser) cleanupLoop() {
+	defer p.wg.Done()
+
 	ticker := time.NewTicker(FragmentCleanupInterval)
 	defer ticker.Stop()
 

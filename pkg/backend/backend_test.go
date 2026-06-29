@@ -540,3 +540,88 @@ func TestEmitEvent_NilParserDoesNotPanic(t *testing.T) {
 	s.emitEvent(GameEvent{Type: EventTypeInfo, Message: "first", Timestamp: time.Now()})
 	s.emitEvent(GameEvent{Type: EventTypeInfo, Message: "dropped", Timestamp: time.Now()})
 }
+
+// ============================================
+// Tests for goroutine lifecycle (Start/Stop)
+// ============================================
+
+// newServiceWithStatsUpdater builds a minimal Service with a parser and the
+// statsUpdater goroutine running, without invoking the full Start() path
+// (which requires pcap). Suitable for exercising Stop() lifecycle.
+func newServiceWithStatsUpdater(t *testing.T) *Service {
+	t.Helper()
+	s := New()
+	s.parser = photon.NewParser(nil)
+	if s.parser == nil || s.parser.Stats == nil {
+		t.Fatalf("failed to construct parser with stats")
+	}
+	s.mu.Lock()
+	s.running = true
+	s.mu.Unlock()
+	s.wg.Add(1)
+	go s.statsUpdater()
+	return s
+}
+
+// TestServiceStopClosesAllChannels verifies that Stop() closes all three
+// public-facing channels (Events, Stats, OnlineStatus).
+func TestServiceStopClosesAllChannels(t *testing.T) {
+	s := newServiceWithStatsUpdater(t)
+
+	s.Stop()
+
+	_, ok := <-s.Events
+	if ok {
+		t.Error("Events channel not closed after Stop()")
+	}
+
+	_, ok = <-s.Stats
+	if ok {
+		t.Error("Stats channel not closed after Stop()")
+	}
+
+	_, ok = <-s.OnlineStatus
+	if ok {
+		t.Error("OnlineStatus channel not closed after Stop()")
+	}
+}
+
+// TestServiceStatsUpdaterExitsCleanly verifies that the statsUpdater goroutine
+// has fully exited after Stop() returns. Stop() blocks on wg.Wait(), so
+// returning here means statsUpdater called wg.Done(). Calling wg.Wait() again
+// is a no-op that confirms the counter is zero.
+func TestServiceStatsUpdaterExitsCleanly(t *testing.T) {
+	s := newServiceWithStatsUpdater(t)
+
+	s.Stop()
+
+	// Should return immediately — statsUpdater already called Done().
+	s.wg.Wait()
+}
+
+// TestServiceStopIdempotent verifies that calling Stop() multiple times does
+// not panic (the running flag guards re-entry).
+func TestServiceStopIdempotent(t *testing.T) {
+	s := newServiceWithStatsUpdater(t)
+
+	s.Stop()
+	s.Stop()
+	s.Stop()
+}
+
+// TestServiceStopNoPanicOnRapidTeardown exercises the scenario from issue #73:
+// Stop() called while statsUpdater may still be active. The WaitGroup ensures
+// channels are only closed after the goroutine exits, preventing any
+// send-on-closed-channel panic. Run with -race for definitive detection.
+func TestServiceStopNoPanicOnRapidTeardown(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		s := newServiceWithStatsUpdater(t)
+
+		// Fill statsChan so the non-blocking send exercises the default path.
+		for j := 0; j < cap(s.statsChan); j++ {
+			s.statsChan <- s.parser.Stats
+		}
+
+		s.Stop()
+	}
+}
