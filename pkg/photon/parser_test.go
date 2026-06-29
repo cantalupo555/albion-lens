@@ -46,11 +46,9 @@ func TestParserClose(t *testing.T) {
 	handler := &mockHandler{}
 	parser := NewParser(handler)
 
-	// Close should not panic
+	// Close blocks until cleanupLoop has exited; returning here means the
+	// WaitGroup was satisfied — the goroutine called Done().
 	parser.Close()
-
-	// Give goroutine time to stop
-	time.Sleep(50 * time.Millisecond)
 }
 
 func TestPendingFragmentsCount(t *testing.T) {
@@ -131,13 +129,51 @@ func TestCleanupLoopStops(t *testing.T) {
 	handler := &mockHandler{}
 	parser := NewParser(handler)
 
-	// Close immediately
+	// Close blocks until cleanupLoop exits — no sleep needed.
 	parser.Close()
 
-	// Wait a bit to ensure goroutine has time to stop
-	time.Sleep(100 * time.Millisecond)
+	// Verify stopCleanup was actually closed (proves Close ran).
+	select {
+	case <-parser.stopCleanup:
+		// expected — channel is closed
+	default:
+		t.Error("stopCleanup not closed after Close()")
+	}
+}
 
-	// If we get here without hanging, the test passes
+func TestParserDoubleCloseNoPanic(t *testing.T) {
+	handler := &mockHandler{}
+	parser := NewParser(handler)
+
+	parser.Close()
+	// Second close must not panic (sync.Once guards it).
+	parser.Close()
+}
+
+func TestParserCloseBlocksUntilGoroutineExits(t *testing.T) {
+	handler := &mockHandler{}
+	parser := NewParser(handler)
+
+	// Before Close, stopCleanup must be open.
+	select {
+	case <-parser.stopCleanup:
+		t.Fatal("stopCleanup closed before Close()")
+	default:
+	}
+
+	// Close blocks until cleanupLoop has called wg.Done().
+	parser.Close()
+
+	// After Close, stopCleanup is closed.
+	select {
+	case <-parser.stopCleanup:
+		// expected
+	default:
+		t.Error("stopCleanup not closed after Close()")
+	}
+
+	// wg.Wait() should return immediately — goroutine already exited.
+	parser.wg.Wait()
 }
 
 func TestFragmentTTLConstants(t *testing.T) {
