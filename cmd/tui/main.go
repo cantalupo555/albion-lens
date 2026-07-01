@@ -86,25 +86,32 @@ func main() {
 	defer svc.Stop()
 
 	// --- Persistence (issues #103, #104): restore state, then keep it warm. ---
-	// Resolve XDG data paths first (the directory is created if missing).
+	// Resolve XDG data paths first (the directory is created if missing). If
+	// resolution fails (e.g. HOME unset or data dir read-only), persistence is
+	// disabled entirely: we never pass an empty path to Load/Save, which would
+	// otherwise silently no-op on Load and emit confusing "periodic save
+	// failed" warnings on Save.
 	dungeonPath, err := storage.DataFile("dungeon-runs.json")
 	if err != nil {
-		fmt.Printf("Warning: could not resolve dungeon data path: %v\n", err)
+		fmt.Printf("Warning: persistence disabled, could not resolve dungeon data path: %v\n", err)
 	}
 	statsPath, err := storage.DataFile("session-stats.json")
 	if err != nil {
-		fmt.Printf("Warning: could not resolve stats data path: %v\n", err)
+		fmt.Printf("Warning: persistence disabled, could not resolve stats data path: %v\n", err)
 	}
+	persistenceEnabled := dungeonPath != "" && statsPath != ""
 
 	// Load-on-startup. The handler is created by Start(), so this must run
 	// after it. A missing file is the first-run case (handled as empty state
 	// inside Load); a corrupt file leaves the in-memory state unchanged.
-	if h := svc.Handler(); h != nil {
-		if err := h.LoadDungeonRuns(dungeonPath); err != nil {
-			fmt.Printf("Warning: could not load dungeon history: %v\n", err)
-		}
-		if err := h.LoadSessionStats(statsPath); err != nil {
-			fmt.Printf("Warning: could not load session stats: %v\n", err)
+	if persistenceEnabled {
+		if h := svc.Handler(); h != nil {
+			if err := h.LoadDungeonRuns(dungeonPath); err != nil {
+				fmt.Printf("Warning: could not load dungeon history: %v\n", err)
+			}
+			if err := h.LoadSessionStats(statsPath); err != nil {
+				fmt.Printf("Warning: could not load session stats: %v\n", err)
+			}
 		}
 	}
 
@@ -113,6 +120,9 @@ func main() {
 	saveCtx, saveCancel := context.WithCancel(context.Background())
 	defer saveCancel()
 	go periodicSave(saveCtx, saveInterval, func() error {
+		if !persistenceEnabled {
+			return nil
+		}
 		h := svc.Handler()
 		if h == nil {
 			return nil
@@ -144,12 +154,14 @@ func main() {
 	// Stop the periodic flush, then do a final save-on-exit so the on-disk
 	// state reflects the very last in-memory values.
 	saveCancel()
-	if h := svc.Handler(); h != nil {
-		if err := h.SaveDungeonRuns(dungeonPath); err != nil {
-			fmt.Printf("Warning: could not save dungeon history: %v\n", err)
-		}
-		if err := h.SaveSessionStats(statsPath); err != nil {
-			fmt.Printf("Warning: could not save session stats: %v\n", err)
+	if persistenceEnabled {
+		if h := svc.Handler(); h != nil {
+			if err := h.SaveDungeonRuns(dungeonPath); err != nil {
+				fmt.Printf("Warning: could not save dungeon history: %v\n", err)
+			}
+			if err := h.SaveSessionStats(statsPath); err != nil {
+				fmt.Printf("Warning: could not save session stats: %v\n", err)
+			}
 		}
 	}
 
