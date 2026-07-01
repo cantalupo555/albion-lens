@@ -641,6 +641,119 @@ func (h *AlbionHandler) GetSessionRespecSilver() int64 {
 	return h.sessionRespecSilver.Load()
 }
 
+// SessionStats is a point-in-time snapshot of the cumulative session counters,
+// used to hydrate the UI on startup. All fields are absolute totals read
+// atomically.
+type SessionStats struct {
+	Fame         int64
+	Silver       int64
+	Respec       int64
+	RespecSilver int64
+	Kills        int64
+	Deaths       int64
+	Loot         int64
+}
+
+// SessionSnapshot returns the current cumulative session counters. Safe to
+// call concurrently with event processing.
+func (h *AlbionHandler) SessionSnapshot() SessionStats {
+	return h.readSessionStats()
+}
+
+// readSessionStats is the single source of truth for reading the seven
+// cumulative counters into a SessionStats. All reads of these atomics for
+// persistence or UI hydration go through here so a new counter only needs to
+// be added in one place.
+func (h *AlbionHandler) readSessionStats() SessionStats {
+	return SessionStats{
+		Fame:         h.sessionFame.Load(),
+		Silver:       h.sessionSilver.Load(),
+		Respec:       h.sessionRespec.Load(),
+		RespecSilver: h.sessionRespecSilver.Load(),
+		Kills:        h.sessionKills.Load(),
+		Deaths:       h.sessionDeaths.Load(),
+		Loot:         h.sessionLoot.Load(),
+	}
+}
+
+// applySessionStats is the single source of truth for writing the seven
+// cumulative counters from a SessionStats (the inverse of readSessionStats).
+// All stores of these atomics on load go through here so a new counter only
+// needs to be added in one place.
+func (h *AlbionHandler) applySessionStats(s SessionStats) {
+	h.sessionFame.Store(s.Fame)
+	h.sessionSilver.Store(s.Silver)
+	h.sessionRespec.Store(s.Respec)
+	h.sessionRespecSilver.Store(s.RespecSilver)
+	h.sessionKills.Store(s.Kills)
+	h.sessionDeaths.Store(s.Deaths)
+	h.sessionLoot.Store(s.Loot)
+}
+
+// sessionStatsFile is the on-disk JSON representation of SessionStats. The
+// Version field is reserved for future additive schema migrations; missing
+// fields in an old file default to zero via encoding/json.
+//
+// Once persisted and restored, the session* counters represent cumulative
+// totals across all launches of the application (long-term) rather than a
+// single session — this matches issue #104's intent. The "session" naming is
+// retained for now and will be revisited when daily/hourly bucketing lands
+// (follow-up #105).
+type sessionStatsFile struct {
+	Version      int       `json:"version"`
+	Fame         int64     `json:"fame"`
+	Silver       int64     `json:"silver"`
+	Respec       int64     `json:"respec"`
+	RespecSilver int64     `json:"respec_silver"`
+	Kills        int64     `json:"kills"`
+	Deaths       int64     `json:"deaths"`
+	Loot         int64     `json:"loot"`
+	SavedAt      time.Time `json:"saved_at"`
+}
+
+// sessionStatsVersion is the current on-disk schema version for session stats.
+const sessionStatsVersion = 1
+
+// SaveSessionStats persists the cumulative session counters to path as JSON
+// using an atomic write (tmp + rename).
+func (h *AlbionHandler) SaveSessionStats(path string) error {
+	s := h.readSessionStats()
+	f := sessionStatsFile{
+		Version:      sessionStatsVersion,
+		Fame:         s.Fame,
+		Silver:       s.Silver,
+		Respec:       s.Respec,
+		RespecSilver: s.RespecSilver,
+		Kills:        s.Kills,
+		Deaths:       s.Deaths,
+		Loot:         s.Loot,
+		SavedAt:      h.nowFunc(),
+	}
+	return storage.Save(path, f)
+}
+
+// LoadSessionStats restores the cumulative session counters from path. A
+// missing file leaves counters at zero (first run). A corrupt file is returned
+// as err and leaves the counters unchanged. The schema is additive: a version
+// mismatch or missing fields apply best-effort (unknown/absent fields default
+// to zero).
+func (h *AlbionHandler) LoadSessionStats(path string) error {
+	f, err := storage.Load[sessionStatsFile](path)
+	if err != nil {
+		return err
+	}
+	h.applySessionStats(SessionStats{
+		Fame:         f.Fame,
+		Silver:       f.Silver,
+		Respec:       f.Respec,
+		RespecSilver: f.RespecSilver,
+		Kills:        f.Kills,
+		Deaths:       f.Deaths,
+		Loot:         f.Loot,
+	})
+	return nil
+}
+
 // handleUpdateFame handles fame/XP gain events
 // Supports multiple event formats as they vary between game versions
 func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {

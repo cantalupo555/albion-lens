@@ -1641,3 +1641,118 @@ func TestOnEventNewShrineNoActiveRun(t *testing.T) {
 		t.Error("expected nil active run when no dungeon entered")
 	}
 }
+
+func TestSaveLoadSessionStatsRoundTrip(t *testing.T) {
+	h := NewAlbionHandler()
+	h.sessionFame.Store(1500)
+	h.sessionSilver.Store(25000)
+	h.sessionRespec.Store(300)
+	h.sessionRespecSilver.Store(4500)
+	h.sessionKills.Store(7)
+	h.sessionDeaths.Store(2)
+	h.sessionLoot.Store(11)
+
+	path := filepath.Join(t.TempDir(), "session-stats.json")
+	if err := h.SaveSessionStats(path); err != nil {
+		t.Fatalf("SaveSessionStats: %v", err)
+	}
+
+	fresh := NewAlbionHandler()
+	if err := fresh.LoadSessionStats(path); err != nil {
+		t.Fatalf("LoadSessionStats: %v", err)
+	}
+	got := fresh.SessionSnapshot()
+	want := SessionStats{Fame: 1500, Silver: 25000, Respec: 300, RespecSilver: 4500, Kills: 7, Deaths: 2, Loot: 11}
+	if got != want {
+		t.Errorf("snapshot = %+v, want %+v", got, want)
+	}
+}
+
+func TestLoadSessionStatsMissingFileLeavesZeroNoError(t *testing.T) {
+	h := NewAlbionHandler()
+	path := filepath.Join(t.TempDir(), "nope.json")
+	if err := h.LoadSessionStats(path); err != nil {
+		t.Errorf("LoadSessionStats missing file: %v", err)
+	}
+	if got := h.SessionSnapshot(); got != (SessionStats{}) {
+		t.Errorf("expected zero snapshot, got %+v", got)
+	}
+}
+
+func TestLoadSessionStatsBackwardCompatMissingField(t *testing.T) {
+	// Older file written before respec_silver existed: that field must default
+	// to zero while the rest loads normally (additive schema).
+	path := filepath.Join(t.TempDir(), "old-stats.json")
+	raw := []byte(`{"version":1,"fame":100,"silver":200,"respec":30,"kills":1,"deaths":0,"loot":2,"saved_at":"2026-01-01T00:00:00Z"}`)
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	h := NewAlbionHandler()
+	if err := h.LoadSessionStats(path); err != nil {
+		t.Fatalf("LoadSessionStats: %v", err)
+	}
+	got := h.SessionSnapshot()
+	want := SessionStats{Fame: 100, Silver: 200, Respec: 30, RespecSilver: 0, Kills: 1, Deaths: 0, Loot: 2}
+	if got != want {
+		t.Errorf("snapshot = %+v, want %+v (respec_silver defaulting to 0)", got, want)
+	}
+}
+
+func TestLoadSessionStatsCorruptFileReturnsError(t *testing.T) {
+	h := NewAlbionHandler()
+	h.sessionFame.Store(999) // pre-existing value must survive a corrupt load
+
+	path := filepath.Join(t.TempDir(), "bad-stats.json")
+	if err := os.WriteFile(path, []byte("{broken"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	if err := h.LoadSessionStats(path); err == nil {
+		t.Fatal("expected error loading corrupt stats file, got nil")
+	}
+	if got := h.sessionFame.Load(); got != 999 {
+		t.Errorf("corrupt load should leave counters unchanged; Fame = %d, want 999", got)
+	}
+}
+
+func TestLoadSessionStatsVersionAbsentStillLoads(t *testing.T) {
+	// An even older file written before the `version` field existed: version
+	// defaults to zero (!= 1) but the schema is additive, so values still load.
+	path := filepath.Join(t.TempDir(), "no-version.json")
+	raw := []byte(`{"fame":50,"silver":60,"respec":7,"respec_silver":8,"kills":1,"deaths":0,"loot":1,"saved_at":"2026-06-29T00:00:00Z"}`)
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	h := NewAlbionHandler()
+	if err := h.LoadSessionStats(path); err != nil {
+		t.Fatalf("LoadSessionStats: %v", err)
+	}
+	got := h.SessionSnapshot()
+	want := SessionStats{Fame: 50, Silver: 60, Respec: 7, RespecSilver: 8, Kills: 1, Deaths: 0, Loot: 1}
+	if got != want {
+		t.Errorf("snapshot = %+v, want %+v (loaded despite missing version)", got, want)
+	}
+}
+
+func TestSaveSessionStatsErrorPropagates(t *testing.T) {
+	h := NewAlbionHandler()
+	h.sessionFame.Store(100)
+
+	// Make the final path a non-empty directory so storage.Save's rename step
+	// fails — a deterministic way (no root/FS assumptions) to exercise error
+	// propagation through SaveSessionStats.
+	dir := t.TempDir()
+	path := filepath.Join(dir, "stats.json")
+	if err := os.MkdirAll(filepath.Join(path, "blocker"), 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	if err := h.SaveSessionStats(path); err == nil {
+		t.Fatal("expected error from SaveSessionStats when storage save fails, got nil")
+	}
+	// Counters must be untouched by a failed save.
+	if got := h.sessionFame.Load(); got != 100 {
+		t.Errorf("failed save should not mutate counters; Fame = %d, want 100", got)
+	}
+}
