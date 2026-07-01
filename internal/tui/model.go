@@ -87,8 +87,30 @@ func New(svc *backend.Service, bulkEventChan chan BulkEventMsg, statsChan chan *
 	if svc != nil {
 		m.debug = svc.IsDebug()
 		m.onlineChan = svc.OnlineStatus
+		// Hydrate the stats panel with persisted cumulative counters so the
+		// dashboard shows long-term totals immediately rather than zeros.
+		m.statsPanel = hydrateStatsPanel(m.statsPanel, svc.Handler())
 	}
 	return m
+}
+
+// hydrateStatsPanel seeds a stats panel from the handler's current session
+// snapshot. It is a no-op when the handler is nil (e.g. before the backend
+// service has started). Extracted from New so the hydration logic can be
+// tested without a running (pcap-backed) service.
+func hydrateStatsPanel(panel components.StatsPanel, h *handlers.AlbionHandler) components.StatsPanel {
+	if h == nil {
+		return panel
+	}
+	snap := h.SessionSnapshot()
+	return panel.
+		SetFame(snap.Fame).
+		SetSilver(snap.Silver).
+		SetRespec(snap.Respec).
+		SetRespecSilver(snap.RespecSilver).
+		SetKills(int(snap.Kills)).
+		SetDeaths(int(snap.Deaths)).
+		SetLoot(int(snap.Loot))
 }
 
 // defaultHiddenDebugEvents returns the set of high-frequency / low-signal debug
