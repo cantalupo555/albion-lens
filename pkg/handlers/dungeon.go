@@ -79,26 +79,33 @@ func (s RunStatus) String() string {
 }
 
 // DungeonRun represents a single random dungeon run from entry to exit.
+//
+// JSON tags pin the on-disk field names so the persisted format is stable and
+// additive-only (new fields default to zero when reading old files). The
+// unexported snap* fields below are runtime-only (delta computation) and are
+// automatically excluded from serialization by encoding/json.
 type DungeonRun struct {
-	EnteredAt time.Time
-	ExitedAt  time.Time // zero while active
-	Mode      DungeonMode
-	Faction   string // "", Keeper, Heretic, Morgana, Undead, Avalon
-	Tier      int    // -1 unknown; 0-7 (mob tier - 1 per reference)
-	Level     int    // -1 unknown (deferred — needs exit-position catalog)
-	Status    RunStatus
-	CloseAt   time.Time // EnteredAt + 90s
+	EnteredAt time.Time   `json:"entered_at"`
+	ExitedAt  time.Time   `json:"exited_at"` // zero while active
+	Mode      DungeonMode `json:"mode"`
+	Faction   string      `json:"faction"` // "", Keeper, Heretic, Morgana, Undead, Avalon
+	Tier      int         `json:"tier"`    // -1 unknown; 0-7 (mob tier - 1 per reference)
+	Level     int         `json:"level"`   // -1 unknown (deferred — needs exit-position catalog)
+	Status    RunStatus   `json:"status"`
+	CloseAt   time.Time   `json:"close_at"` // EnteredAt + 90s
 
 	// Per-run stat deltas (computed on exit).
-	Fame         int64
-	Silver       int64
-	Respec       int64
-	RespecSilver int64
-	Kills        int
-	Deaths       int
-	Loot         int
+	Fame         int64 `json:"fame"`
+	Silver       int64 `json:"silver"`
+	Respec       int64 `json:"respec"`
+	RespecSilver int64 `json:"respec_silver"`
+	Kills        int   `json:"kills"`
+	Deaths       int   `json:"deaths"`
+	Loot         int   `json:"loot"`
 
 	// Snapshot of session counters at entry (internal, for delta computation).
+	// These unexported fields are NOT serialized; restored runs always have
+	// Status != Active, so no delta computation is needed after load.
 	snapFame         int64
 	snapSilver       int64
 	snapRespec       int64

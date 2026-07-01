@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/cantalupo555/albion-lens/internal/storage"
 	"github.com/cantalupo555/albion-lens/pkg/events"
 	"github.com/cantalupo555/albion-lens/pkg/items"
 )
@@ -560,6 +561,64 @@ func (h *AlbionHandler) SaveDiscoveredEvents(filename string) error {
 	}
 
 	return os.WriteFile(filename, data, 0644)
+}
+
+// SaveDungeonRuns persists the completed dungeon run history to path as JSON.
+// The active run (if any) is excluded because it is still incomplete. The
+// snapshot is copied under the dungeon lock and the (potentially slow) atomic
+// write happens without holding it, so dungeon tracking is not blocked on I/O.
+func (h *AlbionHandler) SaveDungeonRuns(path string) error {
+	h.dungeonMu.Lock()
+	toSave := make([]*DungeonRun, 0, len(h.dungeonRuns))
+	for _, r := range h.dungeonRuns {
+		if r.Status == RunStatusActive {
+			continue
+		}
+		cp := *r
+		toSave = append(toSave, &cp)
+	}
+	h.dungeonMu.Unlock()
+
+	return storage.Save(path, toSave)
+}
+
+// LoadDungeonRuns replaces the in-memory run history with the runs decoded from
+// path. Runs are sorted oldest-first by EnteredAt and trimmed to
+// maxDungeonRuns. A missing file is treated as an empty history (first run); a
+// corrupt file is returned as err and leaves the current history unchanged. The
+// active run is always reset to nil after a load.
+func (h *AlbionHandler) LoadDungeonRuns(path string) error {
+	runs, err := storage.Load[[]*DungeonRun](path)
+	if err != nil {
+		return err
+	}
+	sort.Slice(runs, func(i, j int) bool {
+		return runs[i].EnteredAt.Before(runs[j].EnteredAt)
+	})
+	if len(runs) > maxDungeonRuns {
+		runs = runs[len(runs)-maxDungeonRuns:]
+	}
+
+	h.dungeonMu.Lock()
+	h.dungeonRuns = runs
+	h.activeRun = nil
+	h.dungeonMu.Unlock()
+	return nil
+}
+
+// DungeonRunsSnapshot returns a defensive copy of the recorded run history
+// (oldest first) for inspection by tests or the UI without holding the handler
+// lock. It is the read-only counterpart to GetDungeonRuns that does not
+// close-gap expired active runs.
+func (h *AlbionHandler) DungeonRunsSnapshot() []*DungeonRun {
+	h.dungeonMu.Lock()
+	defer h.dungeonMu.Unlock()
+	result := make([]*DungeonRun, len(h.dungeonRuns))
+	for i, r := range h.dungeonRuns {
+		cp := *r
+		result[i] = &cp
+	}
+	return result
 }
 
 // GetSessionFame returns the total fame gained in this session

@@ -1,8 +1,12 @@
 package handlers
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/cantalupo555/albion-lens/internal/storage"
 )
 
 func TestClassifyDungeonMode(t *testing.T) {
@@ -452,5 +456,171 @@ func TestGetActiveDungeonReturnsCopy(t *testing.T) {
 	// But same field values
 	if !a1.EnteredAt.Equal(a2.EnteredAt) {
 		t.Error("copies should have same EnteredAt")
+	}
+}
+
+func TestSaveLoadDungeonRunsRoundTrip(t *testing.T) {
+	h := NewAlbionHandler()
+	t0 := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return t0 }
+	h.EnterDungeon(t0)
+	h.sessionFame.Add(500)
+	h.sessionKills.Add(2)
+	exit := t0.Add(2 * time.Minute)
+	h.nowFunc = func() time.Time { return exit }
+	h.ExitDungeon(exit)
+
+	// Second completed run with a different stat.
+	t1 := t0.Add(10 * time.Minute)
+	h.nowFunc = func() time.Time { return t1 }
+	h.EnterDungeon(t1)
+	h.sessionSilver.Add(300)
+	t2 := t1.Add(5 * time.Minute)
+	h.nowFunc = func() time.Time { return t2 }
+	h.ExitDungeon(t2)
+
+	path := filepath.Join(t.TempDir(), "dungeon-runs.json")
+	if err := h.SaveDungeonRuns(path); err != nil {
+		t.Fatalf("SaveDungeonRuns: %v", err)
+	}
+
+	fresh := NewAlbionHandler()
+	if err := fresh.LoadDungeonRuns(path); err != nil {
+		t.Fatalf("LoadDungeonRuns: %v", err)
+	}
+	got := fresh.GetDungeonRuns()
+	if len(got) != 2 {
+		t.Fatalf("expected 2 runs after load, got %d", len(got))
+	}
+	if got[0].Fame != 500 || got[0].Kills != 2 || got[0].Status != RunStatusDone {
+		t.Errorf("run0 = %+v, want Fame=500 Kills=2 Status=Done", got[0])
+	}
+	if !got[0].EnteredAt.Equal(t0) {
+		t.Errorf("run0 EnteredAt = %v, want %v", got[0].EnteredAt, t0)
+	}
+	if got[1].Silver != 300 || got[1].Status != RunStatusDone {
+		t.Errorf("run1 = %+v, want Silver=300 Status=Done", got[1])
+	}
+	// Unexported snapshot fields are not persisted.
+	if got[0].snapFame != 0 {
+		t.Errorf("run0 snapFame should be zero after load (not persisted), got %d", got[0].snapFame)
+	}
+}
+
+func TestSaveDungeonRunsExcludesActiveRun(t *testing.T) {
+	h := NewAlbionHandler()
+	t0 := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return t0 }
+	h.EnterDungeon(t0) // active, never exited
+
+	path := filepath.Join(t.TempDir(), "dungeon-runs.json")
+	if err := h.SaveDungeonRuns(path); err != nil {
+		t.Fatalf("SaveDungeonRuns: %v", err)
+	}
+
+	fresh := NewAlbionHandler()
+	if err := fresh.LoadDungeonRuns(path); err != nil {
+		t.Fatalf("LoadDungeonRuns: %v", err)
+	}
+	if got := fresh.GetDungeonRuns(); len(got) != 0 {
+		t.Errorf("active run should not be persisted; got %d runs", len(got))
+	}
+}
+
+func TestLoadDungeonRunsMissingFileIsEmptyNoError(t *testing.T) {
+	h := NewAlbionHandler()
+	path := filepath.Join(t.TempDir(), "nope.json")
+	if err := h.LoadDungeonRuns(path); err != nil {
+		t.Errorf("LoadDungeonRuns missing file: %v", err)
+	}
+	if got := h.GetDungeonRuns(); len(got) != 0 {
+		t.Errorf("expected empty history, got %d runs", len(got))
+	}
+}
+
+func TestLoadDungeonRunsCorruptFileReturnsError(t *testing.T) {
+	h := NewAlbionHandler()
+	// Seed an existing history that must survive a corrupt load.
+	t0 := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return t0 }
+	h.EnterDungeon(t0)
+	h.ExitDungeon(t0.Add(time.Minute))
+
+	path := filepath.Join(t.TempDir(), "bad.json")
+	if err := os.WriteFile(path, []byte("{not valid"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	if err := h.LoadDungeonRuns(path); err == nil {
+		t.Fatal("expected error loading corrupt file, got nil")
+	}
+	if got := h.GetDungeonRuns(); len(got) != 1 {
+		t.Errorf("corrupt load should leave existing history intact; got %d runs", len(got))
+	}
+}
+
+func TestLoadDungeonRunsRespectsCapAndSorts(t *testing.T) {
+	// Persist more than the cap, in reverse order, directly to disk so we can
+	// verify Load trims to the newest and re-sorts oldest-first.
+	total := maxDungeonRuns + 50
+	runs := make([]*DungeonRun, 0, total)
+	base := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	for i := 0; i < total; i++ {
+		runs = append(runs, &DungeonRun{
+			EnteredAt: base.Add(time.Duration(i) * time.Minute),
+			Status:    RunStatusDone,
+			Fame:      int64(i),
+		})
+	}
+	for i, j := 0, len(runs)-1; i < j; i, j = i+1, j-1 {
+		runs[i], runs[j] = runs[j], runs[i]
+	}
+
+	path := filepath.Join(t.TempDir(), "many.json")
+	if err := storage.Save(path, runs); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	h := NewAlbionHandler()
+	if err := h.LoadDungeonRuns(path); err != nil {
+		t.Fatalf("LoadDungeonRuns: %v", err)
+	}
+	got := h.GetDungeonRuns()
+	if len(got) != maxDungeonRuns {
+		t.Fatalf("expected %d runs after cap, got %d", maxDungeonRuns, len(got))
+	}
+	// Oldest surviving run is index (total - cap) = 50.
+	wantFirst := int64(total - maxDungeonRuns)
+	if got[0].Fame != wantFirst {
+		t.Errorf("first run Fame = %d, want %d (oldest after trim)", got[0].Fame, wantFirst)
+	}
+	if !got[0].EnteredAt.Before(got[len(got)-1].EnteredAt) {
+		t.Errorf("runs should be ordered oldest-first after load")
+	}
+}
+
+func TestDungeonRunsSnapshotIsDefensiveCopy(t *testing.T) {
+	h := NewAlbionHandler()
+	t0 := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return t0 }
+	h.EnterDungeon(t0)
+	h.ExitDungeon(t0.Add(time.Minute))
+
+	snap := h.DungeonRunsSnapshot()
+	if len(snap) != 1 {
+		t.Fatalf("expected 1 run, got %d", len(snap))
+	}
+
+	// Mutate the returned slice and its element; the handler's internal state
+	// must be insulated.
+	snap[0].Fame = 999999
+	snap[0].Mode = DungeonModeCorrupted
+	snap = append(snap, &DungeonRun{EnteredAt: t0.Add(time.Hour)})
+
+	again := h.DungeonRunsSnapshot()
+	if len(again) != 1 {
+		t.Errorf("internal history changed after mutating snapshot: got %d runs", len(again))
+	}
+	if again[0].Fame == 999999 || again[0].Mode == DungeonModeCorrupted {
+		t.Errorf("internal run mutated via snapshot: %+v", again[0])
 	}
 }
