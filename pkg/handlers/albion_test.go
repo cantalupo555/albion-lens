@@ -1644,13 +1644,7 @@ func TestOnEventNewShrineNoActiveRun(t *testing.T) {
 
 func TestSaveLoadSessionStatsRoundTrip(t *testing.T) {
 	h := NewAlbionHandler()
-	h.sessionFame.Store(1500)
-	h.sessionSilver.Store(25000)
-	h.sessionRespec.Store(300)
-	h.sessionRespecSilver.Store(4500)
-	h.sessionKills.Store(7)
-	h.sessionDeaths.Store(2)
-	h.sessionLoot.Store(11)
+	h.stats.apply(SessionStats{Fame: 1500, Silver: 25000, Respec: 300, RespecSilver: 4500, Kills: 7, Deaths: 2, Loot: 11})
 
 	path := filepath.Join(t.TempDir(), "session-stats.json")
 	if err := h.SaveSessionStats(path); err != nil {
@@ -1701,7 +1695,7 @@ func TestLoadSessionStatsBackwardCompatMissingField(t *testing.T) {
 
 func TestLoadSessionStatsCorruptFileReturnsError(t *testing.T) {
 	h := NewAlbionHandler()
-	h.sessionFame.Store(999) // pre-existing value must survive a corrupt load
+	h.stats.apply(SessionStats{Fame: 999}) // pre-existing value must survive a corrupt load
 
 	path := filepath.Join(t.TempDir(), "bad-stats.json")
 	if err := os.WriteFile(path, []byte("{broken"), 0o644); err != nil {
@@ -1710,7 +1704,7 @@ func TestLoadSessionStatsCorruptFileReturnsError(t *testing.T) {
 	if err := h.LoadSessionStats(path); err == nil {
 		t.Fatal("expected error loading corrupt stats file, got nil")
 	}
-	if got := h.sessionFame.Load(); got != 999 {
+	if got := h.stats.fameNow(); got != 999 {
 		t.Errorf("corrupt load should leave counters unchanged; Fame = %d, want 999", got)
 	}
 }
@@ -1737,7 +1731,7 @@ func TestLoadSessionStatsVersionAbsentStillLoads(t *testing.T) {
 
 func TestSaveSessionStatsErrorPropagates(t *testing.T) {
 	h := NewAlbionHandler()
-	h.sessionFame.Store(100)
+	h.stats.apply(SessionStats{Fame: 100})
 
 	// Make the final path a non-empty directory so storage.Save's rename step
 	// fails — a deterministic way (no root/FS assumptions) to exercise error
@@ -1752,7 +1746,7 @@ func TestSaveSessionStatsErrorPropagates(t *testing.T) {
 		t.Fatal("expected error from SaveSessionStats when storage save fails, got nil")
 	}
 	// Counters must be untouched by a failed save.
-	if got := h.sessionFame.Load(); got != 100 {
+	if got := h.stats.fameNow(); got != 100 {
 		t.Errorf("failed save should not mutate counters; Fame = %d, want 100", got)
 	}
 }
