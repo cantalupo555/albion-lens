@@ -156,6 +156,48 @@ func TestStatsPanelIncrLoot(t *testing.T) {
 	}
 }
 
+func TestStatsPanelSetKills(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.IncrKills()
+	s = s.IncrKills()
+	s = s.SetKills(10)
+	if s.kills != 10 {
+		t.Errorf("SetKills: expected 10 (absolute), got %d", s.kills)
+	}
+	// Incr after Set adds on top of the absolute value.
+	s = s.IncrKills()
+	if s.kills != 11 {
+		t.Errorf("IncrKills after SetKills: expected 11, got %d", s.kills)
+	}
+}
+
+func TestStatsPanelSetDeaths(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.IncrDeaths()
+	s = s.SetDeaths(5)
+	if s.deaths != 5 {
+		t.Errorf("SetDeaths: expected 5 (absolute), got %d", s.deaths)
+	}
+	s = s.IncrDeaths()
+	if s.deaths != 6 {
+		t.Errorf("IncrDeaths after SetDeaths: expected 6, got %d", s.deaths)
+	}
+}
+
+func TestStatsPanelSetLoot(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.IncrLoot()
+	s = s.IncrLoot()
+	s = s.SetLoot(8)
+	if s.lootCount != 8 {
+		t.Errorf("SetLoot: expected 8 (absolute), got %d", s.lootCount)
+	}
+	s = s.IncrLoot()
+	if s.lootCount != 9 {
+		t.Errorf("IncrLoot after SetLoot: expected 9, got %d", s.lootCount)
+	}
+}
+
 // ============================================
 // Reset tests (full)
 // ============================================

@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/cantalupo555/albion-lens/internal/storage"
 	"github.com/cantalupo555/albion-lens/internal/tui"
 	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/capture"
@@ -18,6 +20,9 @@ const (
 	statsChannelSize     = 10
 	eventBatchSize       = 50
 	eventFlushInterval   = 50 * time.Millisecond
+	// saveInterval is how often the in-memory state is flushed to disk while
+	// the TUI runs, bounding data loss on crash or kill to this window.
+	saveInterval = 5 * time.Minute
 )
 
 func main() {
@@ -80,6 +85,54 @@ func main() {
 	}
 	defer svc.Stop()
 
+	// --- Persistence (issues #103, #104): restore state, then keep it warm. ---
+	// Resolve XDG data paths first (the directory is created if missing). If
+	// resolution fails (e.g. HOME unset or data dir read-only), persistence is
+	// disabled entirely: we never pass an empty path to Load/Save, which would
+	// otherwise silently no-op on Load and emit confusing "periodic save
+	// failed" warnings on Save.
+	dungeonPath, err := storage.DataFile("dungeon-runs.json")
+	if err != nil {
+		fmt.Printf("Warning: persistence disabled, could not resolve dungeon data path: %v\n", err)
+	}
+	statsPath, err := storage.DataFile("session-stats.json")
+	if err != nil {
+		fmt.Printf("Warning: persistence disabled, could not resolve stats data path: %v\n", err)
+	}
+	persistenceEnabled := dungeonPath != "" && statsPath != ""
+
+	// Load-on-startup. The handler is created by Start(), so this must run
+	// after it. A missing file is the first-run case (handled as empty state
+	// inside Load); a corrupt file leaves the in-memory state unchanged.
+	if persistenceEnabled {
+		if h := svc.Handler(); h != nil {
+			if err := h.LoadDungeonRuns(dungeonPath); err != nil {
+				fmt.Printf("Warning: could not load dungeon history: %v\n", err)
+			}
+			if err := h.LoadSessionStats(statsPath); err != nil {
+				fmt.Printf("Warning: could not load session stats: %v\n", err)
+			}
+		}
+	}
+
+	// Periodic flush while the TUI runs: a crash or kill loses at most
+	// saveInterval of progress. Cancelled after p.Run returns.
+	saveCtx, saveCancel := context.WithCancel(context.Background())
+	defer saveCancel()
+	go periodicSave(saveCtx, saveInterval, func() error {
+		if !persistenceEnabled {
+			return nil
+		}
+		h := svc.Handler()
+		if h == nil {
+			return nil
+		}
+		if err := h.SaveDungeonRuns(dungeonPath); err != nil {
+			return err
+		}
+		return h.SaveSessionStats(statsPath)
+	})
+
 	// Send initial status event (as a batch)
 	bulkEventChan <- tui.BulkEventMsg{
 		{
@@ -96,6 +149,20 @@ func main() {
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running TUI: %v\n", err)
 		os.Exit(1)
+	}
+
+	// Stop the periodic flush, then do a final save-on-exit so the on-disk
+	// state reflects the very last in-memory values.
+	saveCancel()
+	if persistenceEnabled {
+		if h := svc.Handler(); h != nil {
+			if err := h.SaveDungeonRuns(dungeonPath); err != nil {
+				fmt.Printf("Warning: could not save dungeon history: %v\n", err)
+			}
+			if err := h.SaveSessionStats(statsPath); err != nil {
+				fmt.Printf("Warning: could not save session stats: %v\n", err)
+			}
+		}
 	}
 
 	// In discovery mode, persist the captured event map so unmapped events
@@ -174,6 +241,25 @@ func bridgeEvents(
 
 		case <-ticker.C:
 			flush()
+		}
+	}
+}
+
+// periodicSave calls save at each interval until ctx is cancelled. Used to
+// bound the data-loss window on crash/kill while the TUI is running. A non-nil
+// error from save is surfaced as a warning so the user learns mid-session that
+// persistence has degraded (the final save-on-exit remains the safety net).
+func periodicSave(ctx context.Context, interval time.Duration, save func() error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := save(); err != nil {
+				fmt.Printf("Warning: periodic save failed: %v\n", err)
+			}
 		}
 	}
 }

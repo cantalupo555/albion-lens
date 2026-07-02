@@ -1,11 +1,14 @@
 package tui
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/cantalupo555/albion-lens/internal/tui/components"
 	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/events"
 	"github.com/cantalupo555/albion-lens/pkg/handlers"
@@ -86,6 +89,38 @@ func TestNewModelDefaults(t *testing.T) {
 	}
 	if m.ready {
 		t.Error("expected ready=false by default")
+	}
+}
+
+func TestHydrateStatsPanel(t *testing.T) {
+	h := handlers.NewAlbionHandler()
+
+	// Seed the handler via the public disk-load API: the session counters are
+	// not settable from outside the handlers package.
+	path := filepath.Join(t.TempDir(), "stats.json")
+	seed := []byte(`{"version":1,"fame":123456,"silver":987654,"respec":333,"respec_silver":2222,"kills":42,"deaths":17,"loot":99,"saved_at":"2026-06-29T00:00:00Z"}`)
+	if err := os.WriteFile(path, seed, 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	if err := h.LoadSessionStats(path); err != nil {
+		t.Fatalf("LoadSessionStats: %v", err)
+	}
+
+	panel := hydrateStatsPanel(components.NewStatsPanel(), h)
+	// NewStatsPanel defaults to fullNumbers, so fame renders as "+123456".
+	view := panel.View()
+	for _, want := range []string{"123456", "987654", "99 items"} {
+		if !strings.Contains(view, want) {
+			t.Errorf("stats panel view missing %q after hydration\n%s", want, view)
+		}
+	}
+}
+
+func TestHydrateStatsPanelNilHandlerIsNoOp(t *testing.T) {
+	empty := components.NewStatsPanel()
+	got := hydrateStatsPanel(empty, nil)
+	if got.View() != empty.View() {
+		t.Error("hydrateStatsPanel with nil handler should leave the panel unchanged")
 	}
 }
 

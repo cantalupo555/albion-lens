@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -155,4 +158,67 @@ func TestConstantsHaveExpectedValues(t *testing.T) {
 	if eventFlushInterval != 50*time.Millisecond {
 		t.Errorf("expected eventFlushInterval=50ms, got %v", eventFlushInterval)
 	}
+	if saveInterval != 5*time.Minute {
+		t.Errorf("expected saveInterval=5m, got %v", saveInterval)
+	}
 }
+
+// ============================================
+// periodicSave tests
+// ============================================
+
+func TestPeriodicSaveFiresAndStopsOnCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	var calls atomic.Int32
+
+	done := make(chan struct{})
+	go func() {
+		periodicSave(ctx, 10*time.Millisecond, func() error {
+			calls.Add(1)
+			return nil
+		})
+		close(done)
+	}()
+
+	// Allow at least one tick to fire.
+	time.Sleep(35 * time.Millisecond)
+	cancel()
+
+	select {
+	case <-done:
+		// goroutine exited cleanly after cancel
+	case <-time.After(time.Second):
+		t.Fatal("periodicSave did not exit after cancel")
+	}
+
+	if calls.Load() < 1 {
+		t.Errorf("expected periodic save to fire at least once, got %d", calls.Load())
+	}
+}
+
+func TestPeriodicSaveContinuesAfterError(t *testing.T) {
+	// A failing save must not stop the loop; it should keep ticking until
+	// cancelled so the user can recover if the filesystem issue is transient.
+	ctx, cancel := context.WithCancel(context.Background())
+	var calls atomic.Int32
+
+	done := make(chan struct{})
+	go func() {
+		periodicSave(ctx, 10*time.Millisecond, func() error {
+			calls.Add(1)
+			return errBoom
+		})
+		close(done)
+	}()
+
+	time.Sleep(35 * time.Millisecond)
+	cancel()
+	<-done
+
+	if calls.Load() < 2 {
+		t.Errorf("expected periodic save to keep firing after errors, got %d calls", calls.Load())
+	}
+}
+
+// errBoom is a sentinel error used only by TestPeriodicSaveContinuesAfterError.
+var errBoom = errors.New("boom")

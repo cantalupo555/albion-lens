@@ -41,7 +41,3 @@ output/*
 
 # Debug files
 __debug_bin*
-
-# Workflow artifacts (local planning, never committed)
-PLANNING.md
-REMAINING_GAPS.md

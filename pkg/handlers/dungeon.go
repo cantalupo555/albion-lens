@@ -79,26 +79,33 @@ func (s RunStatus) String() string {
 }
 
 // DungeonRun represents a single random dungeon run from entry to exit.
+//
+// JSON tags pin the on-disk field names so the persisted format is stable and
+// additive-only (new fields default to zero when reading old files). The
+// unexported snap* fields below are runtime-only (delta computation) and are
+// automatically excluded from serialization by encoding/json.
 type DungeonRun struct {
-	EnteredAt time.Time
-	ExitedAt  time.Time // zero while active
-	Mode      DungeonMode
-	Faction   string // "", Keeper, Heretic, Morgana, Undead, Avalon
-	Tier      int    // -1 unknown; 0-7 (mob tier - 1 per reference)
-	Level     int    // -1 unknown (deferred — needs exit-position catalog)
-	Status    RunStatus
-	CloseAt   time.Time // EnteredAt + 90s
+	EnteredAt time.Time   `json:"entered_at"`
+	ExitedAt  time.Time   `json:"exited_at"` // zero while active
+	Mode      DungeonMode `json:"mode"`
+	Faction   string      `json:"faction"` // "", Keeper, Heretic, Morgana, Undead, Avalon
+	Tier      int         `json:"tier"`    // -1 unknown; 0-7 (mob tier - 1 per reference)
+	Level     int         `json:"level"`   // -1 unknown (deferred — needs exit-position catalog)
+	Status    RunStatus   `json:"status"`
+	CloseAt   time.Time   `json:"close_at"` // EnteredAt + 90s
 
 	// Per-run stat deltas (computed on exit).
-	Fame         int64
-	Silver       int64
-	Respec       int64
-	RespecSilver int64
-	Kills        int
-	Deaths       int
-	Loot         int
+	Fame         int64 `json:"fame"`
+	Silver       int64 `json:"silver"`
+	Respec       int64 `json:"respec"`
+	RespecSilver int64 `json:"respec_silver"`
+	Kills        int   `json:"kills"`
+	Deaths       int   `json:"deaths"`
+	Loot         int   `json:"loot"`
 
 	// Snapshot of session counters at entry (internal, for delta computation).
+	// These unexported fields are NOT serialized; restored runs always have
+	// Status != Active, so no delta computation is needed after load.
 	snapFame         int64
 	snapSilver       int64
 	snapRespec       int64
@@ -279,6 +286,9 @@ func (h *AlbionHandler) EnterDungeon(now time.Time) {
 		h.closeActiveRunLocked(now, RunStatusDone)
 	}
 
+	// Snapshot the session counters once, consistently, so the per-run delta
+	// computed on exit is coherent (no mix of pre/post-update values).
+	snap := h.stats.snapshot()
 	run := &DungeonRun{
 		EnteredAt:        now,
 		Mode:             DungeonModeUnknown,
@@ -286,13 +296,13 @@ func (h *AlbionHandler) EnterDungeon(now time.Time) {
 		Level:            -1,
 		Status:           RunStatusActive,
 		CloseAt:          now.Add(DungeonCloseTimeout),
-		snapFame:         h.sessionFame.Load(),
-		snapSilver:       h.sessionSilver.Load(),
-		snapRespec:       h.sessionRespec.Load(),
-		snapRespecSilver: h.sessionRespecSilver.Load(),
-		snapKills:        int(h.sessionKills.Load()),
-		snapDeaths:       int(h.sessionDeaths.Load()),
-		snapLoot:         int(h.sessionLoot.Load()),
+		snapFame:         snap.Fame,
+		snapSilver:       snap.Silver,
+		snapRespec:       snap.Respec,
+		snapRespecSilver: snap.RespecSilver,
+		snapKills:        int(snap.Kills),
+		snapDeaths:       int(snap.Deaths),
+		snapLoot:         int(snap.Loot),
 	}
 	h.activeRun = run
 	h.dungeonRuns = append(h.dungeonRuns, run)
@@ -323,13 +333,16 @@ func (h *AlbionHandler) closeActiveRunLocked(now time.Time, status RunStatus) {
 	}
 	r.ExitedAt = now
 	r.Status = status
-	r.Fame = h.sessionFame.Load() - r.snapFame
-	r.Silver = h.sessionSilver.Load() - r.snapSilver
-	r.Respec = h.sessionRespec.Load() - r.snapRespec
-	r.RespecSilver = h.sessionRespecSilver.Load() - r.snapRespecSilver
-	r.Kills = int(h.sessionKills.Load()) - r.snapKills
-	r.Deaths = int(h.sessionDeaths.Load()) - r.snapDeaths
-	r.Loot = int(h.sessionLoot.Load()) - r.snapLoot
+	// Read the current counters as one consistent snapshot so every delta is
+	// computed against the same point in time.
+	cur := h.stats.snapshot()
+	r.Fame = cur.Fame - r.snapFame
+	r.Silver = cur.Silver - r.snapSilver
+	r.Respec = cur.Respec - r.snapRespec
+	r.RespecSilver = cur.RespecSilver - r.snapRespecSilver
+	r.Kills = int(cur.Kills) - r.snapKills
+	r.Deaths = int(cur.Deaths) - r.snapDeaths
+	r.Loot = int(cur.Loot) - r.snapLoot
 	h.activeRun = nil
 }
 
@@ -393,6 +406,17 @@ func (h *AlbionHandler) GetActiveDungeon() *DungeonRun {
 	return &run
 }
 
+// copyDungeonRunsLocked returns defensive copies of all recorded runs. Caller
+// must hold dungeonMu.
+func (h *AlbionHandler) copyDungeonRunsLocked() []*DungeonRun {
+	result := make([]*DungeonRun, len(h.dungeonRuns))
+	for i, r := range h.dungeonRuns {
+		cp := *r
+		result[i] = &cp
+	}
+	return result
+}
+
 // GetDungeonRuns returns snapshots of all recorded dungeon runs (oldest first).
 // Each pointer is to a copy — callers may freely read, reorder, or retain the
 // slice without holding the handler lock.
@@ -400,10 +424,16 @@ func (h *AlbionHandler) GetDungeonRuns() []*DungeonRun {
 	h.dungeonMu.Lock()
 	defer h.dungeonMu.Unlock()
 	h.closeExpiredLocked(h.nowFunc())
-	result := make([]*DungeonRun, len(h.dungeonRuns))
-	for i, r := range h.dungeonRuns {
-		cp := *r
-		result[i] = &cp
-	}
-	return result
+	return h.copyDungeonRunsLocked()
+}
+
+// DungeonRunsSnapshot returns a defensive copy of the recorded run history
+// (oldest first) for inspection by tests or the UI without holding the handler
+// lock. Like GetDungeonRuns it closes any run whose 90s timer has elapsed, so
+// the two APIs are consistent.
+func (h *AlbionHandler) DungeonRunsSnapshot() []*DungeonRun {
+	h.dungeonMu.Lock()
+	defer h.dungeonMu.Unlock()
+	h.closeExpiredLocked(h.nowFunc())
+	return h.copyDungeonRunsLocked()
 }

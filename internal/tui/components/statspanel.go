@@ -95,6 +95,25 @@ func (s StatsPanel) IncrLoot() StatsPanel {
 	return s
 }
 
+// SetKills sets the kill counter to an absolute value (used to hydrate the
+// panel from persisted state on startup).
+func (s StatsPanel) SetKills(n int) StatsPanel {
+	s.kills = n
+	return s
+}
+
+// SetDeaths sets the death counter to an absolute value.
+func (s StatsPanel) SetDeaths(n int) StatsPanel {
+	s.deaths = n
+	return s
+}
+
+// SetLoot sets the loot counter to an absolute value.
+func (s StatsPanel) SetLoot(n int) StatsPanel {
+	s.lootCount = n
+	return s
+}
+
 // Reset clears all session stats
 func (s StatsPanel) Reset() StatsPanel {
 	s.fame = 0
