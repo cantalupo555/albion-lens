@@ -102,7 +102,7 @@ func hydrateStatsPanel(panel components.StatsPanel, h *handlers.AlbionHandler) c
 	if h == nil {
 		return panel
 	}
-	snap := h.SessionSnapshot()
+	snap := h.TotalSnapshot()
 	return panel.
 		SetFame(snap.Fame).
 		SetSilver(snap.Silver).
@@ -257,34 +257,34 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch eventMsg.Type {
 			case "fame":
 				if data, ok := eventMsg.Data.(*handlers.FameEventData); ok && data != nil {
-					m.statsPanel = m.statsPanel.SetFame(data.Session)
-					displayMsg = fmt.Sprintf("⭐ FAME: +%s | Total: %s | Session: %s",
+					m.statsPanel = m.statsPanel.SetFame(data.AllTime)
+					displayMsg = fmt.Sprintf("⭐ FAME: +%s | Pool: %s | Total: %s",
 						formatNumber(data.Gained, m.fullNumbers),
 						formatNumber(data.Total, m.fullNumbers),
-						formatNumber(data.Session, m.fullNumbers))
+						formatNumber(data.AllTime, m.fullNumbers))
 				}
 			case "silver":
 				if data, ok := eventMsg.Data.(*handlers.SilverEventData); ok && data != nil {
-					m.statsPanel = m.statsPanel.SetSilver(data.Session)
-					displayMsg = fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
+					m.statsPanel = m.statsPanel.SetSilver(data.Total)
+					displayMsg = fmt.Sprintf("💰 %s looted silver (%s) from %s | Total: %s",
 						data.LootedBy,
 						formatNumber(data.Amount, m.fullNumbers),
 						data.LootedFrom,
-						formatNumber(data.Session, m.fullNumbers))
+						formatNumber(data.Total, m.fullNumbers))
 				}
 			case "respec":
 				if data, ok := eventMsg.Data.(*handlers.RespecEventData); ok && data != nil {
-					m.statsPanel = m.statsPanel.SetRespec(data.SessionTotal)
-					m.statsPanel = m.statsPanel.SetRespecSilver(data.SessionSilverTotal)
+					m.statsPanel = m.statsPanel.SetRespec(data.Total)
+					m.statsPanel = m.statsPanel.SetRespecSilver(data.TotalSilver)
 					if data.PaidSilver > 0 {
-						displayMsg = fmt.Sprintf("🏆 RESPEC: +%s credits | Silver cost: -%s | Session: %s",
+						displayMsg = fmt.Sprintf("🏆 RESPEC: +%s credits | Silver cost: -%s | Total: %s",
 							formatNumber(data.Gained, m.fullNumbers),
 							formatNumber(data.PaidSilver, m.fullNumbers),
-							formatNumber(data.SessionTotal, m.fullNumbers))
+							formatNumber(data.Total, m.fullNumbers))
 					} else {
-						displayMsg = fmt.Sprintf("🏆 RESPEC: +%s credits | Session: %s",
+						displayMsg = fmt.Sprintf("🏆 RESPEC: +%s credits | Total: %s",
 							formatNumber(data.Gained, m.fullNumbers),
-							formatNumber(data.SessionTotal, m.fullNumbers))
+							formatNumber(data.Total, m.fullNumbers))
 					}
 				}
 			case "loot":
@@ -381,8 +381,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, TickCmd())
 		return m, tea.Batch(cmds...)
 
-	// Session stats update (from handler)
-	case SessionStatsMsg:
+	// Total stats update (from handler)
+	case TotalStatsMsg:
 		if msg.Fame > 0 {
 			m.statsPanel = m.statsPanel.AddFame(msg.Fame)
 		}

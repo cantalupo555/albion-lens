@@ -31,27 +31,27 @@ type EventCallback func(eventType, message string, data interface{})
 // testing via AlbionHandler.deathDedupWindow.
 const defaultDeathDedupWindow = 5 * time.Second
 
-// sessionCounters holds the seven cumulative session counters behind a single
+// totalCounters holds the seven cumulative session counters behind a single
 // RWMutex so a snapshot reads all of them consistently (independent atomics
 // would allow a snapshot to mix pre- and post-update values). The lock is
 // fine-grained: event handlers take a write lock per increment, persistence
 // and UI hydration take a read lock for the whole set.
-type sessionCounters struct {
-	mu            sync.RWMutex
-	fame          int64
-	silver        int64
-	respec        int64
-	respecSilver  int64
-	kills         int64
-	deaths        int64
-	loot          int64
+type totalCounters struct {
+	mu           sync.RWMutex
+	fame         int64
+	silver       int64
+	respec       int64
+	respecSilver int64
+	kills        int64
+	deaths       int64
+	loot         int64
 }
 
 // snapshot returns a consistent point-in-time copy of all seven counters.
-func (c *sessionCounters) snapshot() SessionStats {
+func (c *totalCounters) snapshot() TotalStats {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return SessionStats{
+	return TotalStats{
 		Fame:         c.fame,
 		Silver:       c.silver,
 		Respec:       c.respec,
@@ -63,7 +63,7 @@ func (c *sessionCounters) snapshot() SessionStats {
 }
 
 // apply overwrites all seven counters. Used when restoring persisted state.
-func (c *sessionCounters) apply(s SessionStats) {
+func (c *totalCounters) apply(s TotalStats) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.fame = s.Fame
@@ -75,85 +75,85 @@ func (c *sessionCounters) apply(s SessionStats) {
 	c.loot = s.Loot
 }
 
-func (c *sessionCounters) addFame(n int64) {
+func (c *totalCounters) addFame(n int64) {
 	c.mu.Lock()
 	c.fame += n
 	c.mu.Unlock()
 }
 
-func (c *sessionCounters) addSilver(n int64) {
+func (c *totalCounters) addSilver(n int64) {
 	c.mu.Lock()
 	c.silver += n
 	c.mu.Unlock()
 }
 
-func (c *sessionCounters) addRespec(n int64) {
+func (c *totalCounters) addRespec(n int64) {
 	c.mu.Lock()
 	c.respec += n
 	c.mu.Unlock()
 }
 
-func (c *sessionCounters) addRespecSilver(n int64) {
+func (c *totalCounters) addRespecSilver(n int64) {
 	c.mu.Lock()
 	c.respecSilver += n
 	c.mu.Unlock()
 }
 
-func (c *sessionCounters) addKill() {
+func (c *totalCounters) addKill() {
 	c.mu.Lock()
 	c.kills++
 	c.mu.Unlock()
 }
 
-func (c *sessionCounters) addDeath() {
+func (c *totalCounters) addDeath() {
 	c.mu.Lock()
 	c.deaths++
 	c.mu.Unlock()
 }
 
-func (c *sessionCounters) addLoot() {
+func (c *totalCounters) addLoot() {
 	c.mu.Lock()
 	c.loot++
 	c.mu.Unlock()
 }
 
-func (c *sessionCounters) fameNow() int64 {
+func (c *totalCounters) fameNow() int64 {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.fame
 }
 
-func (c *sessionCounters) silverNow() int64 {
+func (c *totalCounters) silverNow() int64 {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.silver
 }
 
-func (c *sessionCounters) respecNow() int64 {
+func (c *totalCounters) respecNow() int64 {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.respec
 }
 
-func (c *sessionCounters) respecSilverNow() int64 {
+func (c *totalCounters) respecSilverNow() int64 {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.respecSilver
 }
 
-func (c *sessionCounters) killsNow() int {
+func (c *totalCounters) killsNow() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return int(c.kills)
 }
 
-func (c *sessionCounters) deathsNow() int {
+func (c *totalCounters) deathsNow() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return int(c.deaths)
 }
 
-func (c *sessionCounters) lootNow() int {
+func (c *totalCounters) lootNow() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return int(c.loot)
@@ -169,7 +169,7 @@ type AlbionHandler struct {
 
 	// Cumulative session counters (fame, silver, respec, respecSilver, kills,
 	// deaths, loot). Grouped under one RWMutex so snapshots are consistent.
-	stats sessionCounters
+	stats totalCounters
 
 	// Items database
 	itemDB *items.ItemDatabase
@@ -371,17 +371,17 @@ func (h *AlbionHandler) debugNotify(message string, data interface{}) {
 // FameEventData contains fame-specific event data
 type FameEventData struct {
 	Gained  int64 // Fame gained in this event
-	Total   int64 // Total fame after this event
-	Session int64 // Total fame gained this session
+	Total   int64 // Total fame pool reported by the server after this event
+	AllTime int64 // Cumulative fame gained across all launches (long-term total)
 }
 
 // SilverEventData contains silver-specific event data
 type SilverEventData struct {
 	Amount     int64  // Silver amount in this event
-	Session    int64  // Total silver gained this session
+	Total      int64  // Cumulative silver gained across all launches (long-term total)
 	LootedBy   string // Player who looted
 	LootedFrom string // Source of the loot
-	Counted    bool   // Whether this amount was added to the session total
+	Counted    bool   // Whether this amount was added to the long-term total
 }
 
 // LootEventData contains loot-specific event data
@@ -394,22 +394,22 @@ type LootEventData struct {
 
 // KillEventData contains kill-specific event data
 type KillEventData struct {
-	SessionKills int // Total kills in this session
+	TotalKills int // Cumulative kills across all launches (long-term total)
 }
 
 // DeathEventData contains death-specific event data
 type DeathEventData struct {
-	Victim        string // Player who died
-	Killer        string // Player who killed
-	SessionDeaths int    // Total deaths in this session
+	Victim      string // Player who died
+	Killer      string // Player who killed
+	TotalDeaths int    // Cumulative deaths across all launches (long-term total)
 }
 
 // RespecEventData contains respec-specific event data
 type RespecEventData struct {
-	Gained             int64 // Credits gained in this event
-	PaidSilver         int64 // Silver paid for auto-respec in this event
-	SessionTotal       int64 // Total credits gained this session
-	SessionSilverTotal int64 // Total silver spent on auto-respec this session
+	Gained      int64 // Credits gained in this event
+	PaidSilver  int64 // Silver paid for auto-respec in this event
+	Total       int64 // Cumulative credits gained across all launches (long-term total)
+	TotalSilver int64 // Cumulative silver spent on auto-respec across all launches
 }
 
 // ZoneEventData contains zone-transition event data emitted on ChangeCluster.
@@ -421,18 +421,18 @@ type ZoneEventData struct {
 	Previous     MapType // The zone the player left (MapTypeUnknown on first transition)
 }
 
-// GetSessionKills returns the number of kills in this session
-func (h *AlbionHandler) GetSessionKills() int {
+// GetTotalKills returns the number of kills in this session
+func (h *AlbionHandler) GetTotalKills() int {
 	return h.stats.killsNow()
 }
 
-// GetSessionDeaths returns the number of deaths in this session
-func (h *AlbionHandler) GetSessionDeaths() int {
+// GetTotalDeaths returns the number of deaths in this session
+func (h *AlbionHandler) GetTotalDeaths() int {
 	return h.stats.deathsNow()
 }
 
-// GetSessionLoot returns the number of loot items in this session
-func (h *AlbionHandler) GetSessionLoot() int {
+// GetTotalLoot returns the number of loot items in this session
+func (h *AlbionHandler) GetTotalLoot() int {
 	return h.stats.lootNow()
 }
 
@@ -725,30 +725,30 @@ func (h *AlbionHandler) LoadDungeonRuns(path string) error {
 	return nil
 }
 
-// GetSessionFame returns the total fame gained in this session
-func (h *AlbionHandler) GetSessionFame() int64 {
+// GetTotalFame returns the total fame gained in this session
+func (h *AlbionHandler) GetTotalFame() int64 {
 	return h.stats.fameNow()
 }
 
-// GetSessionSilver returns the total silver looted in this session
-func (h *AlbionHandler) GetSessionSilver() int64 {
+// GetTotalSilver returns the total silver looted in this session
+func (h *AlbionHandler) GetTotalSilver() int64 {
 	return h.stats.silverNow()
 }
 
-// GetSessionRespec returns the total combat fame credits gained in this session
-func (h *AlbionHandler) GetSessionRespec() int64 {
+// GetTotalRespec returns the total combat fame credits gained in this session
+func (h *AlbionHandler) GetTotalRespec() int64 {
 	return h.stats.respecNow()
 }
 
-// GetSessionRespecSilver returns the total silver spent on auto-respec this session
-func (h *AlbionHandler) GetSessionRespecSilver() int64 {
+// GetTotalRespecSilver returns the total silver spent on auto-respec this session
+func (h *AlbionHandler) GetTotalRespecSilver() int64 {
 	return h.stats.respecSilverNow()
 }
 
 // SessionStats is a point-in-time snapshot of the cumulative session counters,
 // used to hydrate the UI on startup. All fields are absolute totals read
 // atomically.
-type SessionStats struct {
+type TotalStats struct {
 	Fame         int64
 	Silver       int64
 	Respec       int64
@@ -758,25 +758,25 @@ type SessionStats struct {
 	Loot         int64
 }
 
-// SessionSnapshot returns the current cumulative session counters. Safe to
+// TotalSnapshot returns the current cumulative session counters. Safe to
 // call concurrently with event processing.
-func (h *AlbionHandler) SessionSnapshot() SessionStats {
-	return h.readSessionStats()
+func (h *AlbionHandler) TotalSnapshot() TotalStats {
+	return h.readTotalStats()
 }
 
-// readSessionStats is the single source of truth for reading the seven
+// readTotalStats is the single source of truth for reading the seven
 // cumulative counters into a consistent SessionStats snapshot.
-func (h *AlbionHandler) readSessionStats() SessionStats {
+func (h *AlbionHandler) readTotalStats() TotalStats {
 	return h.stats.snapshot()
 }
 
-// applySessionStats is the single source of truth for writing the seven
-// cumulative counters from a SessionStats (the inverse of readSessionStats).
-func (h *AlbionHandler) applySessionStats(s SessionStats) {
+// applyTotalStats is the single source of truth for writing the seven
+// cumulative counters from a SessionStats (the inverse of readTotalStats).
+func (h *AlbionHandler) applyTotalStats(s TotalStats) {
 	h.stats.apply(s)
 }
 
-// sessionStatsFile is the on-disk JSON representation of SessionStats. The
+// totalStatsFile is the on-disk JSON representation of SessionStats. The
 // Version field is reserved for future additive schema migrations; missing
 // fields in an old file default to zero via encoding/json.
 //
@@ -785,7 +785,7 @@ func (h *AlbionHandler) applySessionStats(s SessionStats) {
 // single session — this matches issue #104's intent. The "session" naming is
 // retained for now and will be revisited when daily/hourly bucketing lands
 // (follow-up #105).
-type sessionStatsFile struct {
+type totalStatsFile struct {
 	Version      int       `json:"version"`
 	Fame         int64     `json:"fame"`
 	Silver       int64     `json:"silver"`
@@ -797,15 +797,15 @@ type sessionStatsFile struct {
 	SavedAt      time.Time `json:"saved_at"`
 }
 
-// sessionStatsVersion is the current on-disk schema version for session stats.
-const sessionStatsVersion = 1
+// totalStatsVersion is the current on-disk schema version for session stats.
+const totalStatsVersion = 1
 
-// SaveSessionStats persists the cumulative session counters to path as JSON
+// SaveTotalStats persists the cumulative session counters to path as JSON
 // using an atomic write (tmp + rename).
-func (h *AlbionHandler) SaveSessionStats(path string) error {
-	s := h.readSessionStats()
-	f := sessionStatsFile{
-		Version:      sessionStatsVersion,
+func (h *AlbionHandler) SaveTotalStats(path string) error {
+	s := h.readTotalStats()
+	f := totalStatsFile{
+		Version:      totalStatsVersion,
 		Fame:         s.Fame,
 		Silver:       s.Silver,
 		Respec:       s.Respec,
@@ -818,17 +818,17 @@ func (h *AlbionHandler) SaveSessionStats(path string) error {
 	return storage.Save(path, f)
 }
 
-// LoadSessionStats restores the cumulative session counters from path. A
+// LoadTotalStats restores the cumulative session counters from path. A
 // missing file leaves counters at zero (first run). A corrupt file is returned
 // as err and leaves the counters unchanged. The schema is additive: a version
 // mismatch or missing fields apply best-effort (unknown/absent fields default
 // to zero).
-func (h *AlbionHandler) LoadSessionStats(path string) error {
-	f, err := storage.Load[sessionStatsFile](path)
+func (h *AlbionHandler) LoadTotalStats(path string) error {
+	f, err := storage.Load[totalStatsFile](path)
 	if err != nil {
 		return err
 	}
-	h.applySessionStats(SessionStats{
+	h.applyTotalStats(TotalStats{
 		Fame:         f.Fame,
 		Silver:       f.Silver,
 		Respec:       f.Respec,
@@ -899,7 +899,7 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 			h.notifyEvent("fame", "", &FameEventData{
 				Gained:  int64(fameGainedVal),
 				Total:   int64(totalFameVal),
-				Session: h.stats.fameNow(),
+				AllTime: h.stats.fameNow(),
 			})
 		}
 	} else {
@@ -914,7 +914,7 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 				h.notifyEvent("fame", "", &FameEventData{
 					Gained:  int64(gainedVal),
 					Total:   int64(totalFameVal),
-					Session: h.stats.fameNow(),
+					AllTime: h.stats.fameNow(),
 				})
 			}
 		}
@@ -998,7 +998,7 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 		// We just pass the raw data
 		h.notifyEvent("silver", "", &SilverEventData{
 			Amount:     silverAmount,
-			Session:    h.stats.silverNow(),
+			Total:      h.stats.silverNow(),
 			LootedBy:   lootedBy,
 			LootedFrom: lootedFrom,
 			Counted:    counted,
@@ -1113,7 +1113,7 @@ func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 	if isLocalKill {
 		h.stats.addKill()
 		h.notifyEvent("kill", "", &KillEventData{
-			SessionKills: h.stats.killsNow(),
+			TotalKills: h.stats.killsNow(),
 		})
 	}
 
@@ -1127,9 +1127,9 @@ func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 	// killer — the kill event already covers it and avoids a duplicate entry.
 	if !isLocalKill {
 		h.notifyEvent("death", "", &DeathEventData{
-			Victim:        victim,
-			Killer:        killer,
-			SessionDeaths: h.stats.deathsNow(),
+			Victim:      victim,
+			Killer:      killer,
+			TotalDeaths: h.stats.deathsNow(),
 		})
 	}
 }
@@ -1151,10 +1151,10 @@ func (h *AlbionHandler) handleUpdateReSpecPoints(params map[byte]interface{}) {
 	h.stats.addRespecSilver(silverVal)
 
 	h.notifyEvent("respec", "", &RespecEventData{
-		Gained:             gainedVal,
-		PaidSilver:         silverVal,
-		SessionTotal:       h.stats.respecNow(),
-		SessionSilverTotal: h.stats.respecSilverNow(),
+		Gained:      gainedVal,
+		PaidSilver:  silverVal,
+		Total:       h.stats.respecNow(),
+		TotalSilver: h.stats.respecSilverNow(),
 	})
 }
 

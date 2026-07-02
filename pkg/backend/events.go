@@ -30,14 +30,14 @@ type GameEvent struct {
 // FameData contains fame-specific event data
 type FameData struct {
 	Gained  int64 // Fame gained in this event
-	Total   int64 // Total fame after this event
-	Session int64 // Total fame gained this session
+	Total   int64 // Total fame pool reported by the server after this event
+	AllTime int64 // Cumulative fame gained across all launches (long-term total)
 }
 
 // SilverData contains silver-specific event data
 type SilverData struct {
-	Amount  int64 // Silver amount in this event
-	Session int64 // Total silver gained this session
+	Amount int64 // Silver amount in this event
+	Total  int64 // Cumulative silver gained across all launches (long-term total)
 }
 
 // LootData contains loot-specific event data
@@ -53,5 +53,5 @@ type LootData struct {
 type CombatData struct {
 	KillerName string // Name of the killer
 	VictimName string // Name of the victim
-	Session    int    // Total kills or deaths this session
+	Total      int    // Cumulative kills or deaths across all launches (long-term total)
 }

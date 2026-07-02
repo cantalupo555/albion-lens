@@ -31,8 +31,8 @@ type OnlineMsg struct {
 // TickMsg is sent periodically to update the UI
 type TickMsg time.Time
 
-// SessionStatsMsg updates session-specific stats (fame, silver, etc.)
-type SessionStatsMsg struct {
+// TotalStatsMsg updates long-term stats (fame, silver, etc.)
+type TotalStatsMsg struct {
 	Fame   int64
 	Silver int64
 	Kills  int

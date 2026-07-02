@@ -225,7 +225,7 @@ func (s StatsPanel) View() string {
 		Foreground(lipgloss.Color("62")).
 		MarginBottom(1)
 
-	title := titleStyle.Render("Session Stats")
+	title := titleStyle.Render("Total Stats")
 
 	return boxStyle.Render(
 		lipgloss.JoinVertical(lipgloss.Left, title, content),

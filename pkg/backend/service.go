@@ -313,60 +313,60 @@ func (s *Service) IsOnline() bool {
 	return s.capture.IsOnline()
 }
 
-// SessionFame returns the total fame gained in this session.
-func (s *Service) SessionFame() int64 {
+// TotalFame returns the cumulative fame gained across all launches..
+func (s *Service) TotalFame() int64 {
 	if s.handler == nil {
 		return 0
 	}
-	return s.handler.GetSessionFame()
+	return s.handler.GetTotalFame()
 }
 
-// SessionSilver returns the total silver gained in this session.
-func (s *Service) SessionSilver() int64 {
+// TotalSilver returns the cumulative silver gained across all launches..
+func (s *Service) TotalSilver() int64 {
 	if s.handler == nil {
 		return 0
 	}
-	return s.handler.GetSessionSilver()
+	return s.handler.GetTotalSilver()
 }
 
-// SessionRespec returns the total combat fame credits gained in this session.
-func (s *Service) SessionRespec() int64 {
+// TotalRespec returns the cumulative combat fame credits gained across all launches..
+func (s *Service) TotalRespec() int64 {
 	if s.handler == nil {
 		return 0
 	}
-	return s.handler.GetSessionRespec()
+	return s.handler.GetTotalRespec()
 }
 
-// SessionRespecSilver returns the total silver spent on auto-respec this session.
-func (s *Service) SessionRespecSilver() int64 {
+// TotalRespecSilver returns the cumulative silver spent on auto-respec across all launches..
+func (s *Service) TotalRespecSilver() int64 {
 	if s.handler == nil {
 		return 0
 	}
-	return s.handler.GetSessionRespecSilver()
+	return s.handler.GetTotalRespecSilver()
 }
 
-// SessionKills returns the number of kills in this session.
-func (s *Service) SessionKills() int {
+// TotalKills returns the cumulative number of kills across all launches..
+func (s *Service) TotalKills() int {
 	if s.handler == nil {
 		return 0
 	}
-	return s.handler.GetSessionKills()
+	return s.handler.GetTotalKills()
 }
 
-// SessionDeaths returns the number of deaths in this session.
-func (s *Service) SessionDeaths() int {
+// TotalDeaths returns the cumulative number of deaths across all launches..
+func (s *Service) TotalDeaths() int {
 	if s.handler == nil {
 		return 0
 	}
-	return s.handler.GetSessionDeaths()
+	return s.handler.GetTotalDeaths()
 }
 
-// SessionLoot returns the number of loot items in this session.
-func (s *Service) SessionLoot() int {
+// TotalLoot returns the cumulative number of loot items across all launches..
+func (s *Service) TotalLoot() int {
 	if s.handler == nil {
 		return 0
 	}
-	return s.handler.GetSessionLoot()
+	return s.handler.GetTotalLoot()
 }
 
 // LocalPlayerName returns the auto-detected local player name, or "" if the

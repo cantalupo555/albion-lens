@@ -263,7 +263,7 @@ func TestFameDataStructure(t *testing.T) {
 	data := FameData{
 		Gained:  1000,
 		Total:   50000,
-		Session: 5000,
+		AllTime: 5000,
 	}
 
 	if data.Gained != 1000 {
@@ -274,24 +274,24 @@ func TestFameDataStructure(t *testing.T) {
 		t.Errorf("Total: expected 50000, got %d", data.Total)
 	}
 
-	if data.Session != 5000 {
-		t.Errorf("Session: expected 5000, got %d", data.Session)
+	if data.AllTime != 5000 {
+		t.Errorf("AllTime: expected 5000, got %d", data.AllTime)
 	}
 }
 
 // TestSilverDataStructure tests SilverData struct
 func TestSilverDataStructure(t *testing.T) {
 	data := SilverData{
-		Amount:  5000,
-		Session: 25000,
+		Amount: 5000,
+		Total:  25000,
 	}
 
 	if data.Amount != 5000 {
 		t.Errorf("Amount: expected 5000, got %d", data.Amount)
 	}
 
-	if data.Session != 25000 {
-		t.Errorf("Session: expected 25000, got %d", data.Session)
+	if data.Total != 25000 {
+		t.Errorf("Total: expected 25000, got %d", data.Total)
 	}
 }
 
@@ -331,7 +331,7 @@ func TestCombatDataStructure(t *testing.T) {
 	data := CombatData{
 		KillerName: "Attacker",
 		VictimName: "Victim",
-		Session:    5,
+		Total:      5,
 	}
 
 	if data.KillerName != "Attacker" {
@@ -342,8 +342,8 @@ func TestCombatDataStructure(t *testing.T) {
 		t.Errorf("VictimName: expected 'Victim', got '%s'", data.VictimName)
 	}
 
-	if data.Session != 5 {
-		t.Errorf("Session: expected 5, got %d", data.Session)
+	if data.Total != 5 {
+		t.Errorf("Total: expected 5, got %d", data.Total)
 	}
 }
 
@@ -400,32 +400,32 @@ func TestServiceIsOnlineWithoutCapture(t *testing.T) {
 func TestServiceSessionMetricsWithoutHandler(t *testing.T) {
 	s := New()
 
-	if s.SessionFame() != 0 {
-		t.Errorf("SessionFame: expected 0, got %d", s.SessionFame())
+	if s.TotalFame() != 0 {
+		t.Errorf("TotalFame: expected 0, got %d", s.TotalFame())
 	}
 
-	if s.SessionSilver() != 0 {
-		t.Errorf("SessionSilver: expected 0, got %d", s.SessionSilver())
+	if s.TotalSilver() != 0 {
+		t.Errorf("TotalSilver: expected 0, got %d", s.TotalSilver())
 	}
 
-	if s.SessionKills() != 0 {
-		t.Errorf("SessionKills: expected 0, got %d", s.SessionKills())
+	if s.TotalKills() != 0 {
+		t.Errorf("TotalKills: expected 0, got %d", s.TotalKills())
 	}
 
-	if s.SessionDeaths() != 0 {
-		t.Errorf("SessionDeaths: expected 0, got %d", s.SessionDeaths())
+	if s.TotalDeaths() != 0 {
+		t.Errorf("TotalDeaths: expected 0, got %d", s.TotalDeaths())
 	}
 
-	if s.SessionLoot() != 0 {
-		t.Errorf("SessionLoot: expected 0, got %d", s.SessionLoot())
+	if s.TotalLoot() != 0 {
+		t.Errorf("TotalLoot: expected 0, got %d", s.TotalLoot())
 	}
 
-	if s.SessionRespec() != 0 {
-		t.Errorf("SessionRespec: expected 0, got %d", s.SessionRespec())
+	if s.TotalRespec() != 0 {
+		t.Errorf("TotalRespec: expected 0, got %d", s.TotalRespec())
 	}
 
-	if s.SessionRespecSilver() != 0 {
-		t.Errorf("SessionRespecSilver: expected 0, got %d", s.SessionRespecSilver())
+	if s.TotalRespecSilver() != 0 {
+		t.Errorf("TotalRespecSilver: expected 0, got %d", s.TotalRespecSilver())
 	}
 }
 

@@ -109,7 +109,7 @@ func main() {
 			if err := h.LoadDungeonRuns(dungeonPath); err != nil {
 				fmt.Printf("Warning: could not load dungeon history: %v\n", err)
 			}
-			if err := h.LoadSessionStats(statsPath); err != nil {
+			if err := h.LoadTotalStats(statsPath); err != nil {
 				fmt.Printf("Warning: could not load session stats: %v\n", err)
 			}
 		}
@@ -130,7 +130,7 @@ func main() {
 		if err := h.SaveDungeonRuns(dungeonPath); err != nil {
 			return err
 		}
-		return h.SaveSessionStats(statsPath)
+		return h.SaveTotalStats(statsPath)
 	})
 
 	// Send initial status event (as a batch)
@@ -159,7 +159,7 @@ func main() {
 			if err := h.SaveDungeonRuns(dungeonPath); err != nil {
 				fmt.Printf("Warning: could not save dungeon history: %v\n", err)
 			}
-			if err := h.SaveSessionStats(statsPath); err != nil {
+			if err := h.SaveTotalStats(statsPath); err != nil {
 				fmt.Printf("Warning: could not save session stats: %v\n", err)
 			}
 		}

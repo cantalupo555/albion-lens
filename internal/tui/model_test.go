@@ -102,8 +102,8 @@ func TestHydrateStatsPanel(t *testing.T) {
 	if err := os.WriteFile(path, seed, 0o644); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
-	if err := h.LoadSessionStats(path); err != nil {
-		t.Fatalf("LoadSessionStats: %v", err)
+	if err := h.LoadTotalStats(path); err != nil {
+		t.Fatalf("LoadTotalStats: %v", err)
 	}
 
 	panel := hydrateStatsPanel(components.NewStatsPanel(), h)
@@ -501,7 +501,7 @@ func TestUpdateKeyReset(t *testing.T) {
 
 	// Add some stats via events
 	m = updateModel(m, BulkEventMsg{
-		{Type: "fame", Data: &handlers.FameEventData{Gained: 100, Total: 500, Session: 200},
+		{Type: "fame", Data: &handlers.FameEventData{Gained: 100, Total: 500, AllTime: 200},
 			Timestamp: time.Now()},
 	})
 
@@ -535,7 +535,7 @@ func TestUpdateBulkEventFame(t *testing.T) {
 	bulkMsg := BulkEventMsg{
 		{
 			Type:      "fame",
-			Data:      &handlers.FameEventData{Gained: 100, Total: 500, Session: 200},
+			Data:      &handlers.FameEventData{Gained: 100, Total: 500, AllTime: 200},
 			Timestamp: time.Now(),
 		},
 	}
@@ -556,7 +556,7 @@ func TestUpdateBulkEventSilver(t *testing.T) {
 			Type: "silver",
 			Data: &handlers.SilverEventData{
 				Amount:     500,
-				Session:    1000,
+				Total:      1000,
 				LootedBy:   "Player1",
 				LootedFrom: "Mob",
 			},
@@ -578,7 +578,7 @@ func TestUpdateBulkEventKillDeath(t *testing.T) {
 	bulkMsg := BulkEventMsg{
 		{
 			Type:      "kill",
-			Data:      &handlers.KillEventData{SessionKills: 1},
+			Data:      &handlers.KillEventData{TotalKills: 1},
 			Timestamp: time.Now(),
 		},
 		{
@@ -665,14 +665,14 @@ func TestUpdateOnlineMsg(t *testing.T) {
 	}
 }
 
-func TestUpdateSessionStatsMsg(t *testing.T) {
+func TestUpdateTotalStatsMsg(t *testing.T) {
 	m := readyModel()
 
-	m = updateModel(m, SessionStatsMsg{Fame: 500, Silver: 1000})
+	m = updateModel(m, TotalStatsMsg{Fame: 500, Silver: 1000})
 
 	statsView := m.statsPanel.View()
 	if !strings.Contains(statsView, "Fame") {
-		t.Error("expected Fame in stats after SessionStatsMsg")
+		t.Error("expected Fame in stats after TotalStatsMsg")
 	}
 }
 
@@ -755,8 +755,8 @@ func TestViewReady(t *testing.T) {
 	if !strings.Contains(view, "Events") {
 		t.Error("expected 'Events' section in ready view")
 	}
-	if !strings.Contains(view, "Session Stats") {
-		t.Error("expected 'Session Stats' section in ready view")
+	if !strings.Contains(view, "Total Stats") {
+		t.Error("expected 'Total Stats' section in ready view")
 	}
 }
 
