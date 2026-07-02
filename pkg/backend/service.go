@@ -313,7 +313,7 @@ func (s *Service) IsOnline() bool {
 	return s.capture.IsOnline()
 }
 
-// TotalFame returns the cumulative fame gained across all launches..
+// TotalFame returns the cumulative fame gained across all launches.
 func (s *Service) TotalFame() int64 {
 	if s.handler == nil {
 		return 0
@@ -321,7 +321,7 @@ func (s *Service) TotalFame() int64 {
 	return s.handler.GetTotalFame()
 }
 
-// TotalSilver returns the cumulative silver gained across all launches..
+// TotalSilver returns the cumulative silver gained across all launches.
 func (s *Service) TotalSilver() int64 {
 	if s.handler == nil {
 		return 0
@@ -329,7 +329,7 @@ func (s *Service) TotalSilver() int64 {
 	return s.handler.GetTotalSilver()
 }
 
-// TotalRespec returns the cumulative combat fame credits gained across all launches..
+// TotalRespec returns the cumulative combat fame credits gained across all launches.
 func (s *Service) TotalRespec() int64 {
 	if s.handler == nil {
 		return 0
@@ -337,7 +337,7 @@ func (s *Service) TotalRespec() int64 {
 	return s.handler.GetTotalRespec()
 }
 
-// TotalRespecSilver returns the cumulative silver spent on auto-respec across all launches..
+// TotalRespecSilver returns the cumulative silver spent on auto-respec across all launches.
 func (s *Service) TotalRespecSilver() int64 {
 	if s.handler == nil {
 		return 0
@@ -345,7 +345,7 @@ func (s *Service) TotalRespecSilver() int64 {
 	return s.handler.GetTotalRespecSilver()
 }
 
-// TotalKills returns the cumulative number of kills across all launches..
+// TotalKills returns the cumulative number of kills across all launches.
 func (s *Service) TotalKills() int {
 	if s.handler == nil {
 		return 0
@@ -353,7 +353,7 @@ func (s *Service) TotalKills() int {
 	return s.handler.GetTotalKills()
 }
 
-// TotalDeaths returns the cumulative number of deaths across all launches..
+// TotalDeaths returns the cumulative number of deaths across all launches.
 func (s *Service) TotalDeaths() int {
 	if s.handler == nil {
 		return 0
@@ -361,7 +361,7 @@ func (s *Service) TotalDeaths() int {
 	return s.handler.GetTotalDeaths()
 }
 
-// TotalLoot returns the cumulative number of loot items across all launches..
+// TotalLoot returns the cumulative number of loot items across all launches.
 func (s *Service) TotalLoot() int {
 	if s.handler == nil {
 		return 0

@@ -31,23 +31,52 @@ type EventCallback func(eventType, message string, data interface{})
 // testing via AlbionHandler.deathDedupWindow.
 const defaultDeathDedupWindow = 5 * time.Second
 
-// totalCounters holds the seven cumulative session counters behind a single
+// defaultPruneAge is how long daily/hourly buckets are retained before being
+// pruned. Matches the reference's 90-day retention. Overridable per-handler via
+// the totalCounters.pruneAge field for testing.
+const defaultPruneAge = 90 * 24 * time.Hour
+
+// totalCounters holds the seven cumulative long-term counters behind a single
 // RWMutex so a snapshot reads all of them consistently (independent atomics
 // would allow a snapshot to mix pre- and post-update values). The lock is
 // fine-grained: event handlers take a write lock per increment, persistence
 // and UI hydration take a read lock for the whole set.
+//
+// In addition to the running totals, each increment is also attributed to two
+// time buckets: daily (keyed "2006-01-02") and hourly (keyed "2006-01-02T15").
+// These mirror the reference's DailyValues/HourlyValues and let the UI show
+// "fame earned today" alongside the all-time total. Buckets are pruned lazily
+// to pruneAge (default 90 days) so the maps stay bounded.
 type totalCounters struct {
-	mu           sync.RWMutex
-	fame         int64
-	silver       int64
-	respec       int64
-	respecSilver int64
-	kills        int64
-	deaths       int64
-	loot         int64
+	mu            sync.RWMutex
+	fame          int64
+	silver        int64
+	respec        int64
+	respecSilver  int64
+	kills         int64
+	deaths        int64
+	loot          int64
+	daily         map[string]StatValues // key: "2006-01-02" (local calendar date)
+	hourly        map[string]StatValues // key: "2006-01-02T15" (local calendar hour)
+	pruneAge      time.Duration
+	lastPruneDate string // last day a prune ran (avoids re-pruning every increment)
 }
 
-// snapshot returns a consistent point-in-time copy of all seven counters.
+// StatValues holds the bucketable stat types for a single time bucket (a day
+// or an hour). The zero value is a valid empty bucket.
+type StatValues struct {
+	Fame         int64 `json:"fame"`
+	Silver       int64 `json:"silver"`
+	Respec       int64 `json:"respec"`
+	RespecSilver int64 `json:"respec_silver"`
+	Kills        int64 `json:"kills"`
+	Deaths       int64 `json:"deaths"`
+	Loot         int64 `json:"loot"`
+}
+
+// snapshot returns a consistent point-in-time copy of all seven counters plus
+// deep copies of the daily/hourly buckets so callers cannot mutate shared
+// state. Returned maps are non-nil even when empty.
 func (c *totalCounters) snapshot() TotalStats {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -59,10 +88,13 @@ func (c *totalCounters) snapshot() TotalStats {
 		Kills:        c.kills,
 		Deaths:       c.deaths,
 		Loot:         c.loot,
+		Daily:        copyStatValuesMap(c.daily),
+		Hourly:       copyStatValuesMap(c.hourly),
 	}
 }
 
-// apply overwrites all seven counters. Used when restoring persisted state.
+// apply overwrites all seven counters and replaces both bucket maps. Used when
+// restoring persisted state. nil maps are treated as empty.
 func (c *totalCounters) apply(s TotalStats) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -73,48 +105,168 @@ func (c *totalCounters) apply(s TotalStats) {
 	c.kills = s.Kills
 	c.deaths = s.Deaths
 	c.loot = s.Loot
+	c.daily = copyStatValuesMap(s.Daily)
+	c.hourly = copyStatValuesMap(s.Hourly)
+	if c.daily == nil {
+		c.daily = map[string]StatValues{}
+	}
+	if c.hourly == nil {
+		c.hourly = map[string]StatValues{}
+	}
 }
 
-func (c *totalCounters) addFame(n int64) {
+// addDelta applies an arbitrary delta to one numeric field of a StatValues.
+// It panics if field is unknown — a programming error, not a runtime path.
+// Failing loud is safer than silently dropping a delta, which would let the
+// time-bucketed value drift out of sync with the cumulative total.
+func (v *StatValues) addDelta(field string, n int64) {
+	switch field {
+	case "fame":
+		v.Fame += n
+	case "silver":
+		v.Silver += n
+	case "respec":
+		v.Respec += n
+	case "respec_silver":
+		v.RespecSilver += n
+	default:
+		panic("totalCounters: unknown stat field " + field)
+	}
+}
+
+// bucket records a delta into both the daily and hourly buckets for time t.
+// Caller must hold c.mu (write).
+func (c *totalCounters) bucket(t time.Time, field string, n int64) {
+	c.maybePruneLocked(t)
+	dk := t.Format("2006-01-02")
+	d := c.daily[dk]
+	d.addDelta(field, n)
+	c.daily[dk] = d
+
+	hk := t.Format("2006-01-02T15")
+	h := c.hourly[hk]
+	h.addDelta(field, n)
+	c.hourly[hk] = h
+}
+
+// addFame adds n to the cumulative fame total and attributes it to the buckets
+// for time t.
+func (c *totalCounters) addFame(n int64, t time.Time) {
 	c.mu.Lock()
 	c.fame += n
+	c.bucket(t, "fame", n)
 	c.mu.Unlock()
 }
 
-func (c *totalCounters) addSilver(n int64) {
+func (c *totalCounters) addSilver(n int64, t time.Time) {
 	c.mu.Lock()
 	c.silver += n
+	c.bucket(t, "silver", n)
 	c.mu.Unlock()
 }
 
-func (c *totalCounters) addRespec(n int64) {
+func (c *totalCounters) addRespec(n int64, t time.Time) {
 	c.mu.Lock()
 	c.respec += n
+	c.bucket(t, "respec", n)
 	c.mu.Unlock()
 }
 
-func (c *totalCounters) addRespecSilver(n int64) {
+func (c *totalCounters) addRespecSilver(n int64, t time.Time) {
 	c.mu.Lock()
 	c.respecSilver += n
+	c.bucket(t, "respec_silver", n)
 	c.mu.Unlock()
 }
 
-func (c *totalCounters) addKill() {
+// bucketCount attributes a +1 count to a discrete field (kills/deaths/loot) in
+// both buckets. Caller must hold c.mu (write).
+func (c *totalCounters) bucketCount(t time.Time, field string) {
+	c.maybePruneLocked(t)
+	dk := t.Format("2006-01-02")
+	d := c.daily[dk]
+	switch field {
+	case "kills":
+		d.Kills++
+	case "deaths":
+		d.Deaths++
+	case "loot":
+		d.Loot++
+	}
+	c.daily[dk] = d
+
+	hk := t.Format("2006-01-02T15")
+	h := c.hourly[hk]
+	switch field {
+	case "kills":
+		h.Kills++
+	case "deaths":
+		h.Deaths++
+	case "loot":
+		h.Loot++
+	}
+	c.hourly[hk] = h
+}
+
+func (c *totalCounters) addKill(t time.Time) {
 	c.mu.Lock()
 	c.kills++
+	c.bucketCount(t, "kills")
 	c.mu.Unlock()
 }
 
-func (c *totalCounters) addDeath() {
+func (c *totalCounters) addDeath(t time.Time) {
 	c.mu.Lock()
 	c.deaths++
+	c.bucketCount(t, "deaths")
 	c.mu.Unlock()
 }
 
-func (c *totalCounters) addLoot() {
+func (c *totalCounters) addLoot(t time.Time) {
 	c.mu.Lock()
 	c.loot++
+	c.bucketCount(t, "loot")
 	c.mu.Unlock()
+}
+
+// maybePruneLocked drops bucket keys older than pruneAge. Runs at most once per
+// calendar day to avoid scanning the maps on every event. Caller must hold
+// c.mu (write).
+func (c *totalCounters) maybePruneLocked(now time.Time) {
+	today := now.Format("2006-01-02")
+	if c.lastPruneDate == today {
+		return
+	}
+	c.lastPruneDate = today
+	if c.pruneAge <= 0 {
+		return
+	}
+	cutoff := now.Add(-c.pruneAge).Format("2006-01-02")
+	cutoffHour := now.Add(-c.pruneAge).Format("2006-01-02T15")
+	for k := range c.daily {
+		if k < cutoff {
+			delete(c.daily, k)
+		}
+	}
+	for k := range c.hourly {
+		if k < cutoffHour {
+			delete(c.hourly, k)
+		}
+	}
+}
+
+// copyStatValuesMap returns a shallow copy of m (the StatValues values are not
+// further nested, so shallow is a full copy). Returns nil for a nil map so the
+// caller can distinguish "unset" from "empty".
+func copyStatValuesMap(m map[string]StatValues) map[string]StatValues {
+	if m == nil {
+		return nil
+	}
+	out := make(map[string]StatValues, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
 }
 
 func (c *totalCounters) fameNow() int64 {
@@ -157,6 +309,26 @@ func (c *totalCounters) lootNow() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return int(c.loot)
+}
+
+// dailyValueNow returns one numeric field from today's daily bucket, read
+// under the read lock. field is one of: fame, silver, respec, respec_silver.
+func (c *totalCounters) dailyValueNow(now time.Time, field string) int64 {
+	dk := now.Format("2006-01-02")
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	v := c.daily[dk]
+	switch field {
+	case "fame":
+		return v.Fame
+	case "silver":
+		return v.Silver
+	case "respec":
+		return v.Respec
+	case "respec_silver":
+		return v.RespecSilver
+	}
+	return 0
 }
 
 // AlbionHandler handles Albion Online game events
@@ -231,6 +403,11 @@ func NewAlbionHandler() *AlbionHandler {
 		recentDeaths:     make(map[string]time.Time),
 		deathDedupWindow: defaultDeathDedupWindow,
 		nowFunc:          time.Now,
+		stats: totalCounters{
+			daily:    map[string]StatValues{},
+			hourly:   map[string]StatValues{},
+			pruneAge: defaultPruneAge,
+		},
 	}
 }
 
@@ -373,6 +550,7 @@ type FameEventData struct {
 	Gained  int64 // Fame gained in this event
 	Total   int64 // Total fame pool reported by the server after this event
 	AllTime int64 // Cumulative fame gained across all launches (long-term total)
+	Daily   int64 // Fame gained today (current calendar day)
 }
 
 // SilverEventData contains silver-specific event data
@@ -382,6 +560,7 @@ type SilverEventData struct {
 	LootedBy   string // Player who looted
 	LootedFrom string // Source of the loot
 	Counted    bool   // Whether this amount was added to the long-term total
+	Daily      int64  // Silver gained today (current calendar day)
 }
 
 // LootEventData contains loot-specific event data
@@ -410,6 +589,7 @@ type RespecEventData struct {
 	PaidSilver  int64 // Silver paid for auto-respec in this event
 	Total       int64 // Cumulative credits gained across all launches (long-term total)
 	TotalSilver int64 // Cumulative silver spent on auto-respec across all launches
+	Daily       int64 // Credits gained today (current calendar day)
 }
 
 // ZoneEventData contains zone-transition event data emitted on ChangeCluster.
@@ -421,17 +601,17 @@ type ZoneEventData struct {
 	Previous     MapType // The zone the player left (MapTypeUnknown on first transition)
 }
 
-// GetTotalKills returns the number of kills in this session
+// GetTotalKills returns the cumulative number of kills across all launches.
 func (h *AlbionHandler) GetTotalKills() int {
 	return h.stats.killsNow()
 }
 
-// GetTotalDeaths returns the number of deaths in this session
+// GetTotalDeaths returns the cumulative number of deaths across all launches.
 func (h *AlbionHandler) GetTotalDeaths() int {
 	return h.stats.deathsNow()
 }
 
-// GetTotalLoot returns the number of loot items in this session
+// GetTotalLoot returns the cumulative number of loot items across all launches.
 func (h *AlbionHandler) GetTotalLoot() int {
 	return h.stats.lootNow()
 }
@@ -725,29 +905,30 @@ func (h *AlbionHandler) LoadDungeonRuns(path string) error {
 	return nil
 }
 
-// GetTotalFame returns the total fame gained in this session
+// GetTotalFame returns the cumulative fame gained across all launches.
 func (h *AlbionHandler) GetTotalFame() int64 {
 	return h.stats.fameNow()
 }
 
-// GetTotalSilver returns the total silver looted in this session
+// GetTotalSilver returns the cumulative silver looted across all launches.
 func (h *AlbionHandler) GetTotalSilver() int64 {
 	return h.stats.silverNow()
 }
 
-// GetTotalRespec returns the total combat fame credits gained in this session
+// GetTotalRespec returns the cumulative combat fame credits gained across all launches.
 func (h *AlbionHandler) GetTotalRespec() int64 {
 	return h.stats.respecNow()
 }
 
-// GetTotalRespecSilver returns the total silver spent on auto-respec this session
+// GetTotalRespecSilver returns the cumulative silver spent on auto-respec across all launches.
 func (h *AlbionHandler) GetTotalRespecSilver() int64 {
 	return h.stats.respecSilverNow()
 }
 
-// SessionStats is a point-in-time snapshot of the cumulative session counters,
-// used to hydrate the UI on startup. All fields are absolute totals read
-// atomically.
+// TotalStats is a point-in-time snapshot of the cumulative long-term counters
+// and their time-bucketed breakdowns, used to hydrate the UI on startup. The
+// scalar fields are absolute totals read atomically; Daily and Hourly are
+// deep-copied so callers cannot mutate shared state.
 type TotalStats struct {
 	Fame         int64
 	Silver       int64
@@ -756,52 +937,59 @@ type TotalStats struct {
 	Kills        int64
 	Deaths       int64
 	Loot         int64
+	Daily        map[string]StatValues // key: "2006-01-02"
+	Hourly       map[string]StatValues // key: "2006-01-02T15"
 }
 
-// TotalSnapshot returns the current cumulative session counters. Safe to
+// TotalSnapshot returns the current cumulative long-term counters. Safe to
 // call concurrently with event processing.
 func (h *AlbionHandler) TotalSnapshot() TotalStats {
 	return h.readTotalStats()
 }
 
 // readTotalStats is the single source of truth for reading the seven
-// cumulative counters into a consistent SessionStats snapshot.
+// cumulative counters into a consistent TotalStats snapshot.
 func (h *AlbionHandler) readTotalStats() TotalStats {
 	return h.stats.snapshot()
 }
 
 // applyTotalStats is the single source of truth for writing the seven
-// cumulative counters from a SessionStats (the inverse of readTotalStats).
+// cumulative counters from a TotalStats (the inverse of readTotalStats).
 func (h *AlbionHandler) applyTotalStats(s TotalStats) {
 	h.stats.apply(s)
 }
 
-// totalStatsFile is the on-disk JSON representation of SessionStats. The
-// Version field is reserved for future additive schema migrations; missing
-// fields in an old file default to zero via encoding/json.
+// totalStatsFile is the on-disk JSON representation of TotalStats. The
+// Version field tracks additive schema migrations; missing fields in an old
+// file default to zero (scalars) or empty (maps) via encoding/json.
 //
-// Once persisted and restored, the session* counters represent cumulative
-// totals across all launches of the application (long-term) rather than a
-// single session — this matches issue #104's intent. The "session" naming is
-// retained for now and will be revisited when daily/hourly bucketing lands
-// (follow-up #105).
+// Version history:
+//   - 1: cumulative scalar counters only.
+//   - 2: added Daily and Hourly time-bucketed maps (#112).
+//
+// NOTE: the on-disk filename stays "session-stats.json" (see cmd/tui/main.go)
+// so existing files written by earlier versions keep loading. Only the Go
+// type/identifier was renamed (session* → total*) when daily/hourly bucketing
+// landed (#112).
 type totalStatsFile struct {
-	Version      int       `json:"version"`
-	Fame         int64     `json:"fame"`
-	Silver       int64     `json:"silver"`
-	Respec       int64     `json:"respec"`
-	RespecSilver int64     `json:"respec_silver"`
-	Kills        int64     `json:"kills"`
-	Deaths       int64     `json:"deaths"`
-	Loot         int64     `json:"loot"`
-	SavedAt      time.Time `json:"saved_at"`
+	Version      int                   `json:"version"`
+	Fame         int64                 `json:"fame"`
+	Silver       int64                 `json:"silver"`
+	Respec       int64                 `json:"respec"`
+	RespecSilver int64                 `json:"respec_silver"`
+	Kills        int64                 `json:"kills"`
+	Deaths       int64                 `json:"deaths"`
+	Loot         int64                 `json:"loot"`
+	Daily        map[string]StatValues `json:"daily,omitempty"`
+	Hourly       map[string]StatValues `json:"hourly,omitempty"`
+	SavedAt      time.Time             `json:"saved_at"`
 }
 
-// totalStatsVersion is the current on-disk schema version for session stats.
-const totalStatsVersion = 1
+// totalStatsVersion is the current on-disk schema version for total stats.
+const totalStatsVersion = 2
 
-// SaveTotalStats persists the cumulative session counters to path as JSON
-// using an atomic write (tmp + rename).
+// SaveTotalStats persists the cumulative long-term counters and their
+// daily/hourly buckets to path as JSON using an atomic write (tmp + rename).
 func (h *AlbionHandler) SaveTotalStats(path string) error {
 	s := h.readTotalStats()
 	f := totalStatsFile{
@@ -813,16 +1001,18 @@ func (h *AlbionHandler) SaveTotalStats(path string) error {
 		Kills:        s.Kills,
 		Deaths:       s.Deaths,
 		Loot:         s.Loot,
+		Daily:        s.Daily,
+		Hourly:       s.Hourly,
 		SavedAt:      h.nowFunc(),
 	}
 	return storage.Save(path, f)
 }
 
-// LoadTotalStats restores the cumulative session counters from path. A
-// missing file leaves counters at zero (first run). A corrupt file is returned
-// as err and leaves the counters unchanged. The schema is additive: a version
-// mismatch or missing fields apply best-effort (unknown/absent fields default
-// to zero).
+// LoadTotalStats restores the cumulative long-term counters and buckets from
+// path. A missing file leaves counters at zero (first run). A corrupt file is
+// returned as err and leaves the counters unchanged. The schema is additive:
+// a v1 file (no daily/hourly) loads with empty buckets, and unknown fields in
+// a newer file default to zero/empty.
 func (h *AlbionHandler) LoadTotalStats(path string) error {
 	f, err := storage.Load[totalStatsFile](path)
 	if err != nil {
@@ -836,6 +1026,8 @@ func (h *AlbionHandler) LoadTotalStats(path string) error {
 		Kills:        f.Kills,
 		Deaths:       f.Deaths,
 		Loot:         f.Loot,
+		Daily:        f.Daily,
+		Hourly:       f.Hourly,
 	})
 	return nil
 }
@@ -892,7 +1084,7 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 
 		// Only notify if fame was actually gained
 		if fameGainedVal > 0 {
-			h.stats.addFame(int64(fameGainedVal))
+			h.stats.addFame(int64(fameGainedVal), h.nowFunc())
 			h.totalFame.Store(totalFame) // Update tracked total
 
 			// Message formatting is now handled by the frontend (TUI)
@@ -900,6 +1092,7 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 				Gained:  int64(fameGainedVal),
 				Total:   int64(totalFameVal),
 				AllTime: h.stats.fameNow(),
+				Daily:   h.stats.dailyValueNow(h.nowFunc(), "fame"),
 			})
 		}
 	} else {
@@ -909,12 +1102,13 @@ func (h *AlbionHandler) handleUpdateFame(params map[byte]interface{}) {
 			gained := totalFame - h.totalFame.Load()
 			if gained > 0 {
 				gainedVal := math.Floor(float64(gained) / 10000.0)
-				h.stats.addFame(int64(gainedVal))
+				h.stats.addFame(int64(gainedVal), h.nowFunc())
 				// Message formatting is now handled by the frontend (TUI)
 				h.notifyEvent("fame", "", &FameEventData{
 					Gained:  int64(gainedVal),
 					Total:   int64(totalFameVal),
 					AllTime: h.stats.fameNow(),
+					Daily:   h.stats.dailyValueNow(h.nowFunc(), "fame"),
 				})
 			}
 		}
@@ -992,7 +1186,7 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 		local := h.GetLocalPlayer()
 		counted := local != "" && lootedBy == local
 		if counted {
-			h.stats.addSilver(silverAmount)
+			h.stats.addSilver(silverAmount, h.nowFunc())
 		}
 		// Message formatting is now handled by the frontend (TUI)
 		// We just pass the raw data
@@ -1002,6 +1196,7 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 			LootedBy:   lootedBy,
 			LootedFrom: lootedFrom,
 			Counted:    counted,
+			Daily:      h.stats.dailyValueNow(h.nowFunc(), "silver"),
 		})
 	} else {
 		// Try to get item name from database
@@ -1014,7 +1209,7 @@ func (h *AlbionHandler) handleOtherGrabbedLoot(params map[byte]interface{}) {
 		// player's loot), because the total volume of nearby loot is useful
 		// context. Silver is different — only the local player's silver
 		// contributes to the session total (see the silver branch above).
-		h.stats.addLoot()
+		h.stats.addLoot(h.nowFunc())
 
 		// Message formatting is now handled by the frontend (TUI)
 		h.notifyEvent("loot", "", &LootEventData{
@@ -1111,7 +1306,7 @@ func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 
 	// Count a kill when the local player is the killer.
 	if isLocalKill {
-		h.stats.addKill()
+		h.stats.addKill(h.nowFunc())
 		h.notifyEvent("kill", "", &KillEventData{
 			TotalKills: h.stats.killsNow(),
 		})
@@ -1119,7 +1314,7 @@ func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 
 	// Count a death only when the local player is the victim.
 	if local != "" && victim == local {
-		h.stats.addDeath()
+		h.stats.addDeath(h.nowFunc())
 	}
 
 	// Emit a death event for the local player's death or for nearby deaths
@@ -1147,14 +1342,15 @@ func (h *AlbionHandler) handleUpdateReSpecPoints(params map[byte]interface{}) {
 	gainedVal := int64(math.Floor(float64(gainedReSpec) / 10000.0))
 	silverVal := int64(math.Floor(float64(paidSilver) / 10000.0))
 
-	h.stats.addRespec(gainedVal)
-	h.stats.addRespecSilver(silverVal)
+	h.stats.addRespec(gainedVal, h.nowFunc())
+	h.stats.addRespecSilver(silverVal, h.nowFunc())
 
 	h.notifyEvent("respec", "", &RespecEventData{
 		Gained:      gainedVal,
 		PaidSilver:  silverVal,
 		Total:       h.stats.respecNow(),
 		TotalSilver: h.stats.respecSilverNow(),
+		Daily:       h.stats.dailyValueNow(h.nowFunc(), "respec"),
 	})
 }
 
