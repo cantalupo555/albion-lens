@@ -89,20 +89,21 @@ func New(svc *backend.Service, bulkEventChan chan BulkEventMsg, statsChan chan *
 		m.onlineChan = svc.OnlineStatus
 		// Hydrate the stats panel with persisted cumulative counters so the
 		// dashboard shows long-term totals immediately rather than zeros.
-		m.statsPanel = hydrateStatsPanel(m.statsPanel, svc.Handler())
+		m.statsPanel = hydrateStatsPanel(m.statsPanel, svc.Handler(), time.Now())
 	}
 	return m
 }
 
-// hydrateStatsPanel seeds a stats panel from the handler's current session
-// snapshot. It is a no-op when the handler is nil (e.g. before the backend
-// service has started). Extracted from New so the hydration logic can be
-// tested without a running (pcap-backed) service.
-func hydrateStatsPanel(panel components.StatsPanel, h *handlers.AlbionHandler) components.StatsPanel {
+// hydrateStatsPanel seeds a stats panel from the handler's current long-term
+// snapshot, including today's daily bucket. It is a no-op when the handler is
+// nil (e.g. before the backend service has started). Extracted from New so the
+// hydration logic can be tested without a running (pcap-backed) service.
+func hydrateStatsPanel(panel components.StatsPanel, h *handlers.AlbionHandler, now time.Time) components.StatsPanel {
 	if h == nil {
 		return panel
 	}
 	snap := h.TotalSnapshot()
+	today := snap.Daily[now.Format("2006-01-02")]
 	return panel.
 		SetFame(snap.Fame).
 		SetSilver(snap.Silver).
@@ -110,7 +111,10 @@ func hydrateStatsPanel(panel components.StatsPanel, h *handlers.AlbionHandler) c
 		SetRespecSilver(snap.RespecSilver).
 		SetKills(int(snap.Kills)).
 		SetDeaths(int(snap.Deaths)).
-		SetLoot(int(snap.Loot))
+		SetLoot(int(snap.Loot)).
+		SetTodayFame(today.Fame).
+		SetTodaySilver(today.Silver).
+		SetTodayRespec(today.Respec)
 }
 
 // defaultHiddenDebugEvents returns the set of high-frequency / low-signal debug
@@ -257,7 +261,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch eventMsg.Type {
 			case "fame":
 				if data, ok := eventMsg.Data.(*handlers.FameEventData); ok && data != nil {
-					m.statsPanel = m.statsPanel.SetFame(data.AllTime)
+					m.statsPanel = m.statsPanel.SetFame(data.AllTime).SetTodayFame(data.Daily)
 					displayMsg = fmt.Sprintf("⭐ FAME: +%s | Pool: %s | Total: %s",
 						formatNumber(data.Gained, m.fullNumbers),
 						formatNumber(data.Total, m.fullNumbers),
@@ -265,7 +269,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "silver":
 				if data, ok := eventMsg.Data.(*handlers.SilverEventData); ok && data != nil {
-					m.statsPanel = m.statsPanel.SetSilver(data.Total)
+					m.statsPanel = m.statsPanel.SetSilver(data.Total).SetTodaySilver(data.Daily)
 					displayMsg = fmt.Sprintf("💰 %s looted silver (%s) from %s | Total: %s",
 						data.LootedBy,
 						formatNumber(data.Amount, m.fullNumbers),
@@ -274,8 +278,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "respec":
 				if data, ok := eventMsg.Data.(*handlers.RespecEventData); ok && data != nil {
-					m.statsPanel = m.statsPanel.SetRespec(data.Total)
-					m.statsPanel = m.statsPanel.SetRespecSilver(data.TotalSilver)
+					m.statsPanel = m.statsPanel.SetRespec(data.Total).
+						SetRespecSilver(data.TotalSilver).
+						SetTodayRespec(data.Daily)
 					if data.PaidSilver > 0 {
 						displayMsg = fmt.Sprintf("🏆 RESPEC: +%s credits | Silver cost: -%s | Total: %s",
 							formatNumber(data.Gained, m.fullNumbers),

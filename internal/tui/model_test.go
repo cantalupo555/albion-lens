@@ -106,7 +106,7 @@ func TestHydrateStatsPanel(t *testing.T) {
 		t.Fatalf("LoadTotalStats: %v", err)
 	}
 
-	panel := hydrateStatsPanel(components.NewStatsPanel(), h)
+	panel := hydrateStatsPanel(components.NewStatsPanel(), h, time.Now())
 	// NewStatsPanel defaults to fullNumbers, so fame renders as "+123456".
 	view := panel.View()
 	for _, want := range []string{"123456", "987654", "99 items"} {
@@ -118,9 +118,36 @@ func TestHydrateStatsPanel(t *testing.T) {
 
 func TestHydrateStatsPanelNilHandlerIsNoOp(t *testing.T) {
 	empty := components.NewStatsPanel()
-	got := hydrateStatsPanel(empty, nil)
+	got := hydrateStatsPanel(empty, nil, time.Now())
 	if got.View() != empty.View() {
 		t.Error("hydrateStatsPanel with nil handler should leave the panel unchanged")
+	}
+}
+
+// TestHydrateStatsPanelSeedsTodayFromDailyBucket verifies that hydration picks
+// up today's daily bucket values (fame/silver/respec) from persisted state.
+func TestHydrateStatsPanelSeedsTodayFromDailyBucket(t *testing.T) {
+	h := handlers.NewAlbionHandler()
+
+	// Seed with a v2 file that has a daily bucket for 2026-07-01.
+	path := filepath.Join(t.TempDir(), "stats.json")
+	seed := []byte(`{"version":2,"fame":1000000,"silver":500000,"respec":20000,"respec_silver":1000,"kills":42,"deaths":17,"loot":99,"daily":{"2026-07-01":{"fame":12000,"silver":3400,"respec":800,"respec_silver":0,"kills":0,"deaths":0,"loot":0}},"saved_at":"2026-07-01T12:00:00Z"}`)
+	if err := os.WriteFile(path, seed, 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	if err := h.LoadTotalStats(path); err != nil {
+		t.Fatalf("LoadTotalStats: %v", err)
+	}
+
+	// Hydrate using the same date the bucket is keyed on.
+	now := time.Date(2026, 7, 1, 14, 0, 0, 0, time.UTC)
+	panel := hydrateStatsPanel(components.NewStatsPanel(), h, now)
+	view := panel.View()
+
+	for _, want := range []string{"12000", "3400", "800", "today"} {
+		if !strings.Contains(view, want) {
+			t.Errorf("stats panel view missing %q after hydration with daily bucket\n%s", want, view)
+		}
 	}
 }
 
@@ -545,6 +572,30 @@ func TestUpdateBulkEventFame(t *testing.T) {
 	view := m.View().Content
 	if !strings.Contains(view, "Fame") {
 		t.Error("expected 'Fame' in stats panel after fame event")
+	}
+}
+
+// TestUpdateBulkEventFameSetsToday verifies the event's Daily value flows into
+// the stats panel's "today" row.
+func TestUpdateBulkEventFameSetsToday(t *testing.T) {
+	m := readyModel()
+
+	bulkMsg := BulkEventMsg{
+		{
+			Type:      "fame",
+			Data:      &handlers.FameEventData{Gained: 100, Total: 500, AllTime: 200, Daily: 12000},
+			Timestamp: time.Now(),
+		},
+	}
+
+	m = updateModel(m, bulkMsg)
+
+	view := m.View().Content
+	if !strings.Contains(view, "today") {
+		t.Error("expected 'today' section in stats panel after fame event with Daily value")
+	}
+	if !strings.Contains(view, "12000") {
+		t.Error("expected today fame value 12000 in stats panel")
 	}
 }
 

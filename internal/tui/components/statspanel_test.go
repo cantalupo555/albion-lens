@@ -320,3 +320,71 @@ func TestFormatAbbreviatedPreservesSign(t *testing.T) {
 		}
 	}
 }
+
+// --- Today rows (issue #112 / Phase 3) ---
+
+func TestStatsPanelSetTodayFame(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetTodayFame(12000)
+	if s.todayFame != 12000 {
+		t.Errorf("expected todayFame 12000, got %d", s.todayFame)
+	}
+}
+
+func TestStatsPanelSetTodaySilver(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetTodaySilver(3400)
+	if s.todaySilver != 3400 {
+		t.Errorf("expected todaySilver 3400, got %d", s.todaySilver)
+	}
+}
+
+func TestStatsPanelSetTodayRespec(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetTodayRespec(800)
+	if s.todayRespec != 800 {
+		t.Errorf("expected todayRespec 800, got %d", s.todayRespec)
+	}
+}
+
+func TestStatsPanelResetClearsToday(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetTodayFame(12000).SetTodaySilver(3400).SetTodayRespec(800)
+	s = s.Reset()
+	if s.todayFame != 0 || s.todaySilver != 0 || s.todayRespec != 0 {
+		t.Errorf("reset should zero today values, got fame=%d silver=%d respec=%d",
+			s.todayFame, s.todaySilver, s.todayRespec)
+	}
+}
+
+func TestStatsPanelViewShowsTodaySectionWhenNonZero(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetFullNumbers(true)
+	s = s.SetFame(1000000)
+	s = s.SetTodayFame(12000)
+	s = s.SetTodaySilver(3400)
+	s = s.SetSize(30, 24)
+
+	output := s.View()
+	if !strings.Contains(output, "today") {
+		t.Error("View should show a 'today' section when today values are non-zero")
+	}
+	if !strings.Contains(output, "12000") {
+		t.Error("View should contain today fame value 12000")
+	}
+	if !strings.Contains(output, "3400") {
+		t.Error("View should contain today silver value 3400")
+	}
+}
+
+func TestStatsPanelViewHidesTodaySectionWhenAllZero(t *testing.T) {
+	s := NewStatsPanel()
+	s = s.SetFullNumbers(true)
+	s = s.SetFame(1000000) // only cumulative, no today values
+	s = s.SetSize(30, 24)
+
+	output := s.View()
+	if strings.Contains(output, "today") {
+		t.Error("View should NOT show a 'today' section when all today values are zero")
+	}
+}
