@@ -882,6 +882,43 @@ func TestHandleUpdateReSpecPointsZeroGained(t *testing.T) {
 	}
 }
 
+// TestHandleUpdateReSpecPointsFreeRespec tests the common case where respec is
+// free (premium): gained credits > 0 but paidSilver == 0. The credits must be
+// counted, the silver cost must stay zero, and the silver bucket must not be
+// written.
+func TestHandleUpdateReSpecPointsFreeRespec(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	var receivedData *RespecEventData
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "respec" {
+			receivedData = data.(*RespecEventData)
+		}
+	})
+
+	// gained 1000 credits (FixPoint), zero silver paid.
+	params := map[byte]interface{}{
+		2:                     int64(10000000), // gained 1000 (FixPoint)
+		3:                     int64(0),        // free respec
+		events.ParamEventCode: int16(events.EventUpdateReSpecPoints),
+	}
+
+	handler.OnEvent(byte(events.EventUpdateReSpecPoints), params)
+
+	if receivedData == nil {
+		t.Fatal("respec callback was not called")
+	}
+	if handler.GetTotalRespec() != 1000 {
+		t.Errorf("expected total respec 1000, got %d", handler.GetTotalRespec())
+	}
+	if handler.GetTotalRespecSilver() != 0 {
+		t.Errorf("expected total respec silver 0 (free respec), got %d", handler.GetTotalRespecSilver())
+	}
+	if receivedData.PaidSilver != 0 {
+		t.Errorf("expected PaidSilver 0, got %d", receivedData.PaidSilver)
+	}
+}
+
 // TestHandleUpdateReSpecPointsAccumulation tests multiple events accumulate correctly
 func TestHandleUpdateReSpecPointsAccumulation(t *testing.T) {
 	handler := NewAlbionHandler()

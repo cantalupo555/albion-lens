@@ -110,7 +110,7 @@ func main() {
 				fmt.Printf("Warning: could not load dungeon history: %v\n", err)
 			}
 			if err := h.LoadTotalStats(statsPath); err != nil {
-				fmt.Printf("Warning: could not load session stats: %v\n", err)
+				fmt.Printf("Warning: could not load total stats: %v\n", err)
 			}
 		}
 	}
@@ -160,7 +160,7 @@ func main() {
 				fmt.Printf("Warning: could not save dungeon history: %v\n", err)
 			}
 			if err := h.SaveTotalStats(statsPath); err != nil {
-				fmt.Printf("Warning: could not save session stats: %v\n", err)
+				fmt.Printf("Warning: could not save total stats: %v\n", err)
 			}
 		}
 	}

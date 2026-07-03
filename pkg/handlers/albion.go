@@ -1343,7 +1343,12 @@ func (h *AlbionHandler) handleUpdateReSpecPoints(params map[byte]interface{}) {
 	silverVal := int64(math.Floor(float64(paidSilver) / 10000.0))
 
 	h.stats.addRespec(gainedVal, h.nowFunc())
-	h.stats.addRespecSilver(silverVal, h.nowFunc())
+	// Respect can be free (premium, or when the credit pool incurs no silver
+	// cost), so paidSilver is frequently zero. Skip the lock + bucket write in
+	// that case — adding zero would be a no-op but still acquire the write lock.
+	if silverVal > 0 {
+		h.stats.addRespecSilver(silverVal, h.nowFunc())
+	}
 
 	h.notifyEvent("respec", "", &RespecEventData{
 		Gained:      gainedVal,
