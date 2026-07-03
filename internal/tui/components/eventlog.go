@@ -201,30 +201,30 @@ func (e EventLog) formatEventMessage(event Event) string {
 	switch event.Type {
 	case "fame":
 		if data, ok := event.Data.(*handlers.FameEventData); ok && data != nil {
-			return fmt.Sprintf("⭐ FAME: +%s | Total: %s | Session: %s",
+			return fmt.Sprintf("⭐ FAME: +%s | Pool: %s | Total: %s",
 				FormatNumber(data.Gained, e.fullNumbers),
 				FormatNumber(data.Total, e.fullNumbers),
-				FormatNumber(data.Session, e.fullNumbers))
+				FormatNumber(data.AllTime, e.fullNumbers))
 		}
 	case "silver":
 		if data, ok := event.Data.(*handlers.SilverEventData); ok && data != nil {
-			return fmt.Sprintf("💰 %s looted silver (%s) from %s | Session: %s",
+			return fmt.Sprintf("💰 %s looted silver (%s) from %s | Total: %s",
 				data.LootedBy,
 				FormatNumber(data.Amount, e.fullNumbers),
 				data.LootedFrom,
-				FormatNumber(data.Session, e.fullNumbers))
+				FormatNumber(data.Total, e.fullNumbers))
 		}
 	case "respec":
 		if data, ok := event.Data.(*handlers.RespecEventData); ok && data != nil {
 			if data.PaidSilver > 0 {
-				return fmt.Sprintf("🏆 RESPEC: +%s credits | Silver cost: -%s | Session: %s",
+				return fmt.Sprintf("🏆 RESPEC: +%s credits | Silver cost: -%s | Total: %s",
 					FormatNumber(data.Gained, e.fullNumbers),
 					FormatNumber(data.PaidSilver, e.fullNumbers),
-					FormatNumber(data.SessionTotal, e.fullNumbers))
+					FormatNumber(data.Total, e.fullNumbers))
 			}
-			return fmt.Sprintf("🏆 RESPEC: +%s credits | Session: %s",
+			return fmt.Sprintf("🏆 RESPEC: +%s credits | Total: %s",
 				FormatNumber(data.Gained, e.fullNumbers),
-				FormatNumber(data.SessionTotal, e.fullNumbers))
+				FormatNumber(data.Total, e.fullNumbers))
 		}
 	case "loot":
 		if data, ok := event.Data.(*handlers.LootEventData); ok && data != nil {
@@ -236,7 +236,7 @@ func (e EventLog) formatEventMessage(event Event) string {
 		}
 	case "kill":
 		if data, ok := event.Data.(*handlers.KillEventData); ok && data != nil {
-			return fmt.Sprintf("⚔️ Player Killed! (Session: %d kills)", data.SessionKills)
+			return fmt.Sprintf("⚔️ Player Killed! (Total: %d kills)", data.TotalKills)
 		}
 	case "death":
 		if data, ok := event.Data.(*handlers.DeathEventData); ok && data != nil {

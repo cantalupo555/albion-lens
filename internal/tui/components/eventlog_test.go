@@ -14,9 +14,9 @@ func TestFormatEventMessageRespecWithSilver(t *testing.T) {
 	event := Event{
 		Type: "respec",
 		Data: &handlers.RespecEventData{
-			Gained:       1000,
-			PaidSilver:   500,
-			SessionTotal: 3000,
+			Gained:     1000,
+			PaidSilver: 500,
+			Total:      3000,
 		},
 		Timestamp: time.Now(),
 	}
@@ -40,9 +40,9 @@ func TestFormatEventMessageRespecWithoutSilver(t *testing.T) {
 	event := Event{
 		Type: "respec",
 		Data: &handlers.RespecEventData{
-			Gained:       200,
-			PaidSilver:   0,
-			SessionTotal: 200,
+			Gained:     200,
+			PaidSilver: 0,
+			Total:      200,
 		},
 		Timestamp: time.Now(),
 	}
@@ -72,7 +72,7 @@ func TestFormatEventMessageFame(t *testing.T) {
 		Data: &handlers.FameEventData{
 			Gained:  500,
 			Total:   5000,
-			Session: 2000,
+			AllTime: 2000,
 		},
 		Timestamp: time.Now(),
 	}
@@ -97,7 +97,7 @@ func TestFormatEventMessageSilver(t *testing.T) {
 		Type: "silver",
 		Data: &handlers.SilverEventData{
 			Amount:     750,
-			Session:    3000,
+			Total:      3000,
 			LootedBy:   "PlayerA",
 			LootedFrom: "BossNPC",
 		},
@@ -150,7 +150,7 @@ func TestFormatEventMessageKill(t *testing.T) {
 	event := Event{
 		Type: "kill",
 		Data: &handlers.KillEventData{
-			SessionKills: 5,
+			TotalKills: 5,
 		},
 		Timestamp: time.Now(),
 	}
@@ -360,7 +360,7 @@ func TestSetFullNumbersReRender(t *testing.T) {
 	e = e.AddEvents([]Event{
 		{
 			Type:      "fame",
-			Data:      &handlers.FameEventData{Gained: 1500, Total: 5000, Session: 3000},
+			Data:      &handlers.FameEventData{Gained: 1500, Total: 5000, AllTime: 3000},
 			Timestamp: time.Now(),
 		},
 	})

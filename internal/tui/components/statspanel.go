@@ -16,9 +16,13 @@ type StatsPanel struct {
 	kills        int
 	deaths       int
 	lootCount    int
-	width        int
-	height       int
-	fullNumbers  bool
+	// Today's totals (current calendar day) for the headline numeric stats.
+	todayFame   int64
+	todaySilver int64
+	todayRespec int64
+	width       int
+	height      int
+	fullNumbers bool
 }
 
 // NewStatsPanel creates a new StatsPanel component
@@ -77,6 +81,24 @@ func (s StatsPanel) SetRespecSilver(amount int64) StatsPanel {
 	return s
 }
 
+// SetTodayFame sets today's fame total.
+func (s StatsPanel) SetTodayFame(amount int64) StatsPanel {
+	s.todayFame = amount
+	return s
+}
+
+// SetTodaySilver sets today's silver total.
+func (s StatsPanel) SetTodaySilver(amount int64) StatsPanel {
+	s.todaySilver = amount
+	return s
+}
+
+// SetTodayRespec sets today's respec credits total.
+func (s StatsPanel) SetTodayRespec(amount int64) StatsPanel {
+	s.todayRespec = amount
+	return s
+}
+
 // IncrKills increments the kill counter
 func (s StatsPanel) IncrKills() StatsPanel {
 	s.kills++
@@ -123,6 +145,9 @@ func (s StatsPanel) Reset() StatsPanel {
 	s.kills = 0
 	s.deaths = 0
 	s.lootCount = 0
+	s.todayFame = 0
+	s.todaySilver = 0
+	s.todayRespec = 0
 	return s
 }
 
@@ -211,6 +236,35 @@ func (s StatsPanel) View() string {
 		),
 	}
 
+	// "Today" breakdown for the headline numeric stats. Only rendered when at
+	// least one of today's values is non-zero, to avoid cluttering the panel on
+	// a fresh day or before any events arrive.
+	if s.todayFame != 0 || s.todaySilver != 0 || s.todayRespec != 0 {
+		todayLabelStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("241")).
+			Width(8)
+		// The divider is not a data label; render it plain so it spans its
+		// natural width instead of being squeezed by the 8-cell label style
+		// (the separator "─ today ─" is 9 cells wide).
+		dividerStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("241"))
+		statRows = append(statRows,
+			dividerStyle.Render("─ today ─"),
+			fmt.Sprintf("%s %s",
+				todayLabelStyle.Render("Fame"),
+				fameValueStyle.Render(formatNum(s.todayFame)),
+			),
+			fmt.Sprintf("%s %s",
+				todayLabelStyle.Render("Silver"),
+				silverValueStyle.Render(formatNum(s.todaySilver)),
+			),
+			fmt.Sprintf("%s %s",
+				todayLabelStyle.Render("Respec"),
+				respecValueStyle.Render(formatNum(s.todayRespec)),
+			),
+		)
+	}
+
 	content := lipgloss.JoinVertical(lipgloss.Left, statRows...)
 
 	boxStyle := lipgloss.NewStyle().
@@ -225,7 +279,7 @@ func (s StatsPanel) View() string {
 		Foreground(lipgloss.Color("62")).
 		MarginBottom(1)
 
-	title := titleStyle.Render("Session Stats")
+	title := titleStyle.Render("Total Stats")
 
 	return boxStyle.Render(
 		lipgloss.JoinVertical(lipgloss.Left, title, content),

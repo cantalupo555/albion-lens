@@ -84,8 +84,8 @@ func TestEnterExitDungeonLifecycle(t *testing.T) {
 	}
 
 	// Exit — deltas should be zero (no stats gained)
-	h.stats.addFame(500)
-	h.stats.addKill()
+	h.stats.addFame(500, h.nowFunc())
+	h.stats.addKill(h.nowFunc())
 	exitTime := base.Add(2 * time.Minute)
 	h.nowFunc = func() time.Time { return exitTime }
 	h.ExitDungeon(exitTime)
@@ -119,7 +119,7 @@ func TestEnterDungeonClosesPrevious(t *testing.T) {
 	h.EnterDungeon(t0)
 
 	// Gain some fame during first run
-	h.stats.addFame(1000)
+	h.stats.addFame(1000, h.nowFunc())
 
 	// Enter a second dungeon without exiting the first
 	t1 := t0.Add(3 * time.Minute)
@@ -464,9 +464,9 @@ func TestSaveLoadDungeonRunsRoundTrip(t *testing.T) {
 	t0 := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
 	h.nowFunc = func() time.Time { return t0 }
 	h.EnterDungeon(t0)
-	h.stats.addFame(500)
-	h.stats.addKill()
-	h.stats.addKill()
+	h.stats.addFame(500, h.nowFunc())
+	h.stats.addKill(h.nowFunc())
+	h.stats.addKill(h.nowFunc())
 	exit := t0.Add(2 * time.Minute)
 	h.nowFunc = func() time.Time { return exit }
 	h.ExitDungeon(exit)
@@ -475,7 +475,7 @@ func TestSaveLoadDungeonRunsRoundTrip(t *testing.T) {
 	t1 := t0.Add(10 * time.Minute)
 	h.nowFunc = func() time.Time { return t1 }
 	h.EnterDungeon(t1)
-	h.stats.addSilver(300)
+	h.stats.addSilver(300, h.nowFunc())
 	t2 := t1.Add(5 * time.Minute)
 	h.nowFunc = func() time.Time { return t2 }
 	h.ExitDungeon(t2)

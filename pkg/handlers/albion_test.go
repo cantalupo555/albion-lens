@@ -93,20 +93,20 @@ func TestSessionCounters(t *testing.T) {
 	handler.SetLocalPlayer("Hero")
 
 	// Initial values should be 0
-	if handler.GetSessionKills() != 0 {
+	if handler.GetTotalKills() != 0 {
 		t.Error("initial kills should be 0")
 	}
-	if handler.GetSessionDeaths() != 0 {
+	if handler.GetTotalDeaths() != 0 {
 		t.Error("initial deaths should be 0")
 	}
-	if handler.GetSessionLoot() != 0 {
+	if handler.GetTotalLoot() != 0 {
 		t.Error("initial loot should be 0")
 	}
 
 	// EventKilledPlayer is a no-op; kills are counted via EventDied.
 	handler.OnEvent(byte(events.EventKilledPlayer), map[byte]interface{}{})
-	if handler.GetSessionKills() != 0 {
-		t.Errorf("EventKilledPlayer should not count kills, got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 0 {
+		t.Errorf("EventKilledPlayer should not count kills, got %d", handler.GetTotalKills())
 	}
 
 	// Local player kills someone -> kill counted.
@@ -114,8 +114,8 @@ func TestSessionCounters(t *testing.T) {
 		2:  "Enemy",
 		10: "Hero",
 	})
-	if handler.GetSessionKills() != 1 {
-		t.Errorf("expected 1 kill, got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 1 {
+		t.Errorf("expected 1 kill, got %d", handler.GetTotalKills())
 	}
 
 	// Local player dies -> death counted.
@@ -123,25 +123,25 @@ func TestSessionCounters(t *testing.T) {
 		2:  "Hero",
 		10: "Enemy",
 	})
-	if handler.GetSessionDeaths() != 1 {
-		t.Errorf("expected 1 death, got %d", handler.GetSessionDeaths())
+	if handler.GetTotalDeaths() != 1 {
+		t.Errorf("expected 1 death, got %d", handler.GetTotalDeaths())
 	}
 }
 
-// TestGetSessionFame tests fame getter
-func TestGetSessionFame(t *testing.T) {
+// TestGetTotalFame tests fame getter
+func TestGetTotalFame(t *testing.T) {
 	handler := NewAlbionHandler()
 
-	if handler.GetSessionFame() != 0 {
+	if handler.GetTotalFame() != 0 {
 		t.Error("initial session fame should be 0")
 	}
 }
 
-// TestGetSessionSilver tests silver getter
-func TestGetSessionSilver(t *testing.T) {
+// TestGetTotalSilver tests silver getter
+func TestGetTotalSilver(t *testing.T) {
 	handler := NewAlbionHandler()
 
-	if handler.GetSessionSilver() != 0 {
+	if handler.GetTotalSilver() != 0 {
 		t.Error("initial session silver should be 0")
 	}
 }
@@ -177,8 +177,13 @@ func TestHandleUpdateFameDetailedFormat(t *testing.T) {
 		t.Errorf("expected gained 1000, got %d", receivedData.Gained)
 	}
 
-	if handler.GetSessionFame() != 1000 {
-		t.Errorf("expected session fame 1000, got %d", handler.GetSessionFame())
+	if handler.GetTotalFame() != 1000 {
+		t.Errorf("expected session fame 1000, got %d", handler.GetTotalFame())
+	}
+
+	// Daily bucket must track today's gains end-to-end through the callback.
+	if receivedData.Daily != 1000 {
+		t.Errorf("expected daily fame 1000 (same day as cumulative), got %d", receivedData.Daily)
 	}
 }
 
@@ -305,8 +310,13 @@ func TestHandleOtherGrabbedLootSilver(t *testing.T) {
 		t.Errorf("expected LootedFrom 'Monster', got '%s'", receivedData.LootedFrom)
 	}
 
-	if handler.GetSessionSilver() != 5000 {
-		t.Errorf("expected session silver 5000, got %d", handler.GetSessionSilver())
+	if handler.GetTotalSilver() != 5000 {
+		t.Errorf("expected session silver 5000, got %d", handler.GetTotalSilver())
+	}
+
+	// Daily bucket must track today's silver end-to-end through the callback.
+	if receivedData.Daily != 5000 {
+		t.Errorf("expected daily silver 5000 (same day as cumulative), got %d", receivedData.Daily)
 	}
 }
 
@@ -352,8 +362,8 @@ func TestHandleOtherGrabbedLootItem(t *testing.T) {
 		t.Errorf("expected Quantity 3, got %d", receivedData.Quantity)
 	}
 
-	if handler.GetSessionLoot() != 1 {
-		t.Errorf("expected session loot 1, got %d", handler.GetSessionLoot())
+	if handler.GetTotalLoot() != 1 {
+		t.Errorf("expected session loot 1, got %d", handler.GetTotalLoot())
 	}
 }
 
@@ -377,8 +387,8 @@ func TestHandleKilledPlayer(t *testing.T) {
 		t.Error("EventKilledPlayer should not produce a kill callback")
 	}
 
-	if handler.GetSessionKills() != 0 {
-		t.Errorf("expected 0 kills (no-op), got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 0 {
+		t.Errorf("expected 0 kills (no-op), got %d", handler.GetTotalKills())
 	}
 }
 
@@ -407,12 +417,12 @@ func TestHandleDied(t *testing.T) {
 	}
 
 	// Without a known local player, deaths are not counted.
-	if receivedData.SessionDeaths != 0 {
-		t.Errorf("expected SessionDeaths 0 (no local player), got %d", receivedData.SessionDeaths)
+	if receivedData.TotalDeaths != 0 {
+		t.Errorf("expected SessionDeaths 0 (no local player), got %d", receivedData.TotalDeaths)
 	}
 
-	if handler.GetSessionDeaths() != 0 {
-		t.Errorf("expected 0 deaths (no local player), got %d", handler.GetSessionDeaths())
+	if handler.GetTotalDeaths() != 0 {
+		t.Errorf("expected 0 deaths (no local player), got %d", handler.GetTotalDeaths())
 	}
 }
 
@@ -753,7 +763,7 @@ func TestFameEventDataStructure(t *testing.T) {
 	data := &FameEventData{
 		Gained:  100,
 		Total:   5000,
-		Session: 500,
+		AllTime: 500,
 	}
 
 	if data.Gained != 100 {
@@ -762,8 +772,8 @@ func TestFameEventDataStructure(t *testing.T) {
 	if data.Total != 5000 {
 		t.Errorf("Total field incorrect")
 	}
-	if data.Session != 500 {
-		t.Errorf("Session field incorrect")
+	if data.AllTime != 500 {
+		t.Errorf("AllTime field incorrect")
 	}
 }
 
@@ -771,7 +781,7 @@ func TestFameEventDataStructure(t *testing.T) {
 func TestSilverEventDataStructure(t *testing.T) {
 	data := &SilverEventData{
 		Amount:     1000,
-		Session:    5000,
+		Total:      5000,
 		LootedBy:   "Player1",
 		LootedFrom: "Monster",
 	}
@@ -779,8 +789,8 @@ func TestSilverEventDataStructure(t *testing.T) {
 	if data.Amount != 1000 {
 		t.Errorf("Amount field incorrect")
 	}
-	if data.Session != 5000 {
-		t.Errorf("Session field incorrect")
+	if data.Total != 5000 {
+		t.Errorf("Total field incorrect")
 	}
 	if data.LootedBy != "Player1" {
 		t.Errorf("LootedBy field incorrect")
@@ -822,20 +832,25 @@ func TestHandleUpdateReSpecPoints(t *testing.T) {
 		t.Errorf("expected paid silver 500, got %d", receivedData.PaidSilver)
 	}
 
-	if receivedData.SessionTotal != 1000 {
-		t.Errorf("expected session total 1000, got %d", receivedData.SessionTotal)
+	if receivedData.Total != 1000 {
+		t.Errorf("expected session total 1000, got %d", receivedData.Total)
 	}
 
-	if receivedData.SessionSilverTotal != 500 {
-		t.Errorf("expected session silver total 500, got %d", receivedData.SessionSilverTotal)
+	if receivedData.TotalSilver != 500 {
+		t.Errorf("expected session silver total 500, got %d", receivedData.TotalSilver)
 	}
 
-	if handler.GetSessionRespec() != 1000 {
-		t.Errorf("expected session respec 1000, got %d", handler.GetSessionRespec())
+	if handler.GetTotalRespec() != 1000 {
+		t.Errorf("expected session respec 1000, got %d", handler.GetTotalRespec())
 	}
 
-	if handler.GetSessionRespecSilver() != 500 {
-		t.Errorf("expected session respec silver 500, got %d", handler.GetSessionRespecSilver())
+	if handler.GetTotalRespecSilver() != 500 {
+		t.Errorf("expected session respec silver 500, got %d", handler.GetTotalRespecSilver())
+	}
+
+	// Daily bucket must track today's respec end-to-end through the callback.
+	if receivedData.Daily != 1000 {
+		t.Errorf("expected daily respec 1000 (same day as cumulative), got %d", receivedData.Daily)
 	}
 }
 
@@ -862,8 +877,45 @@ func TestHandleUpdateReSpecPointsZeroGained(t *testing.T) {
 		t.Errorf("expected 0 callbacks for zero gained, got %d", callCount)
 	}
 
-	if handler.GetSessionRespec() != 0 {
-		t.Errorf("expected session respec 0, got %d", handler.GetSessionRespec())
+	if handler.GetTotalRespec() != 0 {
+		t.Errorf("expected session respec 0, got %d", handler.GetTotalRespec())
+	}
+}
+
+// TestHandleUpdateReSpecPointsFreeRespec tests the common case where respec is
+// free (premium): gained credits > 0 but paidSilver == 0. The credits must be
+// counted, the silver cost must stay zero, and the silver bucket must not be
+// written.
+func TestHandleUpdateReSpecPointsFreeRespec(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	var receivedData *RespecEventData
+	handler.SetEventCallback(func(eventType, message string, data interface{}) {
+		if eventType == "respec" {
+			receivedData = data.(*RespecEventData)
+		}
+	})
+
+	// gained 1000 credits (FixPoint), zero silver paid.
+	params := map[byte]interface{}{
+		2:                     int64(10000000), // gained 1000 (FixPoint)
+		3:                     int64(0),        // free respec
+		events.ParamEventCode: int16(events.EventUpdateReSpecPoints),
+	}
+
+	handler.OnEvent(byte(events.EventUpdateReSpecPoints), params)
+
+	if receivedData == nil {
+		t.Fatal("respec callback was not called")
+	}
+	if handler.GetTotalRespec() != 1000 {
+		t.Errorf("expected total respec 1000, got %d", handler.GetTotalRespec())
+	}
+	if handler.GetTotalRespecSilver() != 0 {
+		t.Errorf("expected total respec silver 0 (free respec), got %d", handler.GetTotalRespecSilver())
+	}
+	if receivedData.PaidSilver != 0 {
+		t.Errorf("expected PaidSilver 0, got %d", receivedData.PaidSilver)
 	}
 }
 
@@ -871,13 +923,13 @@ func TestHandleUpdateReSpecPointsZeroGained(t *testing.T) {
 func TestHandleUpdateReSpecPointsAccumulation(t *testing.T) {
 	handler := NewAlbionHandler()
 
-	var lastSessionTotal int64
-	var lastSessionSilverTotal int64
+	var lastTotal int64
+	var lastTotalSilver int64
 	handler.SetEventCallback(func(eventType, message string, data interface{}) {
 		if eventType == "respec" {
 			if respecData, ok := data.(*RespecEventData); ok {
-				lastSessionTotal = respecData.SessionTotal
-				lastSessionSilverTotal = respecData.SessionSilverTotal
+				lastTotal = respecData.Total
+				lastTotalSilver = respecData.TotalSilver
 			}
 		}
 	})
@@ -896,20 +948,20 @@ func TestHandleUpdateReSpecPointsAccumulation(t *testing.T) {
 		events.ParamEventCode: int16(events.EventUpdateReSpecPoints),
 	})
 
-	if lastSessionTotal != 800 {
-		t.Errorf("expected session total 800, got %d", lastSessionTotal)
+	if lastTotal != 800 {
+		t.Errorf("expected session total 800, got %d", lastTotal)
 	}
 
-	if lastSessionSilverTotal != 150 {
-		t.Errorf("expected session silver total 150, got %d", lastSessionSilverTotal)
+	if lastTotalSilver != 150 {
+		t.Errorf("expected session silver total 150, got %d", lastTotalSilver)
 	}
 
-	if handler.GetSessionRespec() != 800 {
-		t.Errorf("expected session respec 800, got %d", handler.GetSessionRespec())
+	if handler.GetTotalRespec() != 800 {
+		t.Errorf("expected session respec 800, got %d", handler.GetTotalRespec())
 	}
 
-	if handler.GetSessionRespecSilver() != 150 {
-		t.Errorf("expected session respec silver 150, got %d", handler.GetSessionRespecSilver())
+	if handler.GetTotalRespecSilver() != 150 {
+		t.Errorf("expected session respec silver 150, got %d", handler.GetTotalRespecSilver())
 	}
 }
 
@@ -1035,8 +1087,8 @@ func TestDiedNoKillCountedWhenLocalUnknown(t *testing.T) {
 		10: "Someone",
 	})
 
-	if handler.GetSessionKills() != 0 {
-		t.Errorf("expected 0 kills when local player unknown, got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 0 {
+		t.Errorf("expected 0 kills when local player unknown, got %d", handler.GetTotalKills())
 	}
 	if killCount != 0 {
 		t.Errorf("expected 0 kill callbacks when local player unknown, got %d", killCount)
@@ -1069,8 +1121,8 @@ func TestDiedCountsKillWhenLocalPlayerIsKiller(t *testing.T) {
 		handler.OnEvent(byte(events.EventDied), deathParams)
 	}
 
-	if handler.GetSessionKills() != 1 {
-		t.Errorf("expected 1 kill (deduped), got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 1 {
+		t.Errorf("expected 1 kill (deduped), got %d", handler.GetTotalKills())
 	}
 	if killCount != 1 {
 		t.Errorf("expected 1 kill callback, got %d", killCount)
@@ -1080,8 +1132,8 @@ func TestDiedCountsKillWhenLocalPlayerIsKiller(t *testing.T) {
 	}
 
 	// Local player was the killer, not the victim: deaths must not be counted.
-	if handler.GetSessionDeaths() != 0 {
-		t.Errorf("expected 0 deaths, got %d", handler.GetSessionDeaths())
+	if handler.GetTotalDeaths() != 0 {
+		t.Errorf("expected 0 deaths, got %d", handler.GetTotalDeaths())
 	}
 }
 
@@ -1102,8 +1154,8 @@ func TestDiedDedupByVictimKiller(t *testing.T) {
 		10: "Hero",
 	})
 
-	if handler.GetSessionKills() != 2 {
-		t.Errorf("expected 2 kills for distinct victims, got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 2 {
+		t.Errorf("expected 2 kills for distinct victims, got %d", handler.GetTotalKills())
 	}
 
 	// A duplicate of the first kill is collapsed.
@@ -1112,8 +1164,8 @@ func TestDiedDedupByVictimKiller(t *testing.T) {
 		10: "Hero",
 	})
 
-	if handler.GetSessionKills() != 2 {
-		t.Errorf("expected deduped 2 kills, got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 2 {
+		t.Errorf("expected deduped 2 kills, got %d", handler.GetTotalKills())
 	}
 }
 
@@ -1128,8 +1180,8 @@ func TestDiedOnlyCountsLocalDeaths(t *testing.T) {
 		2:  "Stranger",
 		10: "SomeoneElse",
 	})
-	if handler.GetSessionDeaths() != 0 {
-		t.Errorf("foreign death must not count, got %d", handler.GetSessionDeaths())
+	if handler.GetTotalDeaths() != 0 {
+		t.Errorf("foreign death must not count, got %d", handler.GetTotalDeaths())
 	}
 
 	// Local player dies: counted.
@@ -1137,8 +1189,8 @@ func TestDiedOnlyCountsLocalDeaths(t *testing.T) {
 		2:  "Hero",
 		10: "Killer",
 	})
-	if handler.GetSessionDeaths() != 1 {
-		t.Errorf("expected 1 local death, got %d", handler.GetSessionDeaths())
+	if handler.GetTotalDeaths() != 1 {
+		t.Errorf("expected 1 local death, got %d", handler.GetTotalDeaths())
 	}
 }
 
@@ -1188,8 +1240,8 @@ func TestSilverExcludesForeignLoot(t *testing.T) {
 	}
 
 	// Only the local player's 5000 silver counts toward the session total.
-	if handler.GetSessionSilver() != 5000 {
-		t.Errorf("expected session silver 5000, got %d", handler.GetSessionSilver())
+	if handler.GetTotalSilver() != 5000 {
+		t.Errorf("expected session silver 5000, got %d", handler.GetTotalSilver())
 	}
 }
 
@@ -1213,8 +1265,8 @@ func TestSilverNotCountedWhenLocalUnknown(t *testing.T) {
 	if countedCount != 0 {
 		t.Errorf("expected 0 counted events when local unknown, got %d", countedCount)
 	}
-	if handler.GetSessionSilver() != 0 {
-		t.Errorf("expected session silver 0 (nothing counted), got %d", handler.GetSessionSilver())
+	if handler.GetTotalSilver() != 0 {
+		t.Errorf("expected session silver 0 (nothing counted), got %d", handler.GetTotalSilver())
 	}
 }
 
@@ -1242,8 +1294,8 @@ func TestSilverEmptyLootedWithKnownLocal(t *testing.T) {
 	if received.Counted {
 		t.Error("empty LootedBy must not be counted toward the session total")
 	}
-	if handler.GetSessionSilver() != 0 {
-		t.Errorf("expected session silver 0, got %d", handler.GetSessionSilver())
+	if handler.GetTotalSilver() != 0 {
+		t.Errorf("expected session silver 0, got %d", handler.GetTotalSilver())
 	}
 }
 
@@ -1266,21 +1318,21 @@ func TestDiedDedupWindowExpiry(t *testing.T) {
 
 	// First kill: counted.
 	handler.OnEvent(byte(events.EventDied), deathParams)
-	if handler.GetSessionKills() != 1 {
-		t.Fatalf("expected 1 kill after first death, got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 1 {
+		t.Fatalf("expected 1 kill after first death, got %d", handler.GetTotalKills())
 	}
 
 	// Immediate duplicate: suppressed.
 	handler.OnEvent(byte(events.EventDied), deathParams)
-	if handler.GetSessionKills() != 1 {
-		t.Fatalf("expected duplicate to be suppressed, got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 1 {
+		t.Fatalf("expected duplicate to be suppressed, got %d", handler.GetTotalKills())
 	}
 
 	// Advance time past the dedup window: the same victim+killer is counted again.
 	base = base.Add(handler.deathDedupWindow + time.Second)
 	handler.OnEvent(byte(events.EventDied), deathParams)
-	if handler.GetSessionKills() != 2 {
-		t.Errorf("expected 2 kills after window expiry, got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 2 {
+		t.Errorf("expected 2 kills after window expiry, got %d", handler.GetTotalKills())
 	}
 }
 
@@ -1299,8 +1351,8 @@ func TestDiedDedupNotConsumedBeforeIdentity(t *testing.T) {
 
 	// Death arrives while identity is unknown: not counted, not deduped.
 	handler.OnEvent(byte(events.EventDied), deathParams)
-	if handler.GetSessionKills() != 0 {
-		t.Fatalf("expected 0 kills before identity, got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 0 {
+		t.Fatalf("expected 0 kills before identity, got %d", handler.GetTotalKills())
 	}
 
 	// Identity captured (e.g. from OpJoin). The same victim+killer death arrives
@@ -1308,8 +1360,8 @@ func TestDiedDedupNotConsumedBeforeIdentity(t *testing.T) {
 	// never recorded during the unknown phase.
 	handler.SetLocalPlayer("Hero")
 	handler.OnEvent(byte(events.EventDied), deathParams)
-	if handler.GetSessionKills() != 1 {
-		t.Errorf("expected 1 kill after identity (dedup not pre-consumed), got %d", handler.GetSessionKills())
+	if handler.GetTotalKills() != 1 {
+		t.Errorf("expected 1 kill after identity (dedup not pre-consumed), got %d", handler.GetTotalKills())
 	}
 }
 
@@ -1386,13 +1438,13 @@ func TestSessionCountersConcurrent(t *testing.T) {
 			case <-stop:
 				return
 			default:
-				_ = handler.GetSessionKills()
-				_ = handler.GetSessionDeaths()
-				_ = handler.GetSessionLoot()
-				_ = handler.GetSessionFame()
-				_ = handler.GetSessionSilver()
-				_ = handler.GetSessionRespec()
-				_ = handler.GetSessionRespecSilver()
+				_ = handler.GetTotalKills()
+				_ = handler.GetTotalDeaths()
+				_ = handler.GetTotalLoot()
+				_ = handler.GetTotalFame()
+				_ = handler.GetTotalSilver()
+				_ = handler.GetTotalRespec()
+				_ = handler.GetTotalRespecSilver()
 			}
 		}
 	}()
@@ -1425,7 +1477,7 @@ func TestSessionCountersConcurrent(t *testing.T) {
 	wg.Wait()
 
 	// Final sanity: getters return sensible non-negative values.
-	if k := handler.GetSessionKills(); k < 0 {
+	if k := handler.GetTotalKills(); k < 0 {
 		t.Errorf("sessionKills should be >= 0, got %d", k)
 	}
 }
@@ -1642,38 +1694,63 @@ func TestOnEventNewShrineNoActiveRun(t *testing.T) {
 	}
 }
 
-func TestSaveLoadSessionStatsRoundTrip(t *testing.T) {
+// totalStatsEqual reports whether two TotalStats snapshots are equal, treating
+// nil and empty bucket maps as equivalent (apply/snapshot normalize to empty).
+// Required because TotalStats now contains maps and is no longer comparable
+// with ==.
+func totalStatsEqual(a, b TotalStats) bool {
+	if a.Fame != b.Fame || a.Silver != b.Silver || a.Respec != b.Respec ||
+		a.RespecSilver != b.RespecSilver || a.Kills != b.Kills ||
+		a.Deaths != b.Deaths || a.Loot != b.Loot {
+		return false
+	}
+	return statValuesMapEqual(a.Daily, b.Daily) && statValuesMapEqual(a.Hourly, b.Hourly)
+}
+
+func statValuesMapEqual(a, b map[string]StatValues) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for k, v := range a {
+		if v != b[k] {
+			return false
+		}
+	}
+	return true
+}
+
+func TestSaveLoadTotalStatsRoundTrip(t *testing.T) {
 	h := NewAlbionHandler()
-	h.stats.apply(SessionStats{Fame: 1500, Silver: 25000, Respec: 300, RespecSilver: 4500, Kills: 7, Deaths: 2, Loot: 11})
+	h.stats.apply(TotalStats{Fame: 1500, Silver: 25000, Respec: 300, RespecSilver: 4500, Kills: 7, Deaths: 2, Loot: 11})
 
 	path := filepath.Join(t.TempDir(), "session-stats.json")
-	if err := h.SaveSessionStats(path); err != nil {
-		t.Fatalf("SaveSessionStats: %v", err)
+	if err := h.SaveTotalStats(path); err != nil {
+		t.Fatalf("SaveTotalStats: %v", err)
 	}
 
 	fresh := NewAlbionHandler()
-	if err := fresh.LoadSessionStats(path); err != nil {
-		t.Fatalf("LoadSessionStats: %v", err)
+	if err := fresh.LoadTotalStats(path); err != nil {
+		t.Fatalf("LoadTotalStats: %v", err)
 	}
-	got := fresh.SessionSnapshot()
-	want := SessionStats{Fame: 1500, Silver: 25000, Respec: 300, RespecSilver: 4500, Kills: 7, Deaths: 2, Loot: 11}
-	if got != want {
+	got := fresh.TotalSnapshot()
+	want := TotalStats{Fame: 1500, Silver: 25000, Respec: 300, RespecSilver: 4500, Kills: 7, Deaths: 2, Loot: 11}
+	if !totalStatsEqual(got, want) {
 		t.Errorf("snapshot = %+v, want %+v", got, want)
 	}
 }
 
-func TestLoadSessionStatsMissingFileLeavesZeroNoError(t *testing.T) {
+func TestLoadTotalStatsMissingFileLeavesZeroNoError(t *testing.T) {
 	h := NewAlbionHandler()
 	path := filepath.Join(t.TempDir(), "nope.json")
-	if err := h.LoadSessionStats(path); err != nil {
-		t.Errorf("LoadSessionStats missing file: %v", err)
+	if err := h.LoadTotalStats(path); err != nil {
+		t.Errorf("LoadTotalStats missing file: %v", err)
 	}
-	if got := h.SessionSnapshot(); got != (SessionStats{}) {
+	if got := h.TotalSnapshot(); !totalStatsEqual(got, TotalStats{}) {
 		t.Errorf("expected zero snapshot, got %+v", got)
 	}
 }
 
-func TestLoadSessionStatsBackwardCompatMissingField(t *testing.T) {
+func TestLoadTotalStatsBackwardCompatMissingField(t *testing.T) {
 	// Older file written before respec_silver existed: that field must default
 	// to zero while the rest loads normally (additive schema).
 	path := filepath.Join(t.TempDir(), "old-stats.json")
@@ -1683,25 +1760,25 @@ func TestLoadSessionStatsBackwardCompatMissingField(t *testing.T) {
 	}
 
 	h := NewAlbionHandler()
-	if err := h.LoadSessionStats(path); err != nil {
-		t.Fatalf("LoadSessionStats: %v", err)
+	if err := h.LoadTotalStats(path); err != nil {
+		t.Fatalf("LoadTotalStats: %v", err)
 	}
-	got := h.SessionSnapshot()
-	want := SessionStats{Fame: 100, Silver: 200, Respec: 30, RespecSilver: 0, Kills: 1, Deaths: 0, Loot: 2}
-	if got != want {
+	got := h.TotalSnapshot()
+	want := TotalStats{Fame: 100, Silver: 200, Respec: 30, RespecSilver: 0, Kills: 1, Deaths: 0, Loot: 2}
+	if !totalStatsEqual(got, want) {
 		t.Errorf("snapshot = %+v, want %+v (respec_silver defaulting to 0)", got, want)
 	}
 }
 
-func TestLoadSessionStatsCorruptFileReturnsError(t *testing.T) {
+func TestLoadTotalStatsCorruptFileReturnsError(t *testing.T) {
 	h := NewAlbionHandler()
-	h.stats.apply(SessionStats{Fame: 999}) // pre-existing value must survive a corrupt load
+	h.stats.apply(TotalStats{Fame: 999}) // pre-existing value must survive a corrupt load
 
 	path := filepath.Join(t.TempDir(), "bad-stats.json")
 	if err := os.WriteFile(path, []byte("{broken"), 0o644); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
-	if err := h.LoadSessionStats(path); err == nil {
+	if err := h.LoadTotalStats(path); err == nil {
 		t.Fatal("expected error loading corrupt stats file, got nil")
 	}
 	if got := h.stats.fameNow(); got != 999 {
@@ -1709,7 +1786,7 @@ func TestLoadSessionStatsCorruptFileReturnsError(t *testing.T) {
 	}
 }
 
-func TestLoadSessionStatsVersionAbsentStillLoads(t *testing.T) {
+func TestLoadTotalStatsVersionAbsentStillLoads(t *testing.T) {
 	// An even older file written before the `version` field existed: version
 	// defaults to zero (!= 1) but the schema is additive, so values still load.
 	path := filepath.Join(t.TempDir(), "no-version.json")
@@ -1719,34 +1796,226 @@ func TestLoadSessionStatsVersionAbsentStillLoads(t *testing.T) {
 	}
 
 	h := NewAlbionHandler()
-	if err := h.LoadSessionStats(path); err != nil {
-		t.Fatalf("LoadSessionStats: %v", err)
+	if err := h.LoadTotalStats(path); err != nil {
+		t.Fatalf("LoadTotalStats: %v", err)
 	}
-	got := h.SessionSnapshot()
-	want := SessionStats{Fame: 50, Silver: 60, Respec: 7, RespecSilver: 8, Kills: 1, Deaths: 0, Loot: 1}
-	if got != want {
+	got := h.TotalSnapshot()
+	want := TotalStats{Fame: 50, Silver: 60, Respec: 7, RespecSilver: 8, Kills: 1, Deaths: 0, Loot: 1}
+	if !totalStatsEqual(got, want) {
 		t.Errorf("snapshot = %+v, want %+v (loaded despite missing version)", got, want)
 	}
 }
 
-func TestSaveSessionStatsErrorPropagates(t *testing.T) {
+func TestSaveTotalStatsErrorPropagates(t *testing.T) {
 	h := NewAlbionHandler()
-	h.stats.apply(SessionStats{Fame: 100})
+	h.stats.apply(TotalStats{Fame: 100})
 
 	// Make the final path a non-empty directory so storage.Save's rename step
 	// fails — a deterministic way (no root/FS assumptions) to exercise error
-	// propagation through SaveSessionStats.
+	// propagation through SaveTotalStats.
 	dir := t.TempDir()
 	path := filepath.Join(dir, "stats.json")
 	if err := os.MkdirAll(filepath.Join(path, "blocker"), 0o755); err != nil {
 		t.Fatalf("MkdirAll: %v", err)
 	}
 
-	if err := h.SaveSessionStats(path); err == nil {
-		t.Fatal("expected error from SaveSessionStats when storage save fails, got nil")
+	if err := h.SaveTotalStats(path); err == nil {
+		t.Fatal("expected error from SaveTotalStats when storage save fails, got nil")
 	}
 	// Counters must be untouched by a failed save.
 	if got := h.stats.fameNow(); got != 100 {
 		t.Errorf("failed save should not mutate counters; Fame = %d, want 100", got)
+	}
+}
+
+// --- Daily / hourly bucketing (issue #112) ---
+
+func TestStatsBucketDailyFame(t *testing.T) {
+	h := NewAlbionHandler()
+	day := time.Date(2026, 7, 1, 14, 30, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return day }
+
+	h.stats.addFame(1000, h.nowFunc())
+	h.stats.addSilver(2500, h.nowFunc())
+
+	snap := h.TotalSnapshot()
+	dk := day.Format("2006-01-02")
+	d, ok := snap.Daily[dk]
+	if !ok {
+		t.Fatalf("expected daily bucket for %s, got %v", dk, snap.Daily)
+	}
+	if d.Fame != 1000 {
+		t.Errorf("daily fame = %d, want 1000", d.Fame)
+	}
+	if d.Silver != 2500 {
+		t.Errorf("daily silver = %d, want 2500", d.Silver)
+	}
+	// Cumulative total must also be updated.
+	if got := h.GetTotalFame(); got != 1000 {
+		t.Errorf("cumulative fame = %d, want 1000", got)
+	}
+}
+
+func TestStatsBucketHourlyFame(t *testing.T) {
+	h := NewAlbionHandler()
+	hour := time.Date(2026, 7, 1, 14, 30, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return hour }
+
+	h.stats.addFame(500, h.nowFunc())
+
+	snap := h.TotalSnapshot()
+	hk := hour.Format("2006-01-02T15")
+	hv, ok := snap.Hourly[hk]
+	if !ok {
+		t.Fatalf("expected hourly bucket for %s, got %v", hk, snap.Hourly)
+	}
+	if hv.Fame != 500 {
+		t.Errorf("hourly fame = %d, want 500", hv.Fame)
+	}
+}
+
+func TestStatsBucketSeparatesByDay(t *testing.T) {
+	h := NewAlbionHandler()
+	day1 := time.Date(2026, 7, 1, 10, 0, 0, 0, time.UTC)
+	day2 := time.Date(2026, 7, 2, 10, 0, 0, 0, time.UTC)
+
+	h.nowFunc = func() time.Time { return day1 }
+	h.stats.addFame(100, h.nowFunc())
+	h.nowFunc = func() time.Time { return day2 }
+	h.stats.addFame(200, h.nowFunc())
+
+	snap := h.TotalSnapshot()
+	if got := snap.Daily[day1.Format("2006-01-02")].Fame; got != 100 {
+		t.Errorf("day1 fame = %d, want 100", got)
+	}
+	if got := snap.Daily[day2.Format("2006-01-02")].Fame; got != 200 {
+		t.Errorf("day2 fame = %d, want 200", got)
+	}
+	if got := h.GetTotalFame(); got != 300 {
+		t.Errorf("cumulative fame = %d, want 300", got)
+	}
+}
+
+func TestStatsBucketCountsKillDeathLoot(t *testing.T) {
+	h := NewAlbionHandler()
+	day := time.Date(2026, 7, 1, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return day }
+
+	h.stats.addKill(h.nowFunc())
+	h.stats.addKill(h.nowFunc())
+	h.stats.addDeath(h.nowFunc())
+	h.stats.addLoot(h.nowFunc())
+
+	snap := h.TotalSnapshot()
+	d := snap.Daily[day.Format("2006-01-02")]
+	if d.Kills != 2 {
+		t.Errorf("daily kills = %d, want 2", d.Kills)
+	}
+	if d.Deaths != 1 {
+		t.Errorf("daily deaths = %d, want 1", d.Deaths)
+	}
+	if d.Loot != 1 {
+		t.Errorf("daily loot = %d, want 1", d.Loot)
+	}
+}
+
+func TestStatsBucketPruneOldEntries(t *testing.T) {
+	h := NewAlbionHandler()
+	// Use a short prune age so old buckets are dropped.
+	h.stats.pruneAge = 1 * time.Hour
+
+	old := time.Date(2026, 7, 1, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return old }
+	h.stats.addFame(1000, h.nowFunc())
+
+	// Sanity: the old bucket exists before pruning.
+	snap := h.TotalSnapshot()
+	if _, ok := snap.Daily[old.Format("2006-01-02")]; !ok {
+		t.Fatalf("pre-prune: expected daily bucket for %s", old.Format("2006-01-02"))
+	}
+
+	// Advance well past the prune age; the next increment triggers a prune.
+	future := old.Add(48 * time.Hour)
+	h.nowFunc = func() time.Time { return future }
+	h.stats.addFame(50, h.nowFunc())
+
+	snap = h.TotalSnapshot()
+	if _, ok := snap.Daily[old.Format("2006-01-02")]; ok {
+		t.Errorf("post-prune: old daily bucket should have been removed")
+	}
+	// The new bucket remains.
+	if _, ok := snap.Daily[future.Format("2006-01-02")]; !ok {
+		t.Errorf("post-prune: expected daily bucket for %s", future.Format("2006-01-02"))
+	}
+}
+
+func TestStatsSnapshotReturnsIndependentMaps(t *testing.T) {
+	h := NewAlbionHandler()
+	day := time.Date(2026, 7, 1, 12, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return day }
+	h.stats.addFame(100, h.nowFunc())
+
+	snap := h.TotalSnapshot()
+	// Mutate the returned map; the next snapshot must be unaffected.
+	snap.Daily[day.Format("2006-01-02")] = StatValues{Fame: 999999}
+
+	snap2 := h.TotalSnapshot()
+	if got := snap2.Daily[day.Format("2006-01-02")].Fame; got != 100 {
+		t.Errorf("snapshot isolation broken: fame = %d, want 100 (returned map was mutated)", got)
+	}
+}
+
+func TestSaveLoadTotalStatsRoundTripWithBuckets(t *testing.T) {
+	h := NewAlbionHandler()
+	day := time.Date(2026, 7, 1, 14, 0, 0, 0, time.UTC)
+	h.nowFunc = func() time.Time { return day }
+	h.stats.addFame(1000, h.nowFunc())
+	h.stats.addSilver(2500, h.nowFunc())
+
+	path := filepath.Join(t.TempDir(), "session-stats.json")
+	if err := h.SaveTotalStats(path); err != nil {
+		t.Fatalf("SaveTotalStats: %v", err)
+	}
+
+	fresh := NewAlbionHandler()
+	if err := fresh.LoadTotalStats(path); err != nil {
+		t.Fatalf("LoadTotalStats: %v", err)
+	}
+	snap := fresh.TotalSnapshot()
+	d := snap.Daily[day.Format("2006-01-02")]
+	if d.Fame != 1000 {
+		t.Errorf("restored daily fame = %d, want 1000", d.Fame)
+	}
+	if d.Silver != 2500 {
+		t.Errorf("restored daily silver = %d, want 2500", d.Silver)
+	}
+	hr := snap.Hourly[day.Format("2006-01-02T15")]
+	if hr.Fame != 1000 {
+		t.Errorf("restored hourly fame = %d, want 1000", hr.Fame)
+	}
+}
+
+func TestLoadTotalStatsV1FileLoadsEmptyBuckets(t *testing.T) {
+	// A v1 file (no daily/hourly fields) must load with empty buckets while
+	// cumulative counters are intact — the additive-schema guarantee for #112.
+	path := filepath.Join(t.TempDir(), "v1-stats.json")
+	raw := []byte(`{"version":1,"fame":100,"silver":200,"respec":30,"respec_silver":8,"kills":1,"deaths":0,"loot":2,"saved_at":"2026-06-29T00:00:00Z"}`)
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	h := NewAlbionHandler()
+	if err := h.LoadTotalStats(path); err != nil {
+		t.Fatalf("LoadTotalStats: %v", err)
+	}
+	snap := h.TotalSnapshot()
+	if got := snap.Fame; got != 100 {
+		t.Errorf("cumulative fame = %d, want 100", got)
+	}
+	if len(snap.Daily) != 0 {
+		t.Errorf("v1 file should load with empty daily buckets, got %d entries", len(snap.Daily))
+	}
+	if len(snap.Hourly) != 0 {
+		t.Errorf("v1 file should load with empty hourly buckets, got %d entries", len(snap.Hourly))
 	}
 }
