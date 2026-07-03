@@ -180,6 +180,11 @@ func TestHandleUpdateFameDetailedFormat(t *testing.T) {
 	if handler.GetTotalFame() != 1000 {
 		t.Errorf("expected session fame 1000, got %d", handler.GetTotalFame())
 	}
+
+	// Daily bucket must track today's gains end-to-end through the callback.
+	if receivedData.Daily != 1000 {
+		t.Errorf("expected daily fame 1000 (same day as cumulative), got %d", receivedData.Daily)
+	}
 }
 
 // TestHandleUpdateFameSimpleFormat tests fame handling with simple format (Event #81)
@@ -307,6 +312,11 @@ func TestHandleOtherGrabbedLootSilver(t *testing.T) {
 
 	if handler.GetTotalSilver() != 5000 {
 		t.Errorf("expected session silver 5000, got %d", handler.GetTotalSilver())
+	}
+
+	// Daily bucket must track today's silver end-to-end through the callback.
+	if receivedData.Daily != 5000 {
+		t.Errorf("expected daily silver 5000 (same day as cumulative), got %d", receivedData.Daily)
 	}
 }
 
@@ -836,6 +846,11 @@ func TestHandleUpdateReSpecPoints(t *testing.T) {
 
 	if handler.GetTotalRespecSilver() != 500 {
 		t.Errorf("expected session respec silver 500, got %d", handler.GetTotalRespecSilver())
+	}
+
+	// Daily bucket must track today's respec end-to-end through the callback.
+	if receivedData.Daily != 1000 {
+		t.Errorf("expected daily respec 1000 (same day as cumulative), got %d", receivedData.Daily)
 	}
 }
 

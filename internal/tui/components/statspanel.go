@@ -243,8 +243,13 @@ func (s StatsPanel) View() string {
 		todayLabelStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("241")).
 			Width(8)
+		// The divider is not a data label; render it plain so it spans its
+		// natural width instead of being squeezed by the 8-cell label style
+		// (the separator "─ today ─" is 9 cells wide).
+		dividerStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("241"))
 		statRows = append(statRows,
-			todayLabelStyle.Render("─ today ─"),
+			dividerStyle.Render("─ today ─"),
 			fmt.Sprintf("%s %s",
 				todayLabelStyle.Render("Fame"),
 				fameValueStyle.Render(formatNum(s.todayFame)),
