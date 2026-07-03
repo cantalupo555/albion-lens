@@ -99,7 +99,11 @@ func main() {
 	if err != nil {
 		fmt.Printf("Warning: persistence disabled, could not resolve stats data path: %v\n", err)
 	}
-	persistenceEnabled := dungeonPath != "" && statsPath != ""
+	kdLogPath, err := storage.DataFile("kill-death-log.json")
+	if err != nil {
+		fmt.Printf("Warning: persistence disabled, could not resolve kill/death log path: %v\n", err)
+	}
+	persistenceEnabled := dungeonPath != "" && statsPath != "" && kdLogPath != ""
 
 	// Load-on-startup. The handler is created by Start(), so this must run
 	// after it. A missing file is the first-run case (handled as empty state
@@ -111,6 +115,9 @@ func main() {
 			}
 			if err := h.LoadTotalStats(statsPath); err != nil {
 				fmt.Printf("Warning: could not load total stats: %v\n", err)
+			}
+			if err := h.LoadKillDeathLog(kdLogPath); err != nil {
+				fmt.Printf("Warning: could not load kill/death log: %v\n", err)
 			}
 		}
 	}
@@ -130,7 +137,10 @@ func main() {
 		if err := h.SaveDungeonRuns(dungeonPath); err != nil {
 			return err
 		}
-		return h.SaveTotalStats(statsPath)
+		if err := h.SaveTotalStats(statsPath); err != nil {
+			return err
+		}
+		return h.SaveKillDeathLog(kdLogPath)
 	})
 
 	// Send initial status event (as a batch)
@@ -161,6 +171,9 @@ func main() {
 			}
 			if err := h.SaveTotalStats(statsPath); err != nil {
 				fmt.Printf("Warning: could not save total stats: %v\n", err)
+			}
+			if err := h.SaveKillDeathLog(kdLogPath); err != nil {
+				fmt.Printf("Warning: could not save kill/death log: %v\n", err)
 			}
 		}
 	}

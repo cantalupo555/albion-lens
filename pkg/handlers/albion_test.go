@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cantalupo555/albion-lens/internal/storage"
 	"github.com/cantalupo555/albion-lens/pkg/events"
 )
 
@@ -2017,5 +2018,313 @@ func TestLoadTotalStatsV1FileLoadsEmptyBuckets(t *testing.T) {
 	}
 	if len(snap.Hourly) != 0 {
 		t.Errorf("v1 file should load with empty hourly buckets, got %d entries", len(snap.Hourly))
+	}
+}
+
+// killDeathLogEqual compares two kill/death log slices for equality (used by
+// the persistence round-trip and reload tests).
+func killDeathLogEqual(a, b []KillDeathLogEntry) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i].Type != b[i].Type {
+			return false
+		}
+		if !a[i].Timestamp.Equal(b[i].Timestamp) {
+			return false
+		}
+		if a[i].Victim != b[i].Victim || a[i].Killer != b[i].Killer {
+			return false
+		}
+		if a[i].Local != b[i].Local || a[i].Zone != b[i].Zone {
+			return false
+		}
+	}
+	return true
+}
+
+// TestKillDeathLogClassification verifies that only events involving the local
+// player are logged: a kill when the local player is the killer, a death when
+// the local player is the victim. Nearby deaths (neither party is the local
+// player) must NOT be logged.
+func TestKillDeathLogClassification(t *testing.T) {
+	t0 := time.Date(2026, 7, 3, 10, 0, 0, 0, time.UTC)
+	h := NewAlbionHandler()
+	h.SetLocalPlayer("Hero")
+	h.nowFunc = func() time.Time { return t0 }
+
+	// Local player kills someone -> one kill entry.
+	h.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Enemy",
+		10: "Hero",
+	})
+	// Local player dies -> one death entry.
+	t1 := t0.Add(time.Minute)
+	h.nowFunc = func() time.Time { return t1 }
+	h.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Hero",
+		10: "Enemy2",
+	})
+	// Nearby death (neither party is local) -> NOT logged.
+	t2 := t0.Add(2 * time.Minute)
+	h.nowFunc = func() time.Time { return t2 }
+	h.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Alice",
+		10: "Bob",
+	})
+
+	got := h.KillDeathLog()
+	if len(got) != 2 {
+		t.Fatalf("expected 2 log entries (kill + death), got %d: %+v", len(got), got)
+	}
+	if got[0].Type != KillTypeKill || got[0].Victim != "Enemy" || got[0].Killer != "Hero" {
+		t.Errorf("entry0 = %+v, want kill Victim=Enemy Killer=Hero", got[0])
+	}
+	if !got[0].Timestamp.Equal(t0) {
+		t.Errorf("entry0 Timestamp = %v, want %v", got[0].Timestamp, t0)
+	}
+	if got[1].Type != KillTypeDeath || got[1].Victim != "Hero" || got[1].Killer != "Enemy2" {
+		t.Errorf("entry1 = %+v, want death Victim=Hero Killer=Enemy2", got[1])
+	}
+}
+
+// TestKillDeathLogSelfKill verifies the documented self-kill (suicide) edge
+// case: when the local player is both killer and victim, a single EventDied
+// produces one kill entry AND one death entry. This mirrors the reference,
+// which would receive the same event from both /topkills and /deaths. The test
+// locks in the intended behavior so a future guard against double-counting
+// doesn't silently change the log semantics.
+func TestKillDeathLogSelfKill(t *testing.T) {
+	t0 := time.Date(2026, 7, 3, 10, 0, 0, 0, time.UTC)
+	h := NewAlbionHandler()
+	h.SetLocalPlayer("Hero")
+	h.nowFunc = func() time.Time { return t0 }
+
+	// Self-kill: killer == victim == local.
+	h.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Hero",
+		10: "Hero",
+	})
+
+	got := h.KillDeathLog()
+	if len(got) != 2 {
+		t.Fatalf("self-kill should produce 2 entries (kill + death), got %d: %+v", len(got), got)
+	}
+	// Kill branch runs first (isLocalKill), death branch second (victim == local).
+	if got[0].Type != KillTypeKill {
+		t.Errorf("entry0 Type = %q, want %q", got[0].Type, KillTypeKill)
+	}
+	if got[1].Type != KillTypeDeath {
+		t.Errorf("entry1 Type = %q, want %q", got[1].Type, KillTypeDeath)
+	}
+	// Both entries describe the same victim/killer (the local player).
+	for i, e := range got {
+		if e.Victim != "Hero" || e.Killer != "Hero" {
+			t.Errorf("entry%d = Victim=%q Killer=%q, want both Hero", i, e.Victim, e.Killer)
+		}
+	}
+	// Counters are also incremented for both (consistent with the log).
+	if h.GetTotalKills() != 1 {
+		t.Errorf("kills counter = %d, want 1", h.GetTotalKills())
+	}
+	if h.GetTotalDeaths() != 1 {
+		t.Errorf("deaths counter = %d, want 1", h.GetTotalDeaths())
+	}
+}
+
+// TestKillDeathLogEnrichedFields verifies the local and zone context fields
+// are captured from the handler state at event time.
+func TestKillDeathLogEnrichedFields(t *testing.T) {
+	t0 := time.Date(2026, 7, 3, 10, 0, 0, 0, time.UTC)
+	h := NewAlbionHandler()
+	h.SetLocalPlayer("Hero")
+	h.nowFunc = func() time.Time { return t0 }
+
+	// Establish a zone before the kill so DisplayString is non-empty.
+	h.OnResponse(events.OperationChangeCluster, 0, "", map[byte]interface{}{
+		0: "@ISLAND@my-island",
+		2: "My Island",
+	})
+
+	h.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Enemy",
+		10: "Hero",
+	})
+
+	got := h.KillDeathLog()
+	if len(got) != 1 {
+		t.Fatalf("expected 1 log entry, got %d", len(got))
+	}
+	if got[0].Local != "Hero" {
+		t.Errorf("Local = %q, want \"Hero\"", got[0].Local)
+	}
+	if got[0].Zone == "" {
+		t.Errorf("Zone is empty, want a non-empty display string after ChangeCluster")
+	}
+}
+
+// TestKillDeathLogDedup verifies that the redundant copies of EventDied
+// delivered when the local player is the killer produce exactly one log entry.
+func TestKillDeathLogDedup(t *testing.T) {
+	t0 := time.Date(2026, 7, 3, 10, 0, 0, 0, time.UTC)
+	h := NewAlbionHandler()
+	h.SetLocalPlayer("Hero")
+	h.nowFunc = func() time.Time { return t0 }
+
+	params := map[byte]interface{}{2: "Enemy", 10: "Hero"}
+	for i := 0; i < 5; i++ {
+		h.OnEvent(byte(events.EventDied), params)
+	}
+
+	got := h.KillDeathLog()
+	if len(got) != 1 {
+		t.Errorf("expected 1 log entry after dedup, got %d: %+v", len(got), got)
+	}
+}
+
+// TestKillDeathLogCap verifies the log is bounded to maxKillDeathLogEntries,
+// keeping the newest entries when the cap is exceeded.
+func TestKillDeathLogCap(t *testing.T) {
+	h := NewAlbionHandler()
+	h.SetLocalPlayer("Hero")
+	// Advance time per event so each kill is distinct (avoid dedup) and the
+	// ordering of retained entries is deterministic. ts is freshly declared
+	// each iteration, so the closure captures a distinct value per event.
+	base := time.Date(2026, 7, 3, 10, 0, 0, 0, time.UTC)
+	for i := 0; i < maxKillDeathLogEntries+50; i++ {
+		ts := base.Add(time.Duration(i) * time.Second)
+		h.nowFunc = func() time.Time { return ts }
+		h.OnEvent(byte(events.EventDied), map[byte]interface{}{
+			2:  fmt.Sprintf("Enemy%d", i),
+			10: "Hero",
+		})
+	}
+
+	got := h.KillDeathLog()
+	if len(got) != maxKillDeathLogEntries {
+		t.Fatalf("expected log capped to %d entries, got %d", maxKillDeathLogEntries, len(got))
+	}
+	// The newest maxKillDeathLogEntries should be retained (indices
+	// 50..maxKillDeathLogEntries+49). The first retained victim reflects index 50.
+	wantFirstVictim := "Enemy50"
+	if got[0].Victim != wantFirstVictim {
+		t.Errorf("oldest retained Victim = %q, want %q (cap should drop oldest)", got[0].Victim, wantFirstVictim)
+	}
+	wantLastVictim := fmt.Sprintf("Enemy%d", maxKillDeathLogEntries+49)
+	if got[len(got)-1].Victim != wantLastVictim {
+		t.Errorf("newest retained Victim = %q, want %q", got[len(got)-1].Victim, wantLastVictim)
+	}
+}
+
+// TestSaveLoadKillDeathLogRoundTrip verifies the log survives save+reload
+// intact.
+func TestSaveLoadKillDeathLogRoundTrip(t *testing.T) {
+	t0 := time.Date(2026, 7, 3, 10, 0, 0, 0, time.UTC)
+	h := NewAlbionHandler()
+	h.SetLocalPlayer("Hero")
+	h.nowFunc = func() time.Time { return t0 }
+	h.OnEvent(byte(events.EventDied), map[byte]interface{}{2: "Enemy", 10: "Hero"})
+
+	t1 := t0.Add(time.Minute)
+	h.nowFunc = func() time.Time { return t1 }
+	h.OnEvent(byte(events.EventDied), map[byte]interface{}{2: "Hero", 10: "Enemy2"})
+
+	want := h.KillDeathLog()
+	if len(want) != 2 {
+		t.Fatalf("expected 2 entries seeded, got %d", len(want))
+	}
+
+	path := filepath.Join(t.TempDir(), "kill-death-log.json")
+	if err := h.SaveKillDeathLog(path); err != nil {
+		t.Fatalf("SaveKillDeathLog: %v", err)
+	}
+
+	fresh := NewAlbionHandler()
+	if err := fresh.LoadKillDeathLog(path); err != nil {
+		t.Fatalf("LoadKillDeathLog: %v", err)
+	}
+	got := fresh.KillDeathLog()
+	if !killDeathLogEqual(want, got) {
+		t.Errorf("round-trip mismatch\nwant: %+v\ngot:  %+v", want, got)
+	}
+}
+
+// TestLoadKillDeathLogMissingFile verifies a missing file is the first-run
+// case: no error, empty log.
+func TestLoadKillDeathLogMissingFile(t *testing.T) {
+	h := NewAlbionHandler()
+	path := filepath.Join(t.TempDir(), "does-not-exist.json")
+	if err := h.LoadKillDeathLog(path); err != nil {
+		t.Errorf("missing file should not error, got: %v", err)
+	}
+	if got := h.KillDeathLog(); len(got) != 0 {
+		t.Errorf("expected empty log on missing file, got %d entries", len(got))
+	}
+}
+
+// TestLoadKillDeathLogCorruptFile verifies a corrupt file returns an error and
+// leaves any pre-existing in-memory log unchanged.
+func TestLoadKillDeathLogCorruptFile(t *testing.T) {
+	h := NewAlbionHandler()
+	h.SetLocalPlayer("Hero")
+	h.nowFunc = func() time.Time { return time.Date(2026, 7, 3, 10, 0, 0, 0, time.UTC) }
+	h.OnEvent(byte(events.EventDied), map[byte]interface{}{2: "Enemy", 10: "Hero"})
+	pre := h.KillDeathLog()
+
+	path := filepath.Join(t.TempDir(), "kill-death-log.json")
+	if err := os.WriteFile(path, []byte("{broken json"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	if err := h.LoadKillDeathLog(path); err == nil {
+		t.Error("expected error loading corrupt file, got nil")
+	}
+	if got := h.KillDeathLog(); !killDeathLogEqual(pre, got) {
+		t.Errorf("corrupt load should leave log unchanged\npre: %+v\npost: %+v", pre, got)
+	}
+}
+
+// TestLoadKillDeathLogTrimsToCap verifies that loading more entries than the
+// cap keeps only the newest. The oversized file is written directly (bypassing
+// appendKillDeath, which trims at append time) so the load-time trim branch in
+// LoadKillDeathLog is what's actually exercised.
+func TestLoadKillDeathLogTrimsToCap(t *testing.T) {
+	const n = maxKillDeathLogEntries + 20
+	oversized := make([]*KillDeathLogEntry, 0, n)
+	base := time.Date(2026, 7, 3, 10, 0, 0, 0, time.UTC)
+	for i := 0; i < n; i++ {
+		oversized = append(oversized, &KillDeathLogEntry{
+			Type:      KillTypeKill,
+			Timestamp: base.Add(time.Duration(i) * time.Second),
+			Victim:    fmt.Sprintf("Enemy%d", i),
+			Killer:    "Hero",
+		})
+	}
+
+	// Write the oversized slice directly to disk via the storage layer, so the
+	// append-time trim never runs and the file genuinely contains n entries.
+	path := filepath.Join(t.TempDir(), "kill-death-log.json")
+	if err := storage.Save(path, oversized); err != nil {
+		t.Fatalf("storage.Save oversized: %v", err)
+	}
+
+	fresh := NewAlbionHandler()
+	if err := fresh.LoadKillDeathLog(path); err != nil {
+		t.Fatalf("LoadKillDeathLog: %v", err)
+	}
+	got := fresh.KillDeathLog()
+	if len(got) != maxKillDeathLogEntries {
+		t.Fatalf("expected log trimmed to %d on load, got %d", maxKillDeathLogEntries, len(got))
+	}
+	// After trimming, the newest maxKillDeathLogEntries survive: indices
+	// 20..n-1. The oldest retained entry reflects index 20; the newest index n-1.
+	wantFirstVictim := "Enemy20"
+	if got[0].Victim != wantFirstVictim {
+		t.Errorf("oldest retained Victim = %q, want %q (load trim should drop oldest)", got[0].Victim, wantFirstVictim)
+	}
+	wantLastVictim := fmt.Sprintf("Enemy%d", n-1)
+	if got[len(got)-1].Victim != wantLastVictim {
+		t.Errorf("newest retained Victim = %q, want %q", got[len(got)-1].Victim, wantLastVictim)
 	}
 }

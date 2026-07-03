@@ -112,3 +112,58 @@ func TestTotalStatsPersistenceLifecycle(t *testing.T) {
 		t.Error("expected error loading corrupt file, got nil")
 	}
 }
+
+// TestKillDeathLogPersistenceLifecycle exercises the on-disk lifecycle the TUI
+// orchestrates (main.go) for the kill/death log: a kill event lands in the
+// in-memory log, survives a save->reload round-trip, and a corrupt file errors
+// instead of crashing. Guards the persistence path the handler unit tests touch
+// only in pieces.
+func TestKillDeathLogPersistenceLifecycle(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "kill-death-log.json")
+
+	before := time.Now()
+	h := handlers.NewAlbionHandler()
+	h.SetLocalPlayer("Hero")
+
+	// 1. A kill event must land in the in-memory log.
+	h.OnEvent(byte(events.EventDied), map[byte]interface{}{
+		2:  "Enemy",
+		10: "Hero",
+	})
+	want := h.KillDeathLog()
+	if len(want) != 1 {
+		t.Fatalf("expected 1 in-memory entry, got %d", len(want))
+	}
+	if want[0].Type != handlers.KillTypeKill || want[0].Victim != "Enemy" {
+		t.Errorf("entry = %+v, want kill Victim=Enemy", want[0])
+	}
+
+	// 2. Save and reload — the entry must round-trip intact.
+	if err := h.SaveKillDeathLog(path); err != nil {
+		t.Fatalf("SaveKillDeathLog: %v", err)
+	}
+	fresh := handlers.NewAlbionHandler()
+	if err := fresh.LoadKillDeathLog(path); err != nil {
+		t.Fatalf("LoadKillDeathLog: %v", err)
+	}
+	got := fresh.KillDeathLog()
+	if len(got) != 1 {
+		t.Fatalf("expected 1 entry after reload, got %d", len(got))
+	}
+	if got[0].Type != handlers.KillTypeKill || got[0].Victim != "Enemy" || got[0].Killer != "Hero" {
+		t.Errorf("reloaded entry = %+v, want kill Victim=Enemy Killer=Hero", got[0])
+	}
+	if got[0].Timestamp.Before(before) || got[0].Timestamp.After(time.Now().Add(time.Second)) {
+		t.Errorf("reloaded Timestamp = %v, want ~%v", got[0].Timestamp, before)
+	}
+
+	// 3. A corrupt file must error and not crash the app.
+	bad := filepath.Join(dir, "bad.json")
+	if err := os.WriteFile(bad, []byte("{broken"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	if err := handlers.NewAlbionHandler().LoadKillDeathLog(bad); err == nil {
+		t.Error("expected error loading corrupt kill/death log, got nil")
+	}
+}
