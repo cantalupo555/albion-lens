@@ -36,6 +36,11 @@ const defaultDeathDedupWindow = 5 * time.Second
 // the totalCounters.pruneAge field for testing.
 const defaultPruneAge = 90 * 24 * time.Hour
 
+// maxKillDeathLogEntries bounds the persisted kill/death event log. The
+// reference (LocalUserData.cs) grows its PlayerKillsDeaths list unboundedly;
+// we cap it defensively so the on-disk file stays small and predictable.
+const maxKillDeathLogEntries = 1000
+
 // totalCounters holds the seven cumulative long-term counters behind a single
 // RWMutex so a snapshot reads all of them consistently (independent atomics
 // would allow a snapshot to mix pre- and post-update values). The lock is
@@ -382,6 +387,13 @@ type AlbionHandler struct {
 	dungeonRuns []*DungeonRun
 	activeRun   *DungeonRun
 
+	// Kill/death log of the local player's events, persisted to disk. The
+	// in-memory slice is bounded to maxKillDeathLogEntries (a ring window
+	// that drops the oldest entries when full). Distinct from the cumulative
+	// counters above: this preserves the per-event history.
+	kdLogMu sync.Mutex
+	kdLog   []*KillDeathLogEntry
+
 	// Event callback for frontend integration (TUI, Wails, etc.)
 	eventCallback EventCallback
 }
@@ -583,6 +595,35 @@ type DeathEventData struct {
 	TotalDeaths int    // Cumulative deaths across all launches (long-term total)
 }
 
+// KillDeathType discriminates a kill/death log entry. It is a string type so
+// the on-disk JSON stays human-readable ("kill"/"death"), while the named
+// constants prevent typo-prone bare strings at the call sites.
+type KillDeathType string
+
+const (
+	KillTypeKill  KillDeathType = "kill"
+	KillTypeDeath KillDeathType = "death"
+)
+
+// KillDeathLogEntry is a single persisted kill/death event of the local player
+// in the kill/death log (the reference's PlayerKillsDeaths.json equivalent).
+//
+// Only events involving the local player are recorded — a kill when the local
+// player is the killer, a death when the local player is the victim — mirroring
+// the reference, which fetches the local user's /deaths, /topkills and
+// /solokills. Nearby deaths (neither party is the local player) are not logged.
+//
+// The log is additive to the cumulative counters in session-stats.json: it
+// preserves per-event history (who/when/where) without replacing the totals.
+type KillDeathLogEntry struct {
+	Type      KillDeathType `json:"type"`
+	Timestamp time.Time     `json:"timestamp"`
+	Victim    string        `json:"victim"`
+	Killer    string        `json:"killer"`
+	Local     string        `json:"local,omitempty"` // local player name at the time
+	Zone      string        `json:"zone,omitempty"`  // zone display string at the time
+}
+
 // RespecEventData contains respec-specific event data
 type RespecEventData struct {
 	Gained      int64 // Credits gained in this event
@@ -609,6 +650,30 @@ func (h *AlbionHandler) GetTotalKills() int {
 // GetTotalDeaths returns the cumulative number of deaths across all launches.
 func (h *AlbionHandler) GetTotalDeaths() int {
 	return h.stats.deathsNow()
+}
+
+// KillDeathLog returns a copy of the persisted kill/death event log of the
+// local player, oldest-first. The slice is a deep copy and safe to retain.
+// Returns nil/empty when nothing has been logged yet.
+func (h *AlbionHandler) KillDeathLog() []KillDeathLogEntry {
+	h.kdLogMu.Lock()
+	defer h.kdLogMu.Unlock()
+	out := make([]KillDeathLogEntry, len(h.kdLog))
+	for i, e := range h.kdLog {
+		out[i] = *e
+	}
+	return out
+}
+
+// appendKillDeath appends a kill/death event to the in-memory log, trimming
+// the oldest entries when it exceeds maxKillDeathLogEntries (keeps the newest).
+func (h *AlbionHandler) appendKillDeath(e KillDeathLogEntry) {
+	h.kdLogMu.Lock()
+	h.kdLog = append(h.kdLog, &e)
+	if len(h.kdLog) > maxKillDeathLogEntries {
+		h.kdLog = h.kdLog[len(h.kdLog)-maxKillDeathLogEntries:]
+	}
+	h.kdLogMu.Unlock()
 }
 
 // GetTotalLoot returns the cumulative number of loot items across all launches.
@@ -902,6 +967,48 @@ func (h *AlbionHandler) LoadDungeonRuns(path string) error {
 	h.dungeonRuns = runs
 	h.activeRun = nil
 	h.dungeonMu.Unlock()
+	return nil
+}
+
+// SaveKillDeathLog persists the kill/death event log to path as JSON. The log
+// is copied under the lock and the (potentially slow) atomic write happens
+// without holding it, so event handling is not blocked on I/O — same shape as
+// SaveDungeonRuns. Atomicity (tmp + rename) and crash-recovery are provided by
+// storage.Save / storage.Load.
+func (h *AlbionHandler) SaveKillDeathLog(path string) error {
+	h.kdLogMu.Lock()
+	toSave := make([]*KillDeathLogEntry, len(h.kdLog))
+	for i, e := range h.kdLog {
+		cp := *e
+		toSave[i] = &cp
+	}
+	h.kdLogMu.Unlock()
+
+	return storage.Save(path, toSave)
+}
+
+// LoadKillDeathLog replaces the in-memory kill/death log with the entries
+// decoded from path. Entries are sorted oldest-first by Timestamp and trimmed
+// to maxKillDeathLogEntries (newest kept). The sort is stable so entries that
+// share a timestamp (e.g. near-simultaneous kills) keep their on-disk order.
+// A missing file is treated as an empty log (first run); a corrupt file is
+// returned as err and leaves the current log unchanged — same contract as
+// LoadDungeonRuns / LoadTotalStats.
+func (h *AlbionHandler) LoadKillDeathLog(path string) error {
+	entries, err := storage.Load[[]*KillDeathLogEntry](path)
+	if err != nil {
+		return err
+	}
+	sort.SliceStable(entries, func(i, j int) bool {
+		return entries[i].Timestamp.Before(entries[j].Timestamp)
+	})
+	if len(entries) > maxKillDeathLogEntries {
+		entries = entries[len(entries)-maxKillDeathLogEntries:]
+	}
+
+	h.kdLogMu.Lock()
+	h.kdLog = entries
+	h.kdLogMu.Unlock()
 	return nil
 }
 
@@ -1284,6 +1391,7 @@ func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 	killer := getString(params, 10)
 
 	local := h.GetLocalPlayer()
+	now := h.nowFunc()
 
 	// Dedup redundant copies of the same death. The server delivers EventDied
 	// multiple times when the local player is the killer. Only apply dedup in
@@ -1303,18 +1411,51 @@ func (h *AlbionHandler) handleDied(params map[byte]interface{}) {
 	}
 
 	isLocalKill := local != "" && killer == local
+	isLocalDeath := local != "" && victim == local
+
+	// Resolve the zone display string only when this event will be logged
+	// (local player is the killer or the victim). Nearby deaths take neither
+	// branch, so they never pay for DisplayString. A self-kill (which hits
+	// both branches) resolves it exactly once.
+	var zone string
+	if isLocalKill || isLocalDeath {
+		zone = h.GetCurrentZone().DisplayString()
+	}
 
 	// Count a kill when the local player is the killer.
 	if isLocalKill {
-		h.stats.addKill(h.nowFunc())
+		h.stats.addKill(now)
 		h.notifyEvent("kill", "", &KillEventData{
 			TotalKills: h.stats.killsNow(),
+		})
+		// Append the kill to the persisted log. Only events involving the
+		// local player are logged (mirrors the reference), so this is the
+		// sole capture point for kills.
+		h.appendKillDeath(KillDeathLogEntry{
+			Type:      KillTypeKill,
+			Timestamp: now,
+			Victim:    victim,
+			Killer:    local,
+			Local:     local,
+			Zone:      zone,
 		})
 	}
 
 	// Count a death only when the local player is the victim.
-	if local != "" && victim == local {
-		h.stats.addDeath(h.nowFunc())
+	if isLocalDeath {
+		h.stats.addDeath(now)
+		// Append the local player's death to the persisted log. Note: a
+		// self-kill (suicide, where killer == victim == local) lands in the
+		// log as both a kill and a death entry — matches the reference,
+		// which would receive the same event from both /topkills and /deaths.
+		h.appendKillDeath(KillDeathLogEntry{
+			Type:      KillTypeDeath,
+			Timestamp: now,
+			Victim:    victim,
+			Killer:    killer,
+			Local:     local,
+			Zone:      zone,
+		})
 	}
 
 	// Emit a death event for the local player's death or for nearby deaths
