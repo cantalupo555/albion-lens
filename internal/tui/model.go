@@ -368,7 +368,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Periodic tick
 	case TickMsg:
-		// Refresh player identification, zone, and online status from the backend
+		// Refresh player identification, zone, region, and online status from the backend
 		if m.svc != nil {
 			m.statusBar = m.statusBar.SetPlayerName(m.svc.LocalPlayerName())
 			m.statusBar = m.statusBar.SetOnline(m.svc.IsOnline())
@@ -376,6 +376,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			zone := m.svc.CurrentZone()
 			m.statusBar = m.statusBar.SetZone(zone.DisplayString())
 			m.zonePanel = m.zonePanel.SetZone(zone).SetNow(time.Now())
+
+			m.statusBar = m.statusBar.SetRegion(m.svc.CurrentServer().String())
 
 			// Refresh dungeon runs panel
 			if h := m.svc.Handler(); h != nil {

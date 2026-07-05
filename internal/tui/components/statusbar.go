@@ -12,6 +12,7 @@ type StatusBar struct {
 	online         bool
 	playerName     string
 	currentZone    string
+	region         string
 	packetsTotal   uint64
 	packetsPerSec  float64
 	eventsDecoded  uint64
@@ -53,6 +54,15 @@ func (s StatusBar) SetPlayerName(name string) StatusBar {
 // omitted from the status bar (before the first ChangeCluster is captured).
 func (s StatusBar) SetZone(zone string) StatusBar {
 	s.currentZone = zone
+	return s
+}
+
+// SetRegion updates the detected server region label (e.g. "Europe"). When
+// empty or "Unknown", the region indicator is omitted — the detector needs a
+// few seconds of stable Photon traffic before it confirms a region, so the
+// indicator appears only once detection is confident.
+func (s StatusBar) SetRegion(region string) StatusBar {
+	s.region = region
 	return s
 }
 
@@ -118,6 +128,15 @@ func (s StatusBar) View() string {
 		status += "  " + lipgloss.NewStyle().
 			Foreground(lipgloss.Color("39")).
 			Render("◎ "+s.currentZone)
+	}
+
+	// Region indicator (shown once the server region is confidently detected).
+	// Helps users verify which region's persistence directory is active,
+	// especially after a region switch or when a server-hint override is set.
+	if s.online && s.region != "" && s.region != "Unknown" {
+		status += "  " + lipgloss.NewStyle().
+			Foreground(lipgloss.Color("141")).
+			Render("🌍 "+s.region)
 	}
 
 	// Buffer Stats Logic
