@@ -5,13 +5,17 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/cantalupo555/albion-lens/internal/storage"
+	"github.com/cantalupo555/albion-lens/internal/serverdetect"
 	"github.com/cantalupo555/albion-lens/internal/tui"
 	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/capture"
+	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
 
@@ -63,6 +67,21 @@ func main() {
 	bulkEventChan := make(chan tui.BulkEventMsg, bulkEventChannelSize)
 	statsChan := make(chan *photon.Stats, statsChannelSize)
 
+	// sendWarning delivers a diagnostic to the TUI event log so the user can
+	// see it during operation (fmt.Printf is hidden by the TUI alt-screen).
+	// Falls back to fmt.Printf when the channel is full so no warning is lost.
+	sendWarning := func(msgType, format string, args ...any) {
+		select {
+		case bulkEventChan <- tui.BulkEventMsg{{
+			Type:      msgType,
+			Message:   strings.TrimSpace(fmt.Sprintf(format, args...)),
+			Timestamp: time.Now(),
+		}}:
+		default:
+			fmt.Printf(format, args...)
+		}
+	}
+
 	// Bridge backend events to TUI with batching
 	go bridgeEvents(svc.Events, bulkEventChan, svc.ParserStats)
 
@@ -85,40 +104,47 @@ func main() {
 	}
 	defer svc.Stop()
 
-	// --- Persistence (issues #103, #104): restore state, then keep it warm. ---
-	// Resolve XDG data paths first (the directory is created if missing). If
-	// resolution fails (e.g. HOME unset or data dir read-only), persistence is
-	// disabled entirely: we never pass an empty path to Load/Save, which would
-	// otherwise silently no-op on Load and emit confusing "periodic save
-	// failed" warnings on Save.
-	dungeonPath, err := storage.DataFile("dungeon-runs.json")
-	if err != nil {
-		fmt.Printf("Warning: persistence disabled, could not resolve dungeon data path: %v\n", err)
+	// --- Persistence: restore state, keep it warm, and segregate it per
+	// Albion server region. ---
+	// A user-provided server-hint.txt overrides IP-based detection: when set,
+	// persistence pins to that region for the whole session and detection
+	// events are ignored. This is the escape hatch for when the server IP
+	// prefixes drift (see internal/serverdetect).
+	hintRegion := serverHintOverride()
+	if hintRegion.IsKnown() {
+		fmt.Printf("Server hint active: persistence pinned to %s; IP detection disabled.\n", hintRegion)
 	}
-	statsPath, err := storage.DataFile("session-stats.json")
-	if err != nil {
-		fmt.Printf("Warning: persistence disabled, could not resolve stats data path: %v\n", err)
+	warn := warnFn(func(format string, args ...any) {
+		sendWarning("warning", format, args...)
+	})
+	paths := newPersistPaths(hintRegion.DirName(), warn)
+	if !paths.Enabled() {
+		fmt.Printf("Warning: persistence disabled, could not resolve data directory: %v\n", paths.InitError())
 	}
-	kdLogPath, err := storage.DataFile("kill-death-log.json")
-	if err != nil {
-		fmt.Printf("Warning: persistence disabled, could not resolve kill/death log path: %v\n", err)
-	}
-	persistenceEnabled := dungeonPath != "" && statsPath != "" && kdLogPath != ""
 
 	// Load-on-startup. The handler is created by Start(), so this must run
 	// after it. A missing file is the first-run case (handled as empty state
 	// inside Load); a corrupt file leaves the in-memory state unchanged.
-	if persistenceEnabled {
+	if h := svc.Handler(); h != nil {
+		if err := paths.Load(h); err != nil {
+			sendWarning("warning", "Warning: could not load persisted state: %v\n", err)
+		}
+	}
+
+	// React to server-region changes: flush the old region, switch paths, and
+	// reload state for the new region. Skipped when a hint override is active
+	// (the user explicitly pinned the region) or persistence is disabled.
+	var watchWg sync.WaitGroup
+	notify := func(msgType, format string, args ...any) {
+		sendWarning(msgType, format, args...)
+	}
+	if hintRegion == serverdetect.ServerLocationUnknown && paths.Enabled() {
 		if h := svc.Handler(); h != nil {
-			if err := h.LoadDungeonRuns(dungeonPath); err != nil {
-				fmt.Printf("Warning: could not load dungeon history: %v\n", err)
-			}
-			if err := h.LoadTotalStats(statsPath); err != nil {
-				fmt.Printf("Warning: could not load total stats: %v\n", err)
-			}
-			if err := h.LoadKillDeathLog(kdLogPath); err != nil {
-				fmt.Printf("Warning: could not load kill/death log: %v\n", err)
-			}
+			watchWg.Add(1)
+			go func() {
+				defer watchWg.Done()
+				watchServerChanges(svc.ServerChanged(), h, paths, notify)
+			}()
 		}
 	}
 
@@ -127,21 +153,46 @@ func main() {
 	saveCtx, saveCancel := context.WithCancel(context.Background())
 	defer saveCancel()
 	go periodicSave(saveCtx, saveInterval, func() error {
-		if !persistenceEnabled {
-			return nil
+		if dropped := svc.ServerChangesDropped(); dropped > 0 {
+			notify("warning", "Warning: %d server-region change(s) dropped; persistence may not have switched to the correct region.\n", dropped)
 		}
 		h := svc.Handler()
-		if h == nil {
+		if h == nil || !paths.Enabled() {
 			return nil
 		}
-		if err := h.SaveDungeonRuns(dungeonPath); err != nil {
-			return err
-		}
-		if err := h.SaveTotalStats(statsPath); err != nil {
-			return err
-		}
-		return h.SaveKillDeathLog(kdLogPath)
-	})
+		return paths.Save(h)
+	}, notify)
+
+	// Cluster-change save: each confirmed zone transition asks for a
+	// persistence flush, rate-limited so rapid map hops coalesce into at most
+	// one write per clusterSaveWindow. The save runs in its own goroutine so
+	// the capture hot path that produced the transition is never blocked on
+	// I/O. The periodic ticker and save-on-exit remain as safety nets.
+	// saveWg tracks these goroutines so the final save-on-exit can drain them
+	// first, avoiding an in-flight .tmp write racing with the exit save.
+	// shuttingDown gates saveWg.Add(1) so the WaitGroup cannot be re-entered
+	// after the exit drain has completed (which would panic).
+	var shuttingDown atomic.Bool
+	clusterSaver := newRateLimiter(clusterSaveWindow)
+	var saveWg sync.WaitGroup
+	if h := svc.Handler(); h != nil {
+		h.SetClusterChangeCallback(func() {
+			if shuttingDown.Load() || !paths.Enabled() || !clusterSaver.Allow(time.Now()) {
+				return
+			}
+			saveWg.Add(1)
+			go func() {
+				defer saveWg.Done()
+				hh := svc.Handler()
+				if hh == nil {
+					return
+				}
+				if err := paths.Save(hh); err != nil {
+					notify("warning", "Warning: cluster-change save failed: %v\n", err)
+				}
+			}()
+		})
+	}
 
 	// Send initial status event (as a batch)
 	bulkEventChan <- tui.BulkEventMsg{
@@ -161,22 +212,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Stop the periodic flush, then do a final save-on-exit so the on-disk
-	// state reflects the very last in-memory values.
+	// --- Shutdown sequence ---
+	// 1. Gate the cluster-change callback so no new saveWg.Add(1) can fire
+	//    after we start draining (Add on a waited WaitGroup panics).
+	// 2. Stop the periodic flush.
+	// 3. Drain in-flight cluster-change saves.
+	// 4. Final save-on-exit.
+	// 5. Stop capture (closes serverChangedCh so watchServerChanges exits).
+	// 6. Drain the region-change watcher.
+	shuttingDown.Store(true)
 	saveCancel()
-	if persistenceEnabled {
-		if h := svc.Handler(); h != nil {
-			if err := h.SaveDungeonRuns(dungeonPath); err != nil {
-				fmt.Printf("Warning: could not save dungeon history: %v\n", err)
-			}
-			if err := h.SaveTotalStats(statsPath); err != nil {
-				fmt.Printf("Warning: could not save total stats: %v\n", err)
-			}
-			if err := h.SaveKillDeathLog(kdLogPath); err != nil {
-				fmt.Printf("Warning: could not save kill/death log: %v\n", err)
-			}
+	saveWg.Wait()
+	if h := svc.Handler(); h != nil && paths.Enabled() {
+		if err := paths.Save(h); err != nil {
+			fmt.Printf("Warning: final save failed: %v\n", err)
 		}
 	}
+
+	svc.Stop()
+	watchWg.Wait()
 
 	// In discovery mode, persist the captured event map so unmapped events
 	// (e.g. the dungeon-closure notification) can be identified offline.
@@ -260,9 +314,9 @@ func bridgeEvents(
 
 // periodicSave calls save at each interval until ctx is cancelled. Used to
 // bound the data-loss window on crash/kill while the TUI is running. A non-nil
-// error from save is surfaced as a warning so the user learns mid-session that
-// persistence has degraded (the final save-on-exit remains the safety net).
-func periodicSave(ctx context.Context, interval time.Duration, save func() error) {
+// error from save is surfaced via notify (or fmt.Printf when nil) so the user
+// learns mid-session that persistence has degraded.
+func periodicSave(ctx context.Context, interval time.Duration, save func() error, notify func(msgType, format string, args ...any)) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
@@ -271,8 +325,48 @@ func periodicSave(ctx context.Context, interval time.Duration, save func() error
 			return
 		case <-ticker.C:
 			if err := save(); err != nil {
-				fmt.Printf("Warning: periodic save failed: %v\n", err)
+				if notify != nil {
+					notify("warning", "Warning: periodic save failed: %v\n", err)
+				} else {
+					fmt.Printf("Warning: periodic save failed: %v\n", err)
+				}
 			}
+		}
+	}
+}
+
+// watchServerChanges consumes region transitions from changes and re-points
+// persistence at the newly active region. A transition to a known region
+// triggers SwitchRegion (flush old → reset → migrate → load new); a transition
+// back to Unknown (the detector lost confidence after seeing a different
+// region) is ignored so paths stay on the last known region rather than
+// churning to the shared root. Returns when the service stops and closes the
+// changes channel.
+//
+// notify routes diagnostics to the TUI event log (nil falls back to fmt.Printf
+// for tests). The handler is captured once (it lives for the whole capture
+// session) so the function depends only on its arguments, making it
+// unit-testable without a real Service.
+func watchServerChanges(changes <-chan serverdetect.ChangeEvent, h *handlers.AlbionHandler, paths *persistPaths, notify func(msgType, format string, args ...any)) {
+	for ev := range changes {
+		region := ev.Current.Location
+		if !region.IsKnown() {
+			continue
+		}
+		dir := region.DirName()
+		if h == nil {
+			continue
+		}
+		if err := paths.SwitchRegion(dir, h); err != nil {
+			if notify != nil {
+				notify("warning", "Warning: region switch to %s failed: %v\n", dir, err)
+			} else {
+				fmt.Printf("Warning: region switch to %s failed: %v\n", dir, err)
+			}
+			continue
+		}
+		if notify != nil {
+			notify("info", "Persistence switched to region %s (%s)\n", region, dir)
 		}
 	}
 }

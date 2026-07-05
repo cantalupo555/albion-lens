@@ -176,7 +176,7 @@ func TestPeriodicSaveFiresAndStopsOnCancel(t *testing.T) {
 		periodicSave(ctx, 10*time.Millisecond, func() error {
 			calls.Add(1)
 			return nil
-		})
+		}, nil)
 		close(done)
 	}()
 
@@ -207,7 +207,7 @@ func TestPeriodicSaveContinuesAfterError(t *testing.T) {
 		periodicSave(ctx, 10*time.Millisecond, func() error {
 			calls.Add(1)
 			return errBoom
-		})
+		}, nil)
 		close(done)
 	}()
 
