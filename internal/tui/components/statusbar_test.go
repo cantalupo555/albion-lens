@@ -130,6 +130,33 @@ func TestStatusBarViewOnline(t *testing.T) {
 	}
 }
 
+// TestStatusBarRegionIndicator verifies the region indicator renders when a
+// known region is set + online, and is omitted for Unknown / empty / offline.
+func TestStatusBarRegionIndicator(t *testing.T) {
+	s := NewStatusBar().SetWidth(100).SetOnline(true).SetRegion("Europe")
+	if out := s.View(); !strings.Contains(out, "🌍 Europe") {
+		t.Errorf("expected region indicator in view, got:\n%s", out)
+	}
+
+	// Unknown region must be omitted.
+	s = NewStatusBar().SetWidth(100).SetOnline(true).SetRegion("Unknown")
+	if out := s.View(); strings.Contains(out, "🌍") {
+		t.Errorf("Unknown region should be omitted, got:\n%s", out)
+	}
+
+	// Empty region must be omitted.
+	s = NewStatusBar().SetWidth(100).SetOnline(true)
+	if out := s.View(); strings.Contains(out, "🌍") {
+		t.Errorf("empty region should be omitted, got:\n%s", out)
+	}
+
+	// Online region must not render while offline.
+	s = NewStatusBar().SetWidth(100).SetOnline(false).SetRegion("Europe")
+	if out := s.View(); strings.Contains(out, "🌍") {
+		t.Errorf("region should not render offline, got:\n%s", out)
+	}
+}
+
 func TestStatusBarViewDroppedEvents(t *testing.T) {
 	stats := &photon.Stats{
 		EventsDecoded: uint64(100),

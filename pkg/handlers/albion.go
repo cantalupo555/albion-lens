@@ -396,6 +396,15 @@ type AlbionHandler struct {
 
 	// Event callback for frontend integration (TUI, Wails, etc.)
 	eventCallback EventCallback
+
+	// clusterChangeCallback is invoked once per confirmed zone transition
+	// (ChangeCluster / OpJoin that materially changes the zone). Frontends use
+	// it to trigger a rate-limited persistence flush so a crash shortly after a
+	// map change loses at most the post-transition progress. Guarded by
+	// clusterCbMu because it is set after Start() while the capture goroutine
+	// may already be producing transitions.
+	clusterCbMu     sync.RWMutex
+	clusterChangeCb func()
 }
 
 // DiscoveredEvent tracks unknown events in discovery mode
@@ -436,6 +445,17 @@ func (h *AlbionHandler) SetDiscoveryMode(discovery bool) {
 // SetEventCallback sets a callback function for TUI integration
 func (h *AlbionHandler) SetEventCallback(callback EventCallback) {
 	h.eventCallback = callback
+}
+
+// SetClusterChangeCallback registers a function invoked on each confirmed zone
+// transition (a ChangeCluster or OpJoin that materially changes the map). The
+// callback runs on the capture goroutine, so it must be non-blocking; callers
+// typically dispatch persistence work to a separate goroutine with a rate
+// limit. Passing nil clears the callback.
+func (h *AlbionHandler) SetClusterChangeCallback(fn func()) {
+	h.clusterCbMu.Lock()
+	h.clusterChangeCb = fn
+	h.clusterCbMu.Unlock()
 }
 
 // SetLocalPlayer records the local player's name, auto-detected from the OpJoin
@@ -539,6 +559,16 @@ func (h *AlbionHandler) processZoneTransition(newZone ZoneInfo) {
 		ClusterIndex: newZone.ClusterIndex,
 		Previous:     prev.MapType,
 	})
+
+	// Notify the cluster-change hook. Fires only on a confirmed material
+	// transition — the dedup skip above returns before reaching here. The
+	// callback must be non-blocking; callers rate-limit and dispatch I/O.
+	h.clusterCbMu.RLock()
+	cb := h.clusterChangeCb
+	h.clusterCbMu.RUnlock()
+	if cb != nil {
+		cb()
+	}
 }
 
 // notifyEvent calls the event callback if set
@@ -1010,6 +1040,40 @@ func (h *AlbionHandler) LoadKillDeathLog(path string) error {
 	h.kdLog = entries
 	h.kdLogMu.Unlock()
 	return nil
+}
+
+// ResetPersistedState clears all in-memory state that is persisted to disk:
+// dungeon runs, the kill/death log, and the cumulative stats counters (with
+// their daily/hourly buckets). The active dungeon run is dropped too, since it
+// is runtime-only and belongs to the region being left.
+//
+// The fame-dedup baseline (totalFame) is also reset: it tracks the last
+// server-reported total fame and is not persisted, so leaving the old region's
+// value would cause the new region's first (lower) fame events to be rejected
+// by the monotonic guard in handleUpdateFame.
+//
+// Used when switching the active server region: save the current region, reset,
+// then load the new region. Resetting before the load guarantees that a corrupt
+// new-region file (which Load* leaves untouched on error) cannot leak the
+// previous region's data into the new one.
+func (h *AlbionHandler) ResetPersistedState() {
+	h.dungeonMu.Lock()
+	h.dungeonRuns = nil
+	h.activeRun = nil
+	h.dungeonMu.Unlock()
+
+	h.kdLogMu.Lock()
+	h.kdLog = nil
+	h.kdLogMu.Unlock()
+
+	h.stats.apply(TotalStats{
+		Daily:  map[string]StatValues{},
+		Hourly: map[string]StatValues{},
+	})
+
+	// Reset the fame-dedup baseline so the new region's events are not
+	// rejected by the "totalFame must not decrease" guard.
+	h.totalFame.Store(0)
 }
 
 // GetTotalFame returns the cumulative fame gained across all launches.

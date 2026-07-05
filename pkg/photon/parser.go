@@ -45,10 +45,10 @@ type Parser struct {
 	pendingFragments map[int32]*fragmentedPacket
 	fragmentsMu      sync.RWMutex // Protects pendingFragments
 	debug            bool
-	stopCleanup      chan struct{} // Signal to stop cleanup goroutine
-	closeOnce        sync.Once     // Ensures Close is idempotent
+	stopCleanup      chan struct{}  // Signal to stop cleanup goroutine
+	closeOnce        sync.Once      // Ensures Close is idempotent
 	wg               sync.WaitGroup // Tracks cleanupLoop goroutine
-	Stats            *Stats        // Parser statistics
+	Stats            *Stats         // Parser statistics
 }
 
 // fragmentedPacket holds data for reassembling fragmented packets

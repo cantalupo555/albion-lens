@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/cantalupo555/albion-lens/internal/serverdetect"
 	"github.com/cantalupo555/albion-lens/internal/tui/components"
 	"github.com/cantalupo555/albion-lens/pkg/backend"
 	"github.com/cantalupo555/albion-lens/pkg/events"
@@ -754,6 +756,41 @@ func TestUpdateTickMsgWithService(t *testing.T) {
 	view := m.View().Content
 	if strings.Contains(view, "◎") {
 		t.Error("expected no zone indicator with nil handler")
+	}
+}
+
+// TestUpdateTickMsgWiresRegionToStatusBar is the integration test for the
+// TickMsg → svc.CurrentServer() → StatusBar.SetRegion wiring. Without this
+// test, removing the SetRegion line in the TickMsg handler would not fail any
+// test (the existing TickMsg test uses backend.New() which has a nil detector
+// and returns Unknown — identical to an empty region from the StatusBar guard).
+func TestUpdateTickMsgWiresRegionToStatusBar(t *testing.T) {
+	svc := backend.New()
+	// Wire a detector with zero stability so two matching packets promote
+	// instantly to a known region.
+	d := serverdetect.NewDetector(serverdetect.WithStability(0))
+	svc.SetDetectorForTest(d)
+
+	americasIP := net.ParseIP("5.188.125.10")
+	d.DetectFromIP(americasIP) // first packet: sets candidate
+	d.DetectFromIP(americasIP) // second packet: confirms → promoted
+
+	if got := svc.CurrentServer(); got != serverdetect.ServerLocationAmerica {
+		t.Fatalf("precondition: CurrentServer = %v, want Americas", got)
+	}
+
+	m := New(svc, nil, nil)
+	m = updateModel(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+
+	// TickMsg refreshes region + online from the backend. svc.IsOnline()
+	// returns false (no handler), so set online afterwards to exercise the
+	// render guard.
+	m = updateModel(m, TickMsg(time.Now()))
+	m.statusBar = m.statusBar.SetOnline(true)
+
+	view := m.View().Content
+	if !strings.Contains(view, "Americas") {
+		t.Errorf("expected region indicator 'Americas' in status bar view after TickMsg, got:\n%s", view)
 	}
 }
 
