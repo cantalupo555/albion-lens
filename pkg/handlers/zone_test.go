@@ -221,7 +221,6 @@ func TestChangeClusterUpdatesZone(t *testing.T) {
 		0: "@ISLAND@my-island",
 		2: "My Island",
 	})
-
 	zone := handler.GetCurrentZone()
 	if zone.MapType != MapTypeIsland {
 		t.Errorf("expected GetCurrentZone MapTypeIsland, got %v", zone.MapType)
@@ -550,5 +549,68 @@ func TestClusterDisplay(t *testing.T) {
 		if got := ClusterDisplay(tt.index); got != tt.want {
 			t.Errorf("ClusterDisplay(%q) = %q, want %q", tt.index, got, tt.want)
 		}
+	}
+}
+
+// TestClusterChangeCallbackFiresOnTransition verifies the cluster-change
+// callback fires exactly once per confirmed material zone transition.
+func TestClusterChangeCallbackFiresOnTransition(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	var calls int
+	handler.SetClusterChangeCallback(func() { calls++ })
+
+	// First transition (Unknown → Island): fires.
+	handler.OnResponse(events.OperationChangeCluster, 0, "", map[byte]interface{}{
+		0: "@ISLAND@island-1",
+		2: "Island One",
+	})
+	if calls != 1 {
+		t.Errorf("after first transition, callback calls = %d, want 1", calls)
+	}
+
+	// Second transition (Island → open-world city): fires.
+	handler.OnResponse(events.OperationChangeCluster, 0, "", map[byte]interface{}{
+		0: "4000",
+	})
+	if calls != 2 {
+		t.Errorf("after second transition, callback calls = %d, want 2", calls)
+	}
+}
+
+// TestClusterChangeCallbackSkippedOnDedup verifies the callback does NOT fire
+// for a suppressed duplicate transition (same map type, cluster, island).
+func TestClusterChangeCallbackSkippedOnDedup(t *testing.T) {
+	handler := NewAlbionHandler()
+
+	var calls int
+	handler.SetClusterChangeCallback(func() { calls++ })
+
+	params := map[byte]interface{}{
+		0: "@ISLAND@island-1",
+		2: "Same Island",
+	}
+	// First transition: fires.
+	handler.OnResponse(events.OperationChangeCluster, 0, "", params)
+	// Identical repeat: dedup-suppressed, callback must not fire.
+	handler.OnResponse(events.OperationChangeCluster, 0, "", params)
+
+	if calls != 1 {
+		t.Errorf("callback calls after duplicate transition = %d, want 1", calls)
+	}
+}
+
+// TestClusterChangeCallbackClears confirms passing nil disables the callback.
+func TestClusterChangeCallbackClears(t *testing.T) {
+	handler := NewAlbionHandler()
+	var calls int
+	handler.SetClusterChangeCallback(func() { calls++ })
+	handler.SetClusterChangeCallback(nil)
+
+	handler.OnResponse(events.OperationChangeCluster, 0, "", map[byte]interface{}{
+		0: "4000",
+	})
+	if calls != 0 {
+		t.Errorf("callback fired after being cleared: %d calls", calls)
 	}
 }
