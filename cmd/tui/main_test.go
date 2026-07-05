@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"errors"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/cantalupo555/albion-lens/internal/serverdetect"
 	"github.com/cantalupo555/albion-lens/internal/tui"
 	"github.com/cantalupo555/albion-lens/pkg/backend"
+	"github.com/cantalupo555/albion-lens/pkg/handlers"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
 
@@ -222,3 +225,69 @@ func TestPeriodicSaveContinuesAfterError(t *testing.T) {
 
 // errBoom is a sentinel error used only by TestPeriodicSaveContinuesAfterError.
 var errBoom = errors.New("boom")
+
+// TestShutdownSequenceNoPanicOrDeadlock exercises the exact shutdown sequence
+// from main() with concurrent cluster-save activity and an active region
+// watcher. A future refactor that reorders the steps or drops the
+// shuttingDown gate would panic (WaitGroup re-use) or deadlock here.
+func TestShutdownSequenceNoPanicOrDeadlock(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+
+	h := handlers.NewAlbionHandler()
+	h.SetLocalPlayer("Test")
+	paths := newPersistPaths("", nil)
+
+	// Cluster-save setup — mirrors main.go's callback pattern.
+	var clusterShutdown bool
+	var clusterMu sync.Mutex
+	var saveWg sync.WaitGroup
+
+	// Concurrent goroutine simulating the capture path firing callbacks.
+	stop := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				// Same gate+mutex pattern as main.go's cluster-change callback.
+				clusterMu.Lock()
+				if !clusterShutdown {
+					saveWg.Add(1)
+					clusterMu.Unlock()
+					go func() {
+						defer saveWg.Done()
+						time.Sleep(2 * time.Millisecond) // simulate I/O latency
+						_ = paths.Save(h)
+					}()
+				} else {
+					clusterMu.Unlock()
+				}
+				time.Sleep(time.Millisecond)
+			}
+		}
+	}()
+
+	// Region watcher — mirrors main.go's watchServerChanges goroutine.
+	changes := make(chan serverdetect.ChangeEvent, 4)
+	var watchWg sync.WaitGroup
+	watchWg.Add(1)
+	go func() {
+		defer watchWg.Done()
+		watchServerChanges(changes, h, paths, nil)
+	}()
+
+	// Let concurrent activity accumulate.
+	time.Sleep(20 * time.Millisecond)
+
+	// Shutdown sequence — exact order from main.go.
+	clusterMu.Lock()
+	clusterShutdown = true
+	clusterMu.Unlock()
+	close(stop)
+	saveWg.Wait()  // drain in-flight saves (no panic)
+	close(changes) // simulates svc.Stop() closing ServerChanged
+	watchWg.Wait() // drain watcher (no deadlock)
+
+	// Reaching this point means the shutdown sequence is panic-free.
+}

@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -69,7 +68,9 @@ func main() {
 
 	// sendWarning delivers a diagnostic to the TUI event log so the user can
 	// see it during operation (fmt.Printf is hidden by the TUI alt-screen).
-	// Falls back to fmt.Printf when the channel is full so no warning is lost.
+	// When the channel is full the fallback writes to stdout, which is not
+	// visible during TUI operation — this is an accepted trade-off: warnings
+	// are rare and the channel buffer (250) is sized to absorb bursts.
 	sendWarning := func(msgType, format string, args ...any) {
 		select {
 		case bulkEventChan <- tui.BulkEventMsg{{
@@ -170,17 +171,22 @@ func main() {
 	// I/O. The periodic ticker and save-on-exit remain as safety nets.
 	// saveWg tracks these goroutines so the final save-on-exit can drain them
 	// first, avoiding an in-flight .tmp write racing with the exit save.
-	// shuttingDown gates saveWg.Add(1) so the WaitGroup cannot be re-entered
-	// after the exit drain has completed (which would panic).
-	var shuttingDown atomic.Bool
+	// clusterMu pairs the shutdown gate with saveWg.Add(1) so the WaitGroup
+	// cannot be re-entered after the exit drain (which would panic). The
+	// mutex is held only for the gate check + Add, never during I/O.
+	var clusterShutdown bool
+	var clusterMu sync.Mutex
 	clusterSaver := newRateLimiter(clusterSaveWindow)
 	var saveWg sync.WaitGroup
 	if h := svc.Handler(); h != nil {
 		h.SetClusterChangeCallback(func() {
-			if shuttingDown.Load() || !paths.Enabled() || !clusterSaver.Allow(time.Now()) {
+			clusterMu.Lock()
+			if clusterShutdown || !paths.Enabled() || !clusterSaver.Allow(time.Now()) {
+				clusterMu.Unlock()
 				return
 			}
 			saveWg.Add(1)
+			clusterMu.Unlock()
 			go func() {
 				defer saveWg.Done()
 				hh := svc.Handler()
@@ -220,7 +226,9 @@ func main() {
 	// 4. Final save-on-exit.
 	// 5. Stop capture (closes serverChangedCh so watchServerChanges exits).
 	// 6. Drain the region-change watcher.
-	shuttingDown.Store(true)
+	clusterMu.Lock()
+	clusterShutdown = true
+	clusterMu.Unlock()
 	saveCancel()
 	saveWg.Wait()
 	if h := svc.Handler(); h != nil && paths.Enabled() {
