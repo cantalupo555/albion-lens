@@ -1,6 +1,8 @@
 // Package backend provides a unified service layer for Albion Online packet capture and event processing.
 package backend
 
+import "github.com/cantalupo555/albion-lens/internal/serverdetect"
+
 // Option configures the Service using functional options pattern
 type Option func(*Service)
 
@@ -50,5 +52,15 @@ func WithEventBufferSize(size int) Option {
 func WithStatsBufferSize(size int) Option {
 	return func(s *Service) {
 		s.statsBufferSize = size
+	}
+}
+
+// WithDetectorOptions configures the server-region detector. The service still
+// appends its own OnChange callback (which forwards to ServerChanged), so
+// callers should not set their own OnChange here. Useful for tests that need a
+// shorter stability window or a custom nowFunc.
+func WithDetectorOptions(opts ...serverdetect.Option) Option {
+	return func(s *Service) {
+		s.detectorOpts = append(s.detectorOpts, opts...)
 	}
 }

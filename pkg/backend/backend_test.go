@@ -1,9 +1,11 @@
 package backend
 
 import (
+	"net"
 	"testing"
 	"time"
 
+	"github.com/cantalupo555/albion-lens/internal/serverdetect"
 	"github.com/cantalupo555/albion-lens/pkg/photon"
 )
 
@@ -447,6 +449,174 @@ func TestServiceHandlerWithoutStart(t *testing.T) {
 	}
 }
 
+// TestServiceServerAccessorsBeforeStart checks the region-detection accessors
+// are nil-safe before Start() (the detector is created during Start).
+func TestServiceServerAccessorsBeforeStart(t *testing.T) {
+	s := New()
+
+	if got := s.CurrentServer(); got != serverdetect.ServerLocationUnknown {
+		t.Errorf("CurrentServer before Start = %v, want Unknown", got)
+	}
+	ch := s.ServerChanged()
+	if ch == nil {
+		t.Fatal("ServerChanged() returned nil channel before Start")
+	}
+	// Channel must be open and empty (no transitions without capture).
+	select {
+	case ev, ok := <-ch:
+		if !ok {
+			t.Error("ServerChanged channel closed before Start")
+		}
+		t.Errorf("ServerChanged channel had event before Start: %+v", ev)
+	default:
+		// expected: no event ready
+	}
+}
+
+// TestServiceServerChangedChannelExposed confirms ServerChanged returns the
+// same channel the service forwards region transitions to, and that a value
+// pushed on the internal channel is observable from the public accessor.
+func TestServiceServerChangedChannelExposed(t *testing.T) {
+	s := New()
+
+	americas := serverdetect.MatchByIPString("5.188.125.1")
+	s.serverChangedCh <- serverdetect.ChangeEvent{
+		Previous: serverdetect.Unknown(),
+		Current:  americas,
+	}
+
+	select {
+	case ev := <-s.ServerChanged():
+		if ev.Current.Location != serverdetect.ServerLocationAmerica {
+			t.Errorf("event current = %v, want Americas", ev.Current.Location)
+		}
+		if ev.Previous.Location != serverdetect.ServerLocationUnknown {
+			t.Errorf("event previous = %v, want Unknown", ev.Previous.Location)
+		}
+	default:
+		t.Error("ServerChanged() did not observe the forwarded event")
+	}
+}
+
+// initDetectorForTest wires a region detector onto a Service without invoking
+// the full Start() path (which requires a real capture device). It mirrors the
+// wiring Start() uses: onChange forwards to serverChangedCh and bumps the drop
+// counter on overflow. stability is configurable so tests can promote a region
+// instantly.
+func initDetectorForTest(s *Service, stability time.Duration) {
+	s.detector = serverdetect.NewDetector(
+		serverdetect.WithStability(stability),
+		serverdetect.WithOnChange(func(e serverdetect.ChangeEvent) {
+			select {
+			case s.serverChangedCh <- e:
+			default:
+				s.serverChangesDropped.Add(1)
+			}
+		}),
+	)
+}
+
+// TestServiceHandlePacketFeedsDetector is the wiring test for the
+// capture→detector→ServerChanged path. It calls handlePacket (the per-packet
+// callback) with a known server IP and asserts a region transition flows to
+// ServerChanged. This catches regressions where the packetHandler forgets to
+// feed the detector or passes the wrong IP field.
+func TestServiceHandlePacketFeedsDetector(t *testing.T) {
+	s := New()
+	// Zero stability so the candidate promotes on the second matching packet
+	// without a multi-second wait (the first sets the candidate, the second
+	// confirms and promotes — see detector.tryPromoteStableCandidate).
+	initDetectorForTest(s, 0)
+
+	serverIP := net.ParseIP("5.188.125.10")
+	// Two matching packets: first establishes the candidate, second promotes.
+	s.handlePacket(nil, serverIP, net.ParseIP("192.168.1.5"), 5056, 50000)
+	s.handlePacket(nil, serverIP, net.ParseIP("192.168.1.5"), 5056, 50000)
+
+	select {
+	case ev := <-s.ServerChanged():
+		if ev.Current.Location != serverdetect.ServerLocationAmerica {
+			t.Errorf("handlePacket produced region %v, want Americas", ev.Current.Location)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("handlePacket did not forward a region transition to ServerChanged")
+	}
+
+	// A non-matching packet (local-only IPs) must not fire a transition.
+	select {
+	case ev := <-s.ServerChanged():
+		t.Errorf("non-matching packet produced unexpected event: %+v", ev)
+	default:
+	}
+}
+
+// TestServiceHandlePacketFeedsDetectorOutgoing confirms dstIP is also fed, so
+// detection works for outgoing (client→server) packets where the server is the
+// destination rather than the source.
+func TestServiceHandlePacketFeedsDetectorOutgoing(t *testing.T) {
+	s := New()
+	initDetectorForTest(s, 0)
+
+	// Outgoing packet: srcIP is local, dstIP is the server.
+	serverIP := net.ParseIP("193.169.238.7")
+	s.handlePacket(nil, net.ParseIP("192.168.1.5"), serverIP, 50000, 5056)
+	s.handlePacket(nil, net.ParseIP("192.168.1.5"), serverIP, 50000, 5056)
+
+	select {
+	case ev := <-s.ServerChanged():
+		if ev.Current.Location != serverdetect.ServerLocationEurope {
+			t.Errorf("outgoing packet produced region %v, want Europe", ev.Current.Location)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("outgoing packet did not forward a region transition")
+	}
+}
+
+// TestServiceServerChangesDroppedCounter verifies the overflow counter bumps
+// when the ServerChanged buffer is full and a transition is dropped.
+func TestServiceServerChangesDroppedCounter(t *testing.T) {
+	s := New()
+	initDetectorForTest(s, 0)
+
+	// Drive repeated region switches (Americas ↔ Europe). Each switch needs a
+	// reset-to-Unknown packet + a confirm packet, so the buffer (capacity 4)
+	// fills quickly and later transitions overflow.
+	americas := net.ParseIP("5.188.125.10")
+	europe := net.ParseIP("193.169.238.7")
+	for i := 0; i < 40; i++ {
+		target := americas
+		if i%2 == 1 {
+			target = europe
+		}
+		// Two packets to complete a switch (candidate + confirm).
+		s.handlePacket(nil, target, nil, 0, 0)
+		s.handlePacket(nil, target, nil, 0, 0)
+	}
+
+	// Drain everything we can; what matters is that the drop counter went up.
+	for {
+		select {
+		case <-s.ServerChanged():
+		default:
+			if got := s.ServerChangesDropped(); got == 0 {
+				t.Error("expected dropped transitions when buffer is full, got 0")
+			}
+			return
+		}
+	}
+}
+
+// TestServiceHandlePacketNilDetectorNoPanic confirms handlePacket is safe to
+// call before Start() wires the detector. The nil-detector guard is defensive
+// (unreachable in normal operation since Start() creates the detector before
+// capture begins), but a regression that removes the guard would crash.
+func TestServiceHandlePacketNilDetectorNoPanic(t *testing.T) {
+	s := New()
+	// s.detector is nil (Start() not called). handlePacket must skip detection
+	// without panicking.
+	s.handlePacket(nil, net.ParseIP("5.188.125.10"), net.ParseIP("192.168.1.5"), 5056, 50000)
+}
+
 // TestDefaultBufferSizeConstants tests default buffer size constants
 func TestDefaultBufferSizeConstants(t *testing.T) {
 	if defaultEventBufferSize != 250 {
@@ -563,8 +733,8 @@ func newServiceWithStatsUpdater(t *testing.T) *Service {
 	return s
 }
 
-// TestServiceStopClosesAllChannels verifies that Stop() closes all three
-// public-facing channels (Events, Stats, OnlineStatus).
+// TestServiceStopClosesAllChannels verifies that Stop() closes all four
+// public-facing channels (Events, Stats, OnlineStatus, ServerChanged).
 func TestServiceStopClosesAllChannels(t *testing.T) {
 	s := newServiceWithStatsUpdater(t)
 
@@ -583,6 +753,11 @@ func TestServiceStopClosesAllChannels(t *testing.T) {
 	_, ok = <-s.OnlineStatus
 	if ok {
 		t.Error("OnlineStatus channel not closed after Stop()")
+	}
+
+	_, ok = <-s.ServerChanged()
+	if ok {
+		t.Error("ServerChanged channel not closed after Stop()")
 	}
 }
 
